@@ -1,0 +1,27 @@
+model TicketClass {
+    id          String   @id @default(uuid())
+    name        String
+    description String
+    price       Float
+    eventId     String
+    event       Event    @relation(fields: [eventId], references: [id])
+    tickets     Ticket[]
+
+    @@map("ticket_classes")
+}
+
+model Ticket {
+    id            String       @id @default(uuid())
+    ticketClassId String
+    ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id])
+    status        TicketStatus @default(AVAILABLE)
+    createdAt     DateTime     @default(now())
+    updatedAt     DateTime     @updatedAt
+
+    @@map("tickets")
+}
+
+enum TicketStatus {
+    AVAILABLE
+    SOLD
+}

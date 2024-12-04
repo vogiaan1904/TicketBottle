@@ -5,7 +5,7 @@ enum EventStatus {
 }
 
 model Event {
-    id                 String      @id @default(uuid())
+    id                 String        @id @default(uuid())
     numberOfTickets    Int
     startSellDate      DateTime
     endSellDate        DateTime
@@ -14,8 +14,9 @@ model Event {
     status             EventStatus
     staff              Staff?
     eventInfo          EventInfo?
-    createdAt          DateTime    @default(now())
-    updatedAt          DateTime    @updatedAt
+    ticketClasses      TicketClass[]
+    createdAt          DateTime      @default(now())
+    updatedAt          DateTime      @updatedAt
     staffId            String?
 
     @@map("events")
@@ -35,12 +36,12 @@ model EventInfo {
 
 model Staff {
     id        String   @id @default(uuid())
-    email     String   @unique
+    email     String?  @unique
     password  String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
     eventId   String   @unique
     event     Event    @relation(fields: [eventId], references: [id])
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     @@map("staffs")
 }
