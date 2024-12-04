@@ -6,7 +6,7 @@ import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
-import Joi from 'joi';
+import * as Joi from 'joi';
 import { databaseConfig } from './configs/db.config';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './filters/globalException.filter';
