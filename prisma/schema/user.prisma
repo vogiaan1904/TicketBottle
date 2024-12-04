@@ -1,0 +1,26 @@
+enum Gender {
+    FEMALE
+    MALE
+    CUSTOM
+}
+
+model User {
+    id       String   @id @default(uuid())
+    email    String   @unique
+    password String
+    profile  Profile?
+
+    @@map("users")
+}
+
+model Profile {
+    id          String @id @default(uuid())
+    userId      String @unique
+    user        User   @relation(fields: [userId], references: [id])
+    firstName   String
+    lastName    String
+    gender      Gender
+    phoneNumber String
+
+    @@map("profiles")
+}
