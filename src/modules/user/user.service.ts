@@ -11,24 +11,29 @@ export class UserService {
     });
   }
 
-  async findAll() {}
+  async findAll() {
+    return await this.databaseService.user.findMany();
+  }
 
-  async findOne(id: string) {
+  async findOne(filter: Prisma.UserWhereUniqueInput) {
     return await this.databaseService.user.findUnique({
-      where: { id },
+      where: filter,
     });
   }
 
-  async update(id: string, updateUserDto: Prisma.UserUpdateInput) {
+  async update(
+    filter: Prisma.UserWhereUniqueInput,
+    updateUserDto: Prisma.UserUpdateInput,
+  ) {
     return await this.databaseService.user.update({
-      where: { id },
+      where: filter,
       data: updateUserDto,
     });
   }
 
-  async remove(id: string) {
+  async remove(filter: Prisma.UserWhereUniqueInput) {
     return await this.databaseService.user.delete({
-      where: { id },
+      where: filter,
     });
   }
 }

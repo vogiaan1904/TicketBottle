@@ -1,0 +1,22 @@
+model Order {
+    id              String        @id @default(uuid())
+    userId          String
+    user            User          @relation(fields: [userId], references: [id])
+    eventId         String
+    numberOfTickets Int
+    orderDetails    OrderDetail[]
+    totalCheckOut   Float
+    transactionData Json
+    email           String
+    createdAt       DateTime      @default(now())
+}
+
+model OrderDetail {
+    id        String   @id @default(uuid())
+    orderId   String
+    order     Order    @relation(fields: [orderId], references: [id])
+    ticketId  String   @unique
+    ticket    Ticket   @relation(fields: [ticketId], references: [id])
+    price     Float
+    createdAt DateTime @default(now())
+}

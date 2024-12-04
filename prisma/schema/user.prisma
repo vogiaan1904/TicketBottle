@@ -12,6 +12,7 @@ model User {
     lastName    String
     gender      Gender
     phoneNumber String?
+    orders      Order[]
 
     @@map("users")
 }

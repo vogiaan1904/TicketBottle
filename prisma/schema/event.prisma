@@ -12,7 +12,8 @@ model Event {
     isFree             Boolean
     maxTicketsPerOrder Int
     status             EventStatus
-    staff              Staff?
+    staffUsername      String        @unique
+    staffPassword      String
     eventInfo          EventInfo?
     ticketClasses      TicketClass[]
     createdAt          DateTime      @default(now())
@@ -32,16 +33,4 @@ model EventInfo {
     event       Event    @relation(fields: [eventId], references: [id])
 
     @@map("event_infos")
-}
-
-model Staff {
-    id        String   @id @default(uuid())
-    email     String?  @unique
-    password  String
-    eventId   String   @unique
-    event     Event    @relation(fields: [eventId], references: [id])
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("staffs")
 }

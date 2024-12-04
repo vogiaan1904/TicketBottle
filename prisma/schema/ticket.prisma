@@ -17,6 +17,7 @@ model Ticket {
     status        TicketStatus @default(AVAILABLE)
     createdAt     DateTime     @default(now())
     updatedAt     DateTime     @updatedAt
+    orderDetail   OrderDetail?
 
     @@map("tickets")
 }
