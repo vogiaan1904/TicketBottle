@@ -4,12 +4,13 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { databaseConfig } from './configs/db.config';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './filters/globalException.filter';
+import * as redisStore from 'cache-manager-redis-yet';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -31,6 +32,11 @@ import { GlobalExceptionFilter } from './filters/globalException.filter';
     }),
     CacheModule.register({
       isGlobal: true,
+      store: redisStore.redisStore,
+      socket: {
+        host: 'localhost',
+        port: 6379,
+      },
     }),
     DatabaseModule,
     UserModule,

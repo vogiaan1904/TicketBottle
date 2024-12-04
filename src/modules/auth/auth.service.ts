@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
 import { RegisterRequestDto } from './dto/request/register.request.dto';
 import { User } from '@prisma/client';
-import { Cache } from 'cache-manager';
+
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
@@ -20,6 +20,7 @@ import {
   refresh_token_private_key,
 } from 'src/constraints/jwt.constraints';
 import { TokenPayload } from './interfaces/token.interface';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AuthService {
