@@ -15,9 +15,9 @@ export class EventService {
     return await this.databaseService.event.findMany();
   }
 
-  async findOne(id: string) {
+  async findOne(filter: Prisma.EventWhereUniqueInput) {
     return await this.databaseService.event.findUnique({
-      where: { id },
+      where: filter,
     });
   }
 
