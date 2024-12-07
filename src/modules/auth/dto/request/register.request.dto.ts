@@ -9,7 +9,7 @@ import {
   IsStrongPassword,
 } from 'class-validator';
 
-export class RegisterRequestDto {
+export class RegisterRequestDTO {
   @IsNotEmpty()
   @IsEmail()
   @IsString()

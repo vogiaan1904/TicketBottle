@@ -13,6 +13,7 @@ model User {
     gender      Gender
     phoneNumber String?
     orders      Order[]
+    isVerified  Boolean @default(false)
 
     @@map("users")
 }

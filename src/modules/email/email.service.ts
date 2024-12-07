@@ -23,4 +23,18 @@ export class EmailService {
       },
     });
   }
+
+  async sendUserResetPasswordEmail(
+    email: string,
+    token: string,
+  ): Promise<void> {
+    this.sendEmail({
+      to: email,
+      subject: 'Verify your account',
+      template: 'auth/forgotPassword',
+      context: {
+        token,
+      },
+    });
+  }
 }

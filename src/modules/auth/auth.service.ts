@@ -8,33 +8,55 @@ import {
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
-import { RegisterRequestDto } from './dto/request/register.request.dto';
+import { RegisterRequestDTO } from './dto/request/register.request.dto';
 import { User } from '@prisma/client';
 
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
+
 import {
-  access_token_private_key,
-  refresh_token_private_key,
-} from 'src/constraints/jwt.constraints';
-import { TokenPayload } from './interfaces/token.interface';
+  ResetPasswordTokenPayload,
+  TokenPayload,
+  VerifyAccountTokenPayload,
+} from './interfaces/token.interface';
 import { Cache } from 'cache-manager';
+import {
+  accessTokenKeyPair,
+  refreshTokenKeyPair,
+} from 'src/constraints/jwt.constraints';
+import { TokenService } from '../token/token.service';
+import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
+import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
 
 @Injectable()
 export class AuthService {
   private SALT_ROUND = 10;
+  private readonly FORGOT_PASSWORD_EXPIRATION_TIME = '15mins';
+  private readonly VERIFY_ACCOUNT_EXPIRATION_TIME = '15mins';
   private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
     private readonly emailService: EmailService,
+    private readonly tokenService: TokenService,
+
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
   ) {}
 
-  async register(dto: RegisterRequestDto): Promise<User> {
+  private async verifyPlainContentWithHashedContent(
+    plainText: string,
+    hashedText: string,
+  ): Promise<void> {
+    const is_matching = await bcrypt.compare(plainText, hashedText);
+    if (!is_matching) {
+      throw new BadRequestException();
+    }
+  }
+
+  async register(dto: RegisterRequestDTO): Promise<User> {
     const isExist = await this.userService.findOne({ email: dto.email });
     if (isExist) {
       throw new BadRequestException('Email already exists');
@@ -87,20 +109,10 @@ export class AuthService {
     return user;
   }
 
-  private async verifyPlainContentWithHashedContent(
-    plainText: string,
-    hashedText: string,
-  ): Promise<void> {
-    const is_matching = await bcrypt.compare(plainText, hashedText);
-    if (!is_matching) {
-      throw new BadRequestException();
-    }
-  }
-
   generateAccessToken(payload: TokenPayload): string {
     return this.jwtService.sign(payload, {
       algorithm: 'RS256',
-      privateKey: access_token_private_key,
+      privateKey: accessTokenKeyPair.privateKey,
       expiresIn: `${this.configService.get<string>(
         'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
       )}s`,
@@ -110,7 +122,7 @@ export class AuthService {
   generateRefreshToken(payload: TokenPayload): string {
     return this.jwtService.sign(payload, {
       algorithm: 'RS256',
-      privateKey: refresh_token_private_key,
+      privateKey: refreshTokenKeyPair.privateKey,
       expiresIn: `${this.configService.get<string>(
         'JWT_REFRESH_TOKEN_EXPIRATION_TIME',
       )}s`,
@@ -124,5 +136,86 @@ export class AuthService {
       hashedToken,
       this.configService.get<number>('JWT_REFRESH_TOKEN_EXPIRATION_TIME'),
     );
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.userService.findOne({ email });
+    const payload: ResetPasswordTokenPayload = {
+      email,
+    };
+
+    const resetPasswordToken = await this.tokenService.signJwtWithSecret({
+      payload,
+      secret: user.password,
+      exp: this.FORGOT_PASSWORD_EXPIRATION_TIME,
+    });
+
+    await this.emailService.sendUserResetPasswordEmail(
+      email,
+      resetPasswordToken,
+    );
+  }
+
+  async resetPassword(dto: ResetPasswordRequestDTO): Promise<void> {
+    const decoded = await this.jwtService.decode(dto.token);
+    const user = await this.userService.findOne({ email: decoded.email });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const isValidToken = await this.tokenService.verifyJwtWithSecret(
+      dto.token,
+      user.password,
+    );
+
+    if (!isValidToken) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, this.SALT_ROUND);
+    await this.userService.update(
+      { id: user.id },
+      { password: hashedPassword },
+    );
+  }
+
+  async verifyAccount(dto: VerifyAccountRequestDTO): Promise<void> {
+    const decoded = await this.jwtService.decode(dto.token);
+    const user = await this.userService.findOne(decoded.email);
+
+    if (user.isVerified) {
+      throw new BadRequestException('Account already verifed');
+    }
+
+    const isValidToken = await this.tokenService.verifyJwtWithSecret(
+      dto.token,
+      user.password + user.isVerified,
+    );
+
+    if (!isValidToken) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    await this.userService.update({ id: user.id }, { isVerified: true });
+  }
+
+  async sendVerificationEmail(email: string): Promise<void> {
+    const user = await this.userService.findOne({ email });
+
+    if (user.isVerified) {
+      throw new BadRequestException('Account already verifed');
+    }
+
+    const payload: VerifyAccountTokenPayload = {
+      email,
+    };
+
+    const verifyToken = await this.tokenService.signJwtWithSecret({
+      payload,
+      secret: user.password + user.isVerified,
+      exp: this.VERIFY_ACCOUNT_EXPIRATION_TIME,
+    });
+
+    await this.emailService.sendUserVerifyEmail(email, verifyToken);
   }
 }

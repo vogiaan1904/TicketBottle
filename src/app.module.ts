@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DatabaseModule } from './database/database.module';
+import { DatabaseModule } from './modules/database/database.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { databaseConfig } from './configs/db.config';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { GlobalExceptionFilter } from './filters/globalException.filter';
 import * as redisStore from 'cache-manager-redis-yet';
 import { CacheModule } from '@nestjs/cache-manager';
+import { EmailModule } from './modules/email/email.module';
+import { TokenModule } from './modules/token/token.module';
+import { TicketModule } from './modules/ticket/ticket.module';
+import { TransformInterceptor } from './interceptors/apiResponse.interceptor';
 
 @Module({
   imports: [
@@ -41,6 +45,9 @@ import { CacheModule } from '@nestjs/cache-manager';
     DatabaseModule,
     UserModule,
     AuthModule,
+    EmailModule,
+    TokenModule,
+    TicketModule,
   ],
   controllers: [AppController],
   providers: [
@@ -48,6 +55,10 @@ import { CacheModule } from '@nestjs/cache-manager';
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
     },
   ],
 })
