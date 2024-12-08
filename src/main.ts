@@ -3,11 +3,17 @@ import { AppModule } from './app.module';
 import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { configSwagger } from './configs/apiDocs.config';
+import { WinstonModule } from 'nest-winston';
+import { instance } from './configs/winston.config';
 
 async function bootstrap() {
   const logger = new Logger(bootstrap.name);
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger({
+      instance: instance,
+    }),
+  });
   configSwagger(app);
   const configService = app.get(ConfigService);
   app.useGlobalPipes(
