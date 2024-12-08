@@ -9,7 +9,6 @@ import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
 import { RegisterRequestDTO } from './dto/request/register.request.dto';
-import { User } from '@prisma/client';
 
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
@@ -29,6 +28,8 @@ import {
 import { TokenService } from '../token/token.service';
 import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
 import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
+import { UserResponseDto } from '../user/dto/user.response.dto';
+import { RegisterResponseDTO } from './dto/response/register.response.dto';
 
 @Injectable()
 export class AuthService {
@@ -56,7 +57,7 @@ export class AuthService {
     }
   }
 
-  async register(dto: RegisterRequestDTO): Promise<User> {
+  async register(dto: RegisterRequestDTO): Promise<RegisterResponseDTO> {
     const isExist = await this.userService.findOne({ email: dto.email });
     if (isExist) {
       throw new BadRequestException('Email already exists');
@@ -82,7 +83,10 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async getAuthenticatedUser(email: string, password: string): Promise<User> {
+  async getAuthenticatedUser(
+    email: string,
+    password: string,
+  ): Promise<UserResponseDto> {
     const user = await this.userService.findOne({ email });
     if (!user) {
       throw new BadRequestException('User not found');
@@ -94,7 +98,7 @@ export class AuthService {
   async getUserIfRefreshTokenMatched(
     userID: string,
     refreshToken: string,
-  ): Promise<User> {
+  ): Promise<UserResponseDto> {
     this.logger.log(userID);
     const user = await this.userService.findOne({ id: userID });
     if (!user) {
