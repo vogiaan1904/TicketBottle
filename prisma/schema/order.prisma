@@ -1,14 +1,14 @@
 model Order {
     id              String        @id @default(uuid())
-    userId          String
-    user            User          @relation(fields: [userId], references: [id])
-    eventId         String
-    numberOfTickets Int
     orderDetails    OrderDetail[]
     totalCheckOut   Float
     transactionData Json
     email           String
+    userId          String
+    user            User          @relation(fields: [userId], references: [id])
     createdAt       DateTime      @default(now())
+
+    @@map("orders")
 }
 
 model OrderDetail {
@@ -19,4 +19,6 @@ model OrderDetail {
     ticket    Ticket   @relation(fields: [ticketId], references: [id])
     price     Float
     createdAt DateTime @default(now())
+
+    @@map("order_details")
 }

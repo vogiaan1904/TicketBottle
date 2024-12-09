@@ -3,19 +3,24 @@ model TicketClass {
     name        String
     description String
     price       Float
+    tickets     Ticket[]
     eventId     String
     event       Event    @relation(fields: [eventId], references: [id])
-    tickets     Ticket[]
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 
     @@map("ticket_classes")
 }
 
 model Ticket {
     id            String       @id @default(uuid())
+    status        TicketStatus @default(AVAILABLE)
+    serialNumber  String       @unique
+    orderDetail   OrderDetail?
     ticketClassId String
     ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id])
-    status        TicketStatus @default(AVAILABLE)
-    orderDetail   OrderDetail?
+    eventId       String
+    event         Event        @relation(fields: [eventId], references: [id])
     createdAt     DateTime     @default(now())
     updatedAt     DateTime     @updatedAt
 

@@ -5,20 +5,20 @@ enum EventStatus {
 }
 
 model Event {
-    id                  String        @id @default(uuid())
-    numberOfTickets     Int
-    numberOfSoldTickets Int           @default(0)
-    startSellDate       DateTime
-    endSellDate         DateTime
-    isFree              Boolean
-    maxTicketsPerOrder  Int
-    status              EventStatus   @default(DRAFT)
-    staffUsername       String        @unique
-    staffPassword       String
-    eventInfo           EventInfo?
-    ticketClasses       TicketClass[]
-    createdAt           DateTime      @default(now())
-    updatedAt           DateTime      @updatedAt
+    id                 String        @id @default(uuid())
+    numberOfTickets    Int
+    startSellDate      DateTime
+    endSellDate        DateTime
+    isFree             Boolean
+    maxTicketsPerOrder Int
+    status             EventStatus   @default(DRAFT)
+    staffUsername      String        @unique
+    staffPassword      String
+    eventInfo          EventInfo?
+    ticketClasses      TicketClass[]
+    tickets            Ticket[]
+    createdAt          DateTime      @default(now())
+    updatedAt          DateTime      @updatedAt
 
     @@map("events")
 }
