@@ -2,37 +2,26 @@ import { Gender } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
-  IsNotEmpty,
+  IsEnum,
   IsPhoneNumber,
   IsString,
   IsStrongPassword,
 } from 'class-validator';
 
-export class RegisterRequestDTO {
-  @IsNotEmpty()
+export class CreateUserRequestDto {
   @IsEmail()
   @IsString()
   email: string;
-
-  @IsNotEmpty()
+  @IsString()
+  firstName: string;
+  @IsString()
+  lastName: string;
   @IsString()
   @IsStrongPassword()
   password: string;
-
-  @IsNotEmpty()
-  @IsString()
-  firstName: string;
-
-  @IsNotEmpty()
-  @IsString()
-  lastName: string;
-
-  // @IsEnum(Gender)
-  @IsString()
+  @IsEnum(Gender)
   @Transform(({ value }) => value.toUpperCase())
-  gender: Gender;
-
-  @IsNotEmpty()
+  gender: string;
   @IsPhoneNumber('VN')
   phoneNumber: string;
 }

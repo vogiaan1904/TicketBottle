@@ -11,14 +11,14 @@ model Event {
     endSellDate        DateTime
     isFree             Boolean
     maxTicketsPerOrder Int
-    status             EventStatus
+    status             EventStatus   @default(DRAFT)
     staffUsername      String        @unique
     staffPassword      String
     eventInfo          EventInfo?
     ticketClasses      TicketClass[]
+    tickets            Ticket[]
     createdAt          DateTime      @default(now())
     updatedAt          DateTime      @updatedAt
-    staffId            String?
 
     @@map("events")
 }
@@ -29,6 +29,7 @@ model EventInfo {
     description String
     startDate   DateTime
     location    String
+    thumbnail   String
     eventId     String   @unique
     event       Event    @relation(fields: [eventId], references: [id])
 

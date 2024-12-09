@@ -21,9 +21,11 @@ import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto
 import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
 import { ForgotPasswordRequestDTO } from './dto/request/forgotPassword.request.dto';
 import { SendEmailVerfiyRequestDTO } from './dto/request/sendEmailVerify.request.dto';
+import { User } from '../user/entities/user.entity';
+import { PrismaInterceptor } from '@/interceptors/prisma.interceptor';
 
 @Controller('auth')
-@UseInterceptors()
+@UseInterceptors(new PrismaInterceptor(User))
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

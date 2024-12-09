@@ -39,7 +39,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
       isGlobal: true,
       store: redisStore.redisStore,
       socket: {
-        host: 'localhost',
+        host: process.env.REDIS_HOST,
         port: 6379,
       },
     }),
