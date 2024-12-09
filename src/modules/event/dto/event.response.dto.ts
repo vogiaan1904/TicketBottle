@@ -1,3 +1,4 @@
+import { EventInfoResponseDto } from '@/modules/eventInfo/dto/eventInfo.response.dto';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Event, EventStatus } from '@prisma/client';
 import { Exclude, Expose } from 'class-transformer';
@@ -8,26 +9,36 @@ export class EventResponseDto implements Event {
   }
 
   @Expose()
+  @ApiProperty()
   id: string;
 
   @Expose()
+  @ApiProperty()
   numberOfTickets: number;
 
   @Expose()
+  @ApiProperty()
   startSellDate: Date;
 
   @Expose()
+  @ApiProperty()
   endSellDate: Date;
 
   @Expose()
+  @ApiProperty()
   isFree: boolean;
 
   @Expose()
+  @ApiProperty()
   maxTicketsPerOrder: number;
 
   @Expose()
   @ApiProperty({ enum: EventStatus, enumName: 'EventStatus' })
   status: EventStatus;
+
+  @Expose()
+  @ApiProperty()
+  eventInfo: EventInfoResponseDto;
 
   @Exclude()
   @ApiHideProperty()
@@ -38,8 +49,10 @@ export class EventResponseDto implements Event {
   staffPassword: string;
 
   @Expose()
+  @ApiProperty()
   createdAt: Date;
 
   @Expose()
+  @ApiProperty()
   updatedAt: Date;
 }

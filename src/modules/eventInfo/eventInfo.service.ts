@@ -1,0 +1,12 @@
+import { BaseService } from '@/services/base.service';
+import { Injectable } from '@nestjs/common';
+import { EventInfo } from '@prisma/client';
+import { DatabaseService } from '../database/database.service';
+import { EventInfoResponseDto } from './dto/eventInfo.response.dto';
+
+@Injectable()
+export class EventInfoService extends BaseService<EventInfo> {
+  constructor(private readonly databaseService: DatabaseService) {
+    super(databaseService, 'eventInfo', EventInfoResponseDto);
+  }
+}

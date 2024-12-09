@@ -6,7 +6,7 @@ import { UserResponseDto } from './dto/user.response.dto';
 @Injectable()
 export class UserService extends BaseService<User> {
   constructor(private readonly databaseService: DatabaseService) {
-    super(databaseService, 'user');
+    super(databaseService, 'user', UserResponseDto);
   }
   async getUserByIdOrEmail(idOrEmail: string): Promise<UserResponseDto> {
     const user = await super.findOne({
@@ -23,6 +23,6 @@ export class UserService extends BaseService<User> {
         },
       ],
     });
-    return new UserResponseDto(user);
+    return user;
   }
 }
