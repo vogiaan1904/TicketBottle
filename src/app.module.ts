@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, Logger } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './modules/database/database.module';
@@ -16,6 +16,7 @@ import { TokenModule } from './modules/token/token.module';
 import { TicketModule } from './modules/ticket/ticket.module';
 import { TransformInterceptor } from './interceptors/apiResponse.interceptor';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { EventModule } from './modules/event/event.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
     EmailModule,
     TokenModule,
     TicketModule,
+    EventModule,
   ],
   controllers: [AppController],
   providers: [
@@ -61,6 +63,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
     },
+    Logger,
   ],
 })
 export class AppModule implements NestModule {

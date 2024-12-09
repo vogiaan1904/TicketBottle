@@ -1,15 +1,18 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { instance as logger } from '../../configs/winston.config';
 
 @Injectable()
 export class DatabaseService extends PrismaClient implements OnModuleInit {
+  constructor(private readonly logger: Logger) {
+    super();
+  }
+  private appLogger = new Logger(DatabaseService.name);
   async onModuleInit() {
     try {
       await this.$connect();
-      logger.info('Database connected successfully');
+      this.appLogger.log('Database connected successfully');
     } catch (error) {
-      logger.error('Database connection failed', error);
+      this.appLogger.error('Database connection failed', error);
     }
   }
 }

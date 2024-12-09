@@ -12,7 +12,7 @@ model Event {
     isFree             Boolean
     maxTicketsPerOrder Int
     status             EventStatus   @default(DRAFT)
-    staffUsername      String        @unique
+    staffUsername      String
     staffPassword      String
     eventInfo          EventInfo?
     ticketClasses      TicketClass[]

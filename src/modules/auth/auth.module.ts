@@ -9,12 +9,15 @@ import { TokenModule } from '../token/token.module';
 import { JwtAccessTokenStrategy } from './strategies/jwt-access-token.strategy';
 import { JwtRefreshTokenStrategy } from './strategies/jwt-refresh-token.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { EventModule } from '../event/event.module';
+import { JwtStaffStrategy } from './strategies/jwt-staff.strategy';
 
 @Module({
   imports: [
     UserModule,
     EmailModule,
     PassportModule,
+    EventModule,
     TokenModule,
     JwtModule.register({}),
   ],
@@ -24,6 +27,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     LocalStrategy,
     JwtAccessTokenStrategy,
     JwtRefreshTokenStrategy,
+    JwtStaffStrategy,
   ],
 })
 export class AuthModule {}

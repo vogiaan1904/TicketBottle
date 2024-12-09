@@ -1,6 +1,11 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  ClassSerializerInterceptor,
+  Logger,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { configSwagger } from './configs/apiDocs.config';
 import { WinstonModule } from 'nest-winston';
@@ -29,7 +34,7 @@ async function bootstrap() {
       },
     }),
   );
-
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   await app.listen(configService.get('PORT'), () => {
     logger.log(
       `Server running on http://localhost:${configService.get('PORT')}`,

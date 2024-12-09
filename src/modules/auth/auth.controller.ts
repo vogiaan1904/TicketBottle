@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
 import { ApiPost } from 'src/decorators/apiPost.decorator';
@@ -21,11 +15,9 @@ import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto
 import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
 import { ForgotPasswordRequestDTO } from './dto/request/forgotPassword.request.dto';
 import { SendEmailVerfiyRequestDTO } from './dto/request/sendEmailVerify.request.dto';
-import { User } from '../user/entities/user.entity';
-import { PrismaInterceptor } from '@/interceptors/prisma.interceptor';
 
 @Controller('auth')
-@UseInterceptors(new PrismaInterceptor(User))
+// @UseInterceptors(new PrismaInterceptor(User))
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -74,7 +66,7 @@ export class AuthController {
   async getMe(@Req() request: RequestWithUser) {
     const { user } = request;
 
-    return await this.userService.findOne({ email: user.email });
+    return await this.userService.getUserByIdOrEmail(user.email);
   }
 
   @UseGuards(JwtRefreshTokenGuard)

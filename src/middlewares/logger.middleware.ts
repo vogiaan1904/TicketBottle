@@ -2,6 +2,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { instance as logger } from '../configs/winston.config';
+import { error } from 'console';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
@@ -24,12 +25,11 @@ export class LoggerMiddleware implements NestMiddleware {
 
     res.on('finish', () => {
       const duration = Date.now() - start;
-      logger.info(
+      logger.log(
+        res.statusCode >= 400 ? 'error' : 'info',
         `${method} ${originalUrl} ${res.statusCode} - ${duration}ms`,
         {
           context: 'HTTP',
-          statusCode: res.statusCode,
-          duration,
         },
       );
     });

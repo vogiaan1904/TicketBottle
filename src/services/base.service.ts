@@ -10,7 +10,7 @@ export abstract class BaseService<T> implements BaseServiceInterface<T> {
     return this.prisma[this.model].findMany();
   }
   async findOne(filter: any) {
-    return this.prisma[this.model].findUnique({
+    return this.prisma[this.model].findFirst({
       where: filter,
     });
   }

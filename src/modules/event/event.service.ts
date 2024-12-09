@@ -1,36 +1,33 @@
+import { BaseService } from '@/services/base.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Event } from '@prisma/client';
 import { DatabaseService } from 'src/modules/database/database.service';
+import { CreateEventRequestDto } from './dto/create-event.request.dto';
+import { faker } from '@faker-js/faker';
+import { EventResponseDto } from './dto/event.response.dto';
+import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
 
 @Injectable()
-export class EventService {
-  constructor(private readonly databaseService: DatabaseService) {}
-  async create(createEventDto: Prisma.EventCreateInput) {
-    return await this.databaseService.event.create({
-      data: createEventDto,
-    });
+export class EventService extends BaseService<Event> {
+  constructor(private readonly databaseService: DatabaseService) {
+    super(databaseService, 'event');
   }
 
-  async findAll() {
-    return await this.databaseService.event.findMany();
+  async create(data: CreateEventRequestDto) {
+    const staffUsername = faker.internet.username();
+    const staffPassword = faker.string.alphanumeric(8);
+
+    return new EventResponseDto(
+      await super.create({ ...data, staffUsername, staffPassword }),
+    );
   }
 
-  async findOne(filter: Prisma.EventWhereUniqueInput) {
-    return await this.databaseService.event.findUnique({
-      where: filter,
-    });
-  }
-
-  async update(id: string, updateEventDto: Prisma.EventUpdateInput) {
-    return await this.databaseService.event.update({
-      where: { id },
-      data: updateEventDto,
-    });
-  }
-
-  async remove(id: string) {
-    return await this.databaseService.event.delete({
-      where: { id },
-    });
+  async updateStaffPassword(
+    id: string,
+    newPassword: UpdateStaffPasswordRequestDto,
+  ) {
+    return new EventResponseDto(
+      await super.update(id, { staffPassword: newPassword.newPassword }),
+    );
   }
 }

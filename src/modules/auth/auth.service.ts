@@ -30,6 +30,8 @@ import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto
 import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
 import { UserResponseDto } from '../user/dto/user.response.dto';
 import { RegisterResponseDTO } from './dto/response/register.response.dto';
+import { LoginAsStaffRequestDto } from './dto/request/loginAsStaff.request.dto';
+import { EventService } from '../event/event.service';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +45,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly tokenService: TokenService,
+    private readonly eventService: EventService,
 
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
   ) {}
@@ -58,7 +61,7 @@ export class AuthService {
   }
 
   async register(dto: RegisterRequestDTO): Promise<RegisterResponseDTO> {
-    const isExist = await this.userService.findOne({ email: dto.email });
+    const isExist = await this.userService.getUserByIdOrEmail(dto.email);
     if (isExist) {
       throw new BadRequestException('Email already exists');
     }
@@ -79,15 +82,34 @@ export class AuthService {
     const refreshToken = this.generateRefreshToken({
       userID,
     });
+    console.log(accessToken);
     await this.storeRefreshToken(userID, refreshToken);
     return { accessToken, refreshToken };
+  }
+
+  async loginAsStaff(dto: LoginAsStaffRequestDto) {
+    const event = await this.eventService.findOne({
+      staffUsername: dto.username,
+      staffPassword: dto.password,
+    });
+    if (!event) {
+      throw new BadRequestException('Invalid staff credentials');
+    }
+    const accessToken = this.tokenService.signJwt(
+      {
+        eventID: event.id,
+        username: event.staffUsername,
+      },
+      '1d',
+    );
+    return { accessToken };
   }
 
   async getAuthenticatedUser(
     email: string,
     password: string,
   ): Promise<UserResponseDto> {
-    const user = await this.userService.findOne({ email });
+    const user = await this.userService.getUserByIdOrEmail(email);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -100,7 +122,7 @@ export class AuthService {
     refreshToken: string,
   ): Promise<UserResponseDto> {
     this.logger.log(userID);
-    const user = await this.userService.findOne({ id: userID });
+    const user = await this.userService.getUserByIdOrEmail(userID);
     if (!user) {
       throw new UnauthorizedException();
     }
@@ -143,7 +165,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const user = await this.userService.findOne({ email });
+    const user = await this.userService.getUserByIdOrEmail(email);
     const payload: ResetPasswordTokenPayload = {
       email,
     };
@@ -162,7 +184,7 @@ export class AuthService {
 
   async resetPassword(dto: ResetPasswordRequestDTO): Promise<void> {
     const decoded = await this.jwtService.decode(dto.token);
-    const user = await this.userService.findOne({ email: decoded.email });
+    const user = await this.userService.getUserByIdOrEmail(decoded.email);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -185,7 +207,7 @@ export class AuthService {
 
   async verifyAccount(dto: VerifyAccountRequestDTO): Promise<void> {
     const decoded = await this.jwtService.decode(dto.token);
-    const user = await this.userService.findOne(decoded.email);
+    const user = await this.userService.getUserByIdOrEmail(decoded.email);
 
     if (user.isVerified) {
       throw new BadRequestException('Account already verifed');
@@ -204,7 +226,7 @@ export class AuthService {
   }
 
   async sendVerificationEmail(email: string): Promise<void> {
-    const user = await this.userService.findOne({ email });
+    const user = await this.userService.getUserByIdOrEmail(email);
 
     if (user.isVerified) {
       throw new BadRequestException('Account already verifed');
