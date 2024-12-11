@@ -30,6 +30,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^8.1.0",
+    "@nodeteam/nestjs-prisma-pagination": "^1.0.6",
     "@prisma/client": "^6.0.1",
     "bcryptjs": "^2.4.3",
     "cache-manager": "^5.7.6",
@@ -52,6 +53,7 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
+    "@compodoc/compodoc": "^1.1.26",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

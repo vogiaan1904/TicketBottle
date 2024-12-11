@@ -6,13 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { EventService } from './event.service';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 import { EventResponseDto } from './dto/event.response.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
+import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
+import { ApiPagination } from '@/decorators/apiPagination.decorator';
+import { CreateTicketClassRequestDto } from './dto/create-ticketClass.request.dto';
+import { TicketClassResponseDto } from '../ticket-class/dto/ticketClass.response.dto';
 
 @Controller('event')
 export class EventController {
@@ -32,16 +37,32 @@ export class EventController {
     return this.eventService.createInfo(id, createEventInfoDto);
   }
 
+  @Post(':id/create-ticket-class')
+  createTicketClass(
+    @Param('id') id: string,
+    @Body() createTicketClassDto: CreateTicketClassRequestDto,
+  ) {
+    return this.eventService.createTicketClass(id, createTicketClassDto);
+  }
+
   @ApiOkResponse({ type: EventResponseDto, isArray: true })
   @Get()
-  findAll() {
-    return this.eventService.findMany();
+  @ApiPagination()
+  @ApiQuery({ name: 'includeInfo', required: false })
+  findMany(@Query() dto: GetEventQueryRequestDto) {
+    return this.eventService.findEvents(dto);
   }
 
   @ApiOkResponse({ type: EventResponseDto })
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.eventService.findById(id);
+    return this.eventService.findEventById(id);
+  }
+
+  @ApiOkResponse({ type: TicketClassResponseDto, isArray: true })
+  @Get(':id/ticket-classes')
+  getTicketClasses(@Param('id') id: string) {
+    return this.eventService.getTicketClasses(id);
   }
 
   @ApiOkResponse({ type: EventResponseDto })
@@ -50,12 +71,12 @@ export class EventController {
     @Param('id') id: string,
     @Body() updateEventDto: UpdateEventRequestDto,
   ) {
-    return this.eventService.update(id, updateEventDto);
+    return this.eventService.update({ id }, updateEventDto);
   }
 
   @ApiOkResponse({ type: EventResponseDto })
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.eventService.remove(id);
+    return this.eventService.remove({ id });
   }
 }

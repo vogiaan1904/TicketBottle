@@ -8,16 +8,10 @@ import { UpdateEventInfoRequestDto } from './dto/update-eventInfo.request.dto';
 export class EventInfoController {
   constructor(private readonly eventInfoService: EventInfoService) {}
 
-  @ApiOkResponse({ type: EventInfoResponseDto, isArray: true })
-  @Get()
-  findAll() {
-    return this.eventInfoService.findMany();
-  }
-
   @ApiOkResponse({ type: EventInfoResponseDto })
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.eventInfoService.findOne(id);
+    return this.eventInfoService.findOne({ id });
   }
 
   @ApiOkResponse({ type: EventInfoResponseDto })
@@ -26,12 +20,12 @@ export class EventInfoController {
     @Param('id') id: string,
     @Body() updateEventInfoDto: UpdateEventInfoRequestDto,
   ) {
-    return this.eventInfoService.update(id, updateEventInfoDto);
+    return this.eventInfoService.update({ id }, updateEventInfoDto);
   }
 
   @ApiOkResponse({ type: EventInfoResponseDto })
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.eventInfoService.remove(id);
+    return this.eventInfoService.remove({ id });
   }
 }

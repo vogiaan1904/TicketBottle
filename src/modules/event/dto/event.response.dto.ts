@@ -1,7 +1,7 @@
 import { EventInfoResponseDto } from '@/modules/eventInfo/dto/eventInfo.response.dto';
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { Event, EventStatus } from '@prisma/client';
-import { Exclude, Expose } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { Event, EventStatus, TicketClass } from '@prisma/client';
+import { Expose } from 'class-transformer';
 
 export class EventResponseDto implements Event {
   constructor(partial: Partial<EventResponseDto>) {
@@ -11,10 +11,6 @@ export class EventResponseDto implements Event {
   @Expose()
   @ApiProperty()
   id: string;
-
-  @Expose()
-  @ApiProperty()
-  numberOfTickets: number;
 
   @Expose()
   @ApiProperty()
@@ -40,13 +36,9 @@ export class EventResponseDto implements Event {
   @ApiProperty()
   eventInfo: EventInfoResponseDto;
 
-  @Exclude()
-  @ApiHideProperty()
-  staffUsername: string;
-
-  @Exclude()
-  @ApiHideProperty()
-  staffPassword: string;
+  @Expose()
+  @ApiProperty()
+  ticketClasses: TicketClass[];
 
   @Expose()
   @ApiProperty()

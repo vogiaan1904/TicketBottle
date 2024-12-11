@@ -7,11 +7,6 @@ import {
 } from 'class-validator';
 
 export class CreateEventRequestDto {
-  @IsNumber()
-  @IsPositive()
-  @IsNotEmpty()
-  numberOfTickets: number;
-
   @IsDate()
   @IsNotEmpty()
   startSellDate: Date;

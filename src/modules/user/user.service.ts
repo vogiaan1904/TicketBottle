@@ -8,21 +8,16 @@ export class UserService extends BaseService<User> {
   constructor(private readonly databaseService: DatabaseService) {
     super(databaseService, 'user', UserResponseDto);
   }
-  async getUserByIdOrEmail(idOrEmail: string): Promise<UserResponseDto> {
+
+  async findByEmail(email: string) {
     const user = await super.findOne({
-      OR: [
-        {
-          id: {
-            equals: idOrEmail,
-          },
-        },
-        {
-          email: {
-            equals: idOrEmail,
-          },
-        },
-      ],
+      email,
     });
     return user;
+  }
+  async findById(id: string) {
+    return await super.findOne({
+      id,
+    });
   }
 }

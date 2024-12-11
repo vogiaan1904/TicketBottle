@@ -11,6 +11,5 @@ export class VerifyAccountTokenPayload {
 }
 
 export class StaffTokenPayload {
-  staffUsername: string;
-  eventID: string;
+  staffId: string;
 }

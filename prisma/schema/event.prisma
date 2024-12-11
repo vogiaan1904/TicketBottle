@@ -6,19 +6,17 @@ enum EventStatus {
 
 model Event {
     id                 String        @id @default(uuid())
-    numberOfTickets    Int
     startSellDate      DateTime
     endSellDate        DateTime
     isFree             Boolean
     maxTicketsPerOrder Int
     status             EventStatus   @default(DRAFT)
-    staffUsername      String
-    staffPassword      String
     eventInfo          EventInfo?
     ticketClasses      TicketClass[]
     tickets            Ticket[]
     createdAt          DateTime      @default(now())
     updatedAt          DateTime      @updatedAt
+    staffs             StaffEvent[]
 
     @@map("events")
 }
@@ -31,7 +29,17 @@ model EventInfo {
     location    String
     thumbnail   String
     eventId     String   @unique
-    event       Event    @relation(fields: [eventId], references: [id])
+    event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
     @@map("event_infos")
+}
+
+model StaffEvent {
+    id      String @id @default(uuid())
+    staffId String
+    staff   Staff  @relation(fields: [staffId], references: [id])
+    eventId String
+    event   Event  @relation(fields: [eventId], references: [id])
+
+    @@map("staff_events")
 }

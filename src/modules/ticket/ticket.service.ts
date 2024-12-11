@@ -1,36 +1,33 @@
+import { BaseService } from '@/services/base.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Ticket } from '@prisma/client';
 import { DatabaseService } from 'src/modules/database/database.service';
+import { TicketResponseDto } from './dto/ticket.response.dto';
+import { CreateTicketRequestDto } from './dto/create-ticket.request.dto';
+import { UpdateTicketRequestDto } from './dto/update-ticket.request.dto';
 
 @Injectable()
-export class TicketService {
-  constructor(private readonly databaseService: DatabaseService) {}
-  async create(createTicketDto: Prisma.TicketCreateInput) {
-    return await this.databaseService.ticket.create({
-      data: createTicketDto,
+export class TicketService extends BaseService<Ticket> {
+  constructor(private readonly databaseService: DatabaseService) {
+    super(databaseService, 'event', TicketResponseDto);
+  }
+
+  async create(dto: CreateTicketRequestDto) {
+    return await super.create({
+      event: {
+        connect: {
+          id: dto.eventId,
+        },
+      },
+      ticketClass: {
+        connect: {
+          id: dto.ticketClassId,
+        },
+      },
     });
   }
 
-  async findAll() {
-    return await this.databaseService.ticket.findMany();
-  }
-
-  async findOne(filter: Prisma.TicketWhereUniqueInput) {
-    return await this.databaseService.ticket.findUnique({
-      where: filter,
-    });
-  }
-
-  async update(id: string, updateTicketDto: Prisma.TicketUpdateInput) {
-    return await this.databaseService.ticket.update({
-      where: { id },
-      data: updateTicketDto,
-    });
-  }
-
-  async remove(id: string) {
-    return await this.databaseService.ticket.delete({
-      where: { id },
-    });
+  async update(id: string, dto: UpdateTicketRequestDto) {
+    return await super.update({ id }, dto);
   }
 }

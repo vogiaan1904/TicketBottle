@@ -10,7 +10,7 @@ import { refreshTokenKeyPair } from 'src/constraints/jwt.constraints';
 @Injectable()
 export class JwtRefreshTokenStrategy extends PassportStrategy(
   Strategy,
-  'refresh_token',
+  'user-refresh-token',
 ) {
   constructor(private readonly authService: AuthService) {
     super({

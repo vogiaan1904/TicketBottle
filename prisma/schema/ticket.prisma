@@ -1,21 +1,23 @@
 model TicketClass {
-    id          String   @id @default(uuid())
-    name        String
-    description String
-    price       Float
-    tickets     Ticket[]
-    eventId     String
-    event       Event    @relation(fields: [eventId], references: [id])
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    id            String   @id @default(uuid())
+    name          String
+    totalQuantity Int
+    description   String
+    price         Float
+    tickets       Ticket[]
+    eventId       String
+    event         Event    @relation(fields: [eventId], references: [id])
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
 
+    @@unique([name, eventId])
     @@map("ticket_classes")
 }
 
 model Ticket {
     id            String       @id @default(uuid())
     status        TicketStatus @default(AVAILABLE)
-    serialNumber  String       @unique
+    serialNumber  String       @unique @default(cuid())
     orderDetail   OrderDetail?
     ticketClassId String
     ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id])
