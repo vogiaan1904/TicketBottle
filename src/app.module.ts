@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './modules/database/database.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { databaseConfig } from './configs/db.config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
@@ -20,6 +20,7 @@ import { EventModule } from './modules/event/event.module';
 import { EventInfoModule } from './modules/event-info/event-info.module';
 import { TicketClassModule } from './modules/ticket-class/ticket-class.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -46,6 +47,15 @@ import { StaffModule } from './modules/staff/staff.module';
         host: process.env.REDIS_HOST,
         port: 6379,
       },
+    }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_HOST'),
+          port: configService.get('REDIS_PORT'),
+        },
+      }),
     }),
     DatabaseModule,
     UserModule,

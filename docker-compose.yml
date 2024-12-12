@@ -11,6 +11,7 @@ services:
       POSTGRES_DB: ${DATABASE_NAME}
     ports:
       - '5432:5432'
+
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4
@@ -20,9 +21,20 @@ services:
       PGADMIN_DEFAULT_PASSWORD: root
     ports:
       - '5050:80'
+
   redis:
     container_name: redis_container
     image: redis
     restart: always
     ports:
       - '6379:6379'
+
+  ticket_redis_commander:
+    container_name: ticket_redis_commander
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - '8088:8081'
+    depends_on:
+      - redis

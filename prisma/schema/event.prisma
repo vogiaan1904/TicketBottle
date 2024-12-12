@@ -33,13 +33,3 @@ model EventInfo {
 
     @@map("event_infos")
 }
-
-model StaffEvent {
-    id      String @id @default(uuid())
-    staffId String
-    staff   Staff  @relation(fields: [staffId], references: [id])
-    eventId String
-    event   Event  @relation(fields: [eventId], references: [id])
-
-    @@map("staff_events")
-}

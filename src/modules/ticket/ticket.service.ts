@@ -5,10 +5,16 @@ import { DatabaseService } from 'src/modules/database/database.service';
 import { TicketResponseDto } from './dto/ticket.response.dto';
 import { CreateTicketRequestDto } from './dto/create-ticket.request.dto';
 import { UpdateTicketRequestDto } from './dto/update-ticket.request.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class TicketService extends BaseService<Ticket> {
-  constructor(private readonly databaseService: DatabaseService) {
+  constructor(
+    @InjectQueue('ticket')
+    private readonly image_optimize_queue: Queue,
+    private readonly databaseService: DatabaseService,
+  ) {
     super(databaseService, 'event', TicketResponseDto);
   }
 
