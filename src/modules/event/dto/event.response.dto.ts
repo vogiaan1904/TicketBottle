@@ -1,4 +1,4 @@
-import { EventInfoResponseDto } from '@/modules/eventInfo/dto/eventInfo.response.dto';
+import { EventInfoResponseDto } from '@/modules/event-info/dto/event-info.response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Event, EventStatus, TicketClass } from '@prisma/client';
 import { Expose } from 'class-transformer';

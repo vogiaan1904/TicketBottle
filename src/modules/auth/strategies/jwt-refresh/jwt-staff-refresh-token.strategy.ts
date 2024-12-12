@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { AuthService } from '../auth.service';
-import { TokenPayload } from '../interfaces/token.interface';
+import { AuthService } from '../../auth.service';
+import { TokenPayload } from '../../interfaces/token.interface';
 import { refreshTokenKeyPair } from 'src/constraints/jwt.constraints';
 
 @Injectable()

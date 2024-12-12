@@ -7,7 +7,7 @@ import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.reques
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { CreateTicketClassRequestDto } from './dto/create-ticketClass.request.dto';
-import { TicketClassService } from '../ticket-class/ticketClass.service';
+import { TicketClassService } from '../ticket-class/ticket-class.service';
 
 @Injectable()
 export class EventService extends BaseService<Event> {
@@ -62,10 +62,7 @@ export class EventService extends BaseService<Event> {
   }
 
   async findEventById(id: string) {
-    return await super.findOne(
-      { id },
-      { include: { ...this.includeInfo, ...this.includeTicketClasses } },
-    );
+    return await super.findOne({ id }, { include: { ...this.includeInfo } });
   }
 
   async getTicketClasses(id: string) {

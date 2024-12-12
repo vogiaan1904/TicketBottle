@@ -7,9 +7,10 @@ import { AuthService } from './auth.service';
 import { LoginAsStaffRequestDto } from './dto/request/loginAsStaff.request.dto';
 import { RefreshTokenRequestDTO } from './dto/request/refreshToken.request.dto';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
-import { JwtStaffAccessTokenGuard } from './guards/jwt-staff-access-token.guard';
-import { JwtStaffRefreshTokenGuard } from './guards/jwt-staff-refresh-token.guard';
-import { LocalStaffAuthGuard } from './guards/local-staff.guard';
+import { JwtStaffAccessTokenGuard } from './guards/jwt-access/jwt-staff-access-token.guard';
+import { JwtStaffRefreshTokenGuard } from './guards/jwt-refresh/jwt-staff-refresh-token.guard';
+import { LocalStaffAuthGuard } from './guards/local/local-staff.guard';
+import { StaffResponseDto } from '../staff/dto/staff.response.dto';
 
 @Controller('auth/staff')
 // @UseInterceptors(new PrismaInterceptor(User))
@@ -49,6 +50,7 @@ export class AuthStaffController {
   }
 
   @UseGuards(JwtStaffAccessTokenGuard)
+  @ApiOkResponse({ type: StaffResponseDto })
   @ApiPost({ path: 'me' })
   async getMeStaff(@Req() request: RequestWithStaff) {
     const { user } = request;

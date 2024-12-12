@@ -2,7 +2,7 @@ import { BaseService } from '@/services/base.service';
 import { Injectable } from '@nestjs/common';
 import { TicketClass } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
-import { TicketClassResponseDto } from './dto/ticketClass.response.dto';
+import { TicketClassResponseDto } from './dto/ticket-class.response.dto';
 
 @Injectable()
 export class TicketClassService extends BaseService<TicketClass> {

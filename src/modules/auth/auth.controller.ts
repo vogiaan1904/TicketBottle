@@ -13,9 +13,10 @@ import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto
 import { SendEmailVerfiyRequestDTO } from './dto/request/sendEmailVerify.request.dto';
 import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
-import { JwtAccessTokenGuard } from './guards/jwt-user-access-token.guard';
-import { LocalUserAuthGuard } from './guards/local-user.guard';
-import { JwtRefreshTokenGuard } from './guards/jwt-user-refresh-token.guard';
+import { JwtAccessTokenGuard } from './guards/jwt-access/jwt-user-access-token.guard';
+import { LocalUserAuthGuard } from './guards/local/local-user.guard';
+import { JwtRefreshTokenGuard } from './guards/jwt-refresh/jwt-user-refresh-token.guard';
+import { UserResponseDto } from '../user/dto/user.response.dto';
 
 @Controller('auth')
 // @UseInterceptors(new PrismaInterceptor(User))
@@ -65,9 +66,9 @@ export class AuthController {
 
   @UseGuards(JwtAccessTokenGuard)
   @ApiPost({ path: 'me' })
+  @ApiOkResponse({ type: UserResponseDto })
   async getMe(@Req() request: RequestWithUser) {
     const { user } = request;
-
     return await this.userService.findByEmail(user.email);
   }
 

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { TicketClassService } from './ticketClass.service';
-import { TicketClassController } from './ticketClass.controller';
+import { TicketClassService } from './ticket-class.service';
+import { TicketClassController } from './ticket-class.controller';
 
 @Module({
   controllers: [TicketClassController],

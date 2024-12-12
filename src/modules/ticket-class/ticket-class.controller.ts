@@ -1,8 +1,8 @@
 import { Controller, Get, Body, Patch, Param, Delete } from '@nestjs/common';
-import { TicketClassService } from './ticketClass.service';
-import { UpdateTicketClassRequestDto } from './dto/update-ticketClass.request.dto';
+import { TicketClassService } from './ticket-class.service';
+import { UpdateTicketClassRequestDto } from './dto/update-ticket-class.request.dto';
 import { ApiOkResponse } from '@nestjs/swagger';
-import { TicketClassResponseDto } from './dto/ticketClass.response.dto';
+import { TicketClassResponseDto } from './dto/ticket-class.response.dto';
 
 @Controller('ticket-class')
 export class TicketClassController {

@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { TokenPayload } from '../interfaces/token.interface';
+import { TokenPayload } from '../../interfaces/token.interface';
 import { accessTokenKeyPair } from 'src/constraints/jwt.constraints';
 import { UserService } from 'src/modules/user/user.service';
 
@@ -17,6 +17,9 @@ export class JwtAccessTokenStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: TokenPayload) {
     const user = await this.userService.findById(payload.userID);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
     return user;
   }
 }

@@ -17,8 +17,8 @@ import { TicketModule } from './modules/ticket/ticket.module';
 import { TransformInterceptor } from './interceptors/apiResponse.interceptor';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { EventModule } from './modules/event/event.module';
-import { EventInfoModule } from './modules/eventInfo/eventInfo.module';
-import { TicketClassModule } from './modules/ticket-class/ticketClass.module';
+import { EventInfoModule } from './modules/event-info/event-info.module';
+import { TicketClassModule } from './modules/ticket-class/ticket-class.module';
 import { StaffModule } from './modules/staff/staff.module';
 
 @Module({

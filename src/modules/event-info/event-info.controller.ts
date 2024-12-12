@@ -1,8 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
-import { EventInfoService } from './eventInfo.service';
+import { EventInfoService } from './event-info.service';
 import { ApiOkResponse } from '@nestjs/swagger';
-import { EventInfoResponseDto } from './dto/eventInfo.response.dto';
-import { UpdateEventInfoRequestDto } from './dto/update-eventInfo.request.dto';
+import { EventInfoResponseDto } from './dto/event-info.response.dto';
+import { UpdateEventInfoRequestDto } from './dto/update-event-info.request.dto';
+import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 
 @Controller('event-info')
 export class EventInfoController {
@@ -14,6 +15,7 @@ export class EventInfoController {
     return this.eventInfoService.findOne({ id });
   }
 
+  @OnlyAdmin()
   @ApiOkResponse({ type: EventInfoResponseDto })
   @Patch(':id')
   update(
@@ -23,6 +25,7 @@ export class EventInfoController {
     return this.eventInfoService.update({ id }, updateEventInfoDto);
   }
 
+  @OnlyAdmin()
   @ApiOkResponse({ type: EventInfoResponseDto })
   @Delete(':id')
   remove(@Param('id') id: string) {

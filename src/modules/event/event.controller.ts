@@ -1,35 +1,39 @@
+import { ApiPagination } from '@/decorators/apiPagination.decorator';
+import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
 } from '@nestjs/common';
-import { EventService } from './event.service';
+import { ApiCreatedResponse, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
+import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
-import { UpdateEventRequestDto } from './dto/update-event.request.dto';
-import { ApiOkResponse, ApiQuery } from '@nestjs/swagger';
-import { EventResponseDto } from './dto/event.response.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
-import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
-import { ApiPagination } from '@/decorators/apiPagination.decorator';
 import { CreateTicketClassRequestDto } from './dto/create-ticketClass.request.dto';
-import { TicketClassResponseDto } from '../ticket-class/dto/ticketClass.response.dto';
+import { EventResponseDto } from './dto/event.response.dto';
+import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
+import { UpdateEventRequestDto } from './dto/update-event.request.dto';
+import { EventService } from './event.service';
 
 @Controller('event')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
-  @ApiOkResponse({ type: EventResponseDto })
+  @OnlyAdmin()
   @Post()
+  @ApiCreatedResponse({ type: EventResponseDto })
   create(@Body() createEventDto: CreateEventRequestDto) {
     return this.eventService.create(createEventDto);
   }
 
+  @OnlyAdmin()
   @Post(':id/create-info')
+  @ApiCreatedResponse({ type: EventResponseDto })
   createInfo(
     @Param('id') id: string,
     @Body() createEventInfoDto: CreateEventInfoRequestDto,
@@ -37,7 +41,9 @@ export class EventController {
     return this.eventService.createInfo(id, createEventInfoDto);
   }
 
+  @OnlyAdmin()
   @Post(':id/create-ticket-class')
+  @ApiCreatedResponse({ type: TicketClassResponseDto })
   createTicketClass(
     @Param('id') id: string,
     @Body() createTicketClassDto: CreateTicketClassRequestDto,
@@ -65,6 +71,7 @@ export class EventController {
     return this.eventService.getTicketClasses(id);
   }
 
+  @OnlyAdmin()
   @ApiOkResponse({ type: EventResponseDto })
   @Patch(':id')
   update(
@@ -74,6 +81,7 @@ export class EventController {
     return this.eventService.update({ id }, updateEventDto);
   }
 
+  @OnlyAdmin()
   @ApiOkResponse({ type: EventResponseDto })
   @Delete(':id')
   remove(@Param('id') id: string) {
