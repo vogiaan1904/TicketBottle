@@ -23,7 +23,7 @@ import { TicketClassModule } from './modules/ticket-class/ticket-class.module';
 import { TicketModule } from './modules/ticket/ticket.module';
 import { TokenModule } from './modules/token/token.module';
 import { UserModule } from './modules/user/user.module';
-import { RedisModule } from './modules/redis/redis.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
@@ -55,6 +55,13 @@ import { RedisModule } from './modules/redis/redis.module';
       }),
       inject: [ConfigService],
     }),
+    RedisModule.forRootAsync({
+      useFactory: async (configService: ConfigService) => ({
+        type: 'single',
+        url: configService.get<string>('REDIS_CORE_URL'),
+      }),
+      inject: [ConfigService],
+    }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -70,7 +77,6 @@ import { RedisModule } from './modules/redis/redis.module';
         };
       },
     }),
-    RedisModule,
     DatabaseModule,
     UserModule,
     AuthModule,

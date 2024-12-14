@@ -1,33 +1,24 @@
-import { CreateOrderDetailRequestDto } from '@/modules/order-detail/dto/create-order-detail.request.dto';
-import { Type } from 'class-transformer';
 import {
-  IsEmail,
+  ArrayMinSize,
+  IsArray,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsString,
-  ValidateNested,
 } from 'class-validator';
 
-export class CreateOrderRequestDto {
-  @IsString()
-  @IsEmail()
+export class CreateOrderDetail {
   @IsNotEmpty()
-  email: string;
-
   @IsString()
-  @IsNotEmpty()
-  userId: string;
+  ticketClassId: string;
 
+  @IsNotEmpty()
   @IsNumber()
-  @IsNotEmpty()
   quantity: number;
+}
 
-  @IsObject()
+export class CreateOrderRequestDto {
+  @IsArray()
   @IsNotEmpty()
-  transactionData: any;
-
-  @ValidateNested({ each: true })
-  @Type(() => CreateOrderDetailRequestDto)
-  orderDetails: CreateOrderDetailRequestDto[];
+  @ArrayMinSize(1)
+  orderDetails: CreateOrderDetail[];
 }

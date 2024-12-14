@@ -34,10 +34,10 @@ export class UserController {
     return this.userService.findById(id);
   }
 
-  @Get(':id/orders')
-  findOrdersByUserId(@Param('id') id: string) {
-    return this.orderService.findOrdersByUserId(id);
-  }
+  // @Get(':id/orders')
+  // findOrdersByUserId(@Param('id') id: string) {
+  //   return this.orderService.findOrdersByUserId(id);
+  // }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserRequestDto) {

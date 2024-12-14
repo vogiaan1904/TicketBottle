@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0",
+    "@nestjs-modules/ioredis": "^2.0.2",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/bullmq": "^10.2.3",
     "@nestjs/cache-manager": "^2.3.0",

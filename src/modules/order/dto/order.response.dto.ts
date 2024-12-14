@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Order } from '@prisma/client';
+import { $Enums, Order } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/library';
 import { Expose } from 'class-transformer';
 
@@ -22,6 +22,10 @@ export class OrderResponseDto implements Order {
   @Expose()
   @ApiProperty()
   transactionData: JsonValue;
+
+  @Expose()
+  @ApiProperty()
+  status: $Enums.OrderStatus;
 
   @Expose()
   @ApiProperty()

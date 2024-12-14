@@ -1,7 +1,6 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateOrderRequestDto } from './create-order.request.dto';
-import { OmitType } from '@nestjs/swagger';
+import { PickType } from '@nestjs/swagger';
+import { OrderResponseDto } from './order.response.dto';
 
-export class UpdateOrderRequestDto extends PartialType(
-  OmitType(CreateOrderRequestDto, ['userId']),
-) {}
+export class UpdateOrderRequestDto extends PickType(OrderResponseDto, [
+  'status',
+]) {}
