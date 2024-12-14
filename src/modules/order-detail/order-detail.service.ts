@@ -1,26 +1,16 @@
+import { BaseService } from '@/services/base.service';
 import { Injectable } from '@nestjs/common';
-import { CreateOrderDetailDto } from './dto/create-order-detail.dto';
-import { UpdateOrderDetailDto } from './dto/update-order-detail.dto';
+import { OrderDetail } from '@prisma/client';
+import { OrderDetailResponseDto } from './dto/order-detail.response.dto';
+import { DatabaseService } from '../database/database.service';
 
 @Injectable()
-export class OrderDetailService {
-  create(createOrderDetailDto: CreateOrderDetailDto) {
-    return 'This action adds a new orderDetail';
+export class OrderDetailService extends BaseService<OrderDetail> {
+  constructor(private readonly databaseService: DatabaseService) {
+    super(databaseService, 'orderDetail', OrderDetailResponseDto);
   }
 
-  findAll() {
-    return `This action returns all orderDetail`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} orderDetail`;
-  }
-
-  update(id: number, updateOrderDetailDto: UpdateOrderDetailDto) {
-    return `This action updates a #${id} orderDetail`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} orderDetail`;
+  async findOrderDetailsByOrderId(orderId: string) {
+    return await super.findMany({ filter: { orderId } });
   }
 }

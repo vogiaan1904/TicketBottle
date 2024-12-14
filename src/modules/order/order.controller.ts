@@ -1,34 +1,32 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { CreateOrderRequestDto } from './dto/create-order.request.dto';
+import { UpdateOrderRequestDto } from './dto/update-order.request.dto';
 import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { OrderResponseDto } from './dto/order.response.dto';
 
 @Controller('order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
+  @ApiCreatedResponse({ type: OrderResponseDto })
+  create(@Body() createOrderDto: CreateOrderRequestDto) {
     return this.orderService.create(createOrderDto);
   }
 
-  @Get()
-  findAll() {
-    return this.orderService.findAll();
-  }
-
   @Get(':id')
+  @ApiOkResponse({ type: OrderResponseDto })
   findOne(@Param('id') id: string) {
-    return this.orderService.findOne(+id);
+    return this.orderService.findOne({ id });
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.orderService.update(+id, updateOrderDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orderService.remove(+id);
+  @ApiOkResponse({ type: OrderResponseDto })
+  update(
+    @Param('id') id: string,
+    @Body() updateOrderDto: UpdateOrderRequestDto,
+  ) {
+    return this.orderService.update({ id }, updateOrderDto);
   }
 }

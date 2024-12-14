@@ -14,7 +14,7 @@ import { ApiCreatedResponse, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
-import { CreateTicketClassRequestDto } from './dto/create-ticketClass.request.dto';
+import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';

@@ -6,7 +6,7 @@ import { EventResponseDto } from './dto/event.response.dto';
 import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
-import { CreateTicketClassRequestDto } from './dto/create-ticketClass.request.dto';
+import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassService } from '../ticket-class/ticket-class.service';
 
 @Injectable()

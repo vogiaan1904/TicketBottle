@@ -1,26 +1,63 @@
-import { Injectable } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+import { BaseService } from '@/services/base.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Order } from '@prisma/client';
+import { DatabaseService } from '../database/database.service';
+import { CreateOrderRequestDto } from './dto/create-order.request.dto';
+import { OrderResponseDto } from './dto/order.response.dto';
 
 @Injectable()
-export class OrderService {
-  create(createOrderDto: CreateOrderDto) {
-    return 'This action adds a new order';
+export class OrderService extends BaseService<Order> {
+  constructor(private readonly databaseService: DatabaseService) {
+    super(databaseService, 'order', OrderResponseDto);
   }
 
-  findAll() {
-    return `This action returns all order`;
+  async create(dto: CreateOrderRequestDto) {
+    const { userId, orderDetails } = dto;
+
+    const user = await this.databaseService.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const totalCheckOut = orderDetails.reduce(
+      (acc, orderDetail) => acc + orderDetail.amount,
+      0,
+    );
+    return await super.create({
+      transactionData: dto.transactionData,
+      email: dto.email,
+      orderDetails: {
+        create: orderDetails.map((orderDetail) => ({
+          amount: orderDetail.amount,
+          ticket: {
+            connect: {
+              id: orderDetail.ticketId,
+            },
+          },
+        })),
+      },
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
-  }
+  async findOrdersByUserId(userId: string) {
+    const user = await this.databaseService.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} order`;
+    return await super.findMany({
+      filter: {
+        userId,
+      },
+    });
   }
 }

@@ -55,14 +55,14 @@ export abstract class BaseService<T> implements BaseServiceInterface<T> {
   }
 
   async findOne(filter: any, options?: any) {
-    const user = await this.prisma[this.model].findUnique({
+    const entity = await this.prisma[this.model].findUnique({
       where: filter,
       ...options,
     });
-    if (!user) {
+    if (!entity) {
       return null;
     }
-    return new this.responseDto(user);
+    return new this.responseDto(entity);
   }
 
   async create(data: any) {

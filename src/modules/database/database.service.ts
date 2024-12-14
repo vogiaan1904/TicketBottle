@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 
@@ -11,10 +16,11 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
   async onModuleInit() {
     try {
       await this.$connect();
-      this.appLogger.log('Database connected successfully');
+      this.appLogger.log('Connected to database successfully');
       await this.createAdminAccount();
     } catch (error) {
-      this.appLogger.error('Database connection failed', error);
+      this.appLogger.error('Failed to connect to database', error);
+      throw new InternalServerErrorException(error);
     }
   }
 

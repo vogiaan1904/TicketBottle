@@ -1,19 +1,23 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { UserService } from './user.service';
 import { CreateUserRequestDto } from './dto/create-user.request.dto';
 import { UpdateUserRequestDto } from './dto/update-user.request.dto';
+import { UserService } from './user.service';
+import { OrderService } from '../order/order.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly orderService: OrderService,
+  ) {}
 
   @Post()
   create(@Body() createUserDto: CreateUserRequestDto) {
@@ -28,6 +32,11 @@ export class UserController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findById(id);
+  }
+
+  @Get(':id/orders')
+  findOrdersByUserId(@Param('id') id: string) {
+    return this.orderService.findOrdersByUserId(id);
   }
 
   @Patch(':id')

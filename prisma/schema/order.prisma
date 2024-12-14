@@ -1,10 +1,19 @@
+enum OrderStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    CANCELLED
+}
+
 model Order {
     id              String        @id @default(uuid())
     orderDetails    OrderDetail[]
     totalCheckOut   Float
+    quantity        Int
     transactionData Json
     email           String
     userId          String
+    status          OrderStatus   @default(PENDING)
     user            User          @relation(fields: [userId], references: [id])
     createdAt       DateTime      @default(now())
 
@@ -17,7 +26,7 @@ model OrderDetail {
     order     Order    @relation(fields: [orderId], references: [id])
     ticketId  String   @unique
     ticket    Ticket   @relation(fields: [ticketId], references: [id])
-    price     Float
+    amount    Float
     createdAt DateTime @default(now())
 
     @@map("order_details")
