@@ -33,22 +33,22 @@ services:
       - '6380:6379'
     networks:
       - app-network
-  ticketBottle_api_dev:
-    container_name: ticketbottle_api_dev
-    image: ticketbottle_api_dev:latest
-    build:
-      context: .
-      target: development
-    command: npm run start:dev
-    ports:
-      - ${PORT}:${PORT}
-    depends_on:
-      - mainDB
-      - redis_cache
-      - redis_core
-    volumes:
-      - ./:/usr/src/app
-    restart: unless-stopped
+  # ticketBottle_api_dev:
+  #   container_name: ticketbottle_api_dev
+  #   image: ticketbottle_api_dev:latest
+  #   build:
+  #     context: .
+  #     target: development
+  #   command: npm run start:dev
+  #   ports:
+  #     - ${PORT}:${PORT}
+  #   depends_on:
+  #     - mainDB
+  #     - redis_cache
+  #     - redis_core
+  #   volumes:
+  #     - ./:/usr/src/app
+  #   restart: unless-stopped
 
 networks:
   app-network:
