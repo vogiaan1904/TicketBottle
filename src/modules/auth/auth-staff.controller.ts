@@ -45,7 +45,6 @@ export class AuthStaffController {
   @ApiPost({ path: 'login' })
   async loginAsStaff(@Req() request: RequestWithStaff) {
     const { user } = request;
-    console.log(user);
     return await this.authService.login(user.id);
   }
 
