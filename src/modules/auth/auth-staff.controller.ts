@@ -26,8 +26,8 @@ export class AuthStaffController {
     examples: {
       user_1: {
         value: {
-          username: 'pnviethung',
-          password: '0922981365aA@',
+          username: 'admin',
+          password: 'admin123',
         } as LoginAsStaffRequestDto,
       },
       user_2: {
