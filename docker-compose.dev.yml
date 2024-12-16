@@ -1,28 +1,18 @@
 services:
-  db:
+  mainDB:
     container_name: postgres_container
     image: postgres
     restart: always
     env_file:
-      - .env
+      - .env.dev
     environment:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     ports:
       - '5432:5432'
-    networks:
-      - app-network
-
-  pgadmin:
-    container_name: pgadmin4_container
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: root
-    ports:
-      - '5050:80'
+    volumes:
+      - ./vol:/db/main
     networks:
       - app-network
 
@@ -40,22 +30,25 @@ services:
     image: redis
     restart: always
     ports:
-      - '6380:6379' # Map host port 6380 to container's 6379
+      - '6380:6379'
     networks:
       - app-network
-
-  ticket_redis_commander:
-    container_name: ticket_redis_commander
-    image: rediscommander/redis-commander:latest
-    environment:
-      - REDIS_HOSTS=local:redis:6379
+  ticketBottle_api_dev:
+    container_name: ticketbottle_api_dev
+    image: ticketbottle_api_dev:latest
+    build:
+      context: .
+      target: development
+    command: npm run start:dev
     ports:
-      - '8088:8081'
+      - ${PORT}:${PORT}
     depends_on:
+      - mainDB
       - redis_cache
       - redis_core
-    networks:
-      - app-network
+    volumes:
+      - ./:/usr/src/app
+    restart: unless-stopped
 
 networks:
   app-network:
