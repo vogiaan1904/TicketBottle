@@ -10,7 +10,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
@@ -19,10 +24,15 @@ import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventService } from './event.service';
+import { EventConfigService } from './event-config.service';
+import { ApiPost } from '@/decorators/apiPost.decorator';
 
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly eventConfigService: EventConfigService,
+  ) {}
 
   @OnlyAdmin()
   @Post()
@@ -86,5 +96,19 @@ export class EventController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.eventService.remove({ id });
+  }
+
+  @OnlyAdmin()
+  @ApiPost({ path: ':id/configure' })
+  @ApiOperation({ summary: 'Prepare data for sale' })
+  requestConfigureEvent(@Param('id') id: string) {
+    return this.eventConfigService.requestConfigure(id);
+  }
+
+  @OnlyAdmin()
+  @Get(':id/sales')
+  @ApiOperation({ summary: 'Get sale data of an event' })
+  getEventConfig(@Param('id') id: string) {
+    return this.eventConfigService.getSaleData(id);
   }
 }

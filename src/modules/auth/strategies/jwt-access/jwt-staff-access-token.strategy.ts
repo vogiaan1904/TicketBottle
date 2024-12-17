@@ -21,7 +21,6 @@ export class JwtStaffAccessStrategy extends PassportStrategy(
 
   async validate(payload: TokenPayload) {
     const staff = await this.staffService.findOne({ id: payload.userID });
-    console.log('staff', staff);
     if (!staff) {
       throw new UnauthorizedException('Staff not found');
     }

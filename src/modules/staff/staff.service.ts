@@ -19,7 +19,6 @@ export class StaffService extends BaseService<Staff> {
         username: data.username,
       },
     });
-    console.log(existingStaff);
     if (existingStaff) {
       throw new BadRequestException('Staff with this username already exists');
     }
