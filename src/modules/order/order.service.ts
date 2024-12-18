@@ -4,19 +4,24 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Order, OrderStatus } from '@prisma/client';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
+import { EventConfigService } from '../event/event-config.service';
 import {
-  CreateOrderDetail,
-  CreateOrderRequestDto,
+  CreateOrderDetailRedis,
+  CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
+import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
-  private readonly redisOrderKeyPrefix = 'order:';
-  private readonly redisOrderDetailKeyPrefix = 'orderDetail:';
+  readonly genRedisKey = {
+    order: (orderId: string) => `order:${orderId}`,
+    orderDetail: (orderDetailId: string) => `orderDetail:${orderDetailId}`,
+  };
 
   constructor(
     private readonly databaseService: DatabaseService,
+    private readonly eventConfigService: EventConfigService,
     @InjectRedis() private readonly redis: Redis,
   ) {
     super(databaseService, 'order', OrderResponseDto);
@@ -25,13 +30,21 @@ export class OrderService extends BaseService<Order> {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  async createOrderInRedis(dto: CreateOrderRequestDto): Promise<any> {
+  async createOrderOnRedis(dto: CreateOrderRedisDto): Promise<any> {
     const orderId = this.generateTemporaryId();
-    const orderKey = `${this.redisOrderKeyPrefix}${orderId}`;
+    const orderKey = this.genRedisKey.order(orderId);
     const orderDetails = [];
 
+    const eventSaleData = await this.eventConfigService.getSaleData(
+      dto.eventId,
+    );
+
+    if (!eventSaleData.isReadyForSale) {
+      throw new BadRequestException('Event has not been for sale');
+    }
+
     const orderData = {
-      ...dto,
+      //...//
       id: orderId,
       status: OrderStatus.PENDING,
       createdAt: new Date(),
@@ -53,7 +66,10 @@ export class OrderService extends BaseService<Order> {
     return false;
   }
 
-  async processOrderDetails(orderDetails: CreateOrderDetail[]): Promise<any[]> {
+  async processOrderDetails(
+    orderDetails: CreateOrderDetailRedis,
+    ticketClassesInfo: any,
+  ): Promise<any[]> {
     const orderDetailsData = [];
 
     await Promise.all(

@@ -6,7 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class CreateOrderDetail {
+export class CreateOrderDetailRedis {
   @IsNotEmpty()
   @IsString()
   ticketClassId: string;
@@ -16,9 +16,17 @@ export class CreateOrderDetail {
   quantity: number;
 }
 
-export class CreateOrderRequestDto {
+export class CreateOrderRedisDto {
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  eventId: string;
+
   @IsArray()
   @IsNotEmpty()
   @ArrayMinSize(1)
-  orderDetails: CreateOrderDetail[];
+  orderDetails: CreateOrderDetailRedis[];
 }
