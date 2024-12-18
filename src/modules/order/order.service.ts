@@ -4,19 +4,23 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Order, OrderStatus } from '@prisma/client';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
+import { TicketClassRedisResponseDto } from '../event/dto/ticket-class-redis.response.dto';
 import { EventConfigService } from '../event/event-config.service';
 import {
   CreateOrderDetailRedis,
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
-import { OrderResponseDto } from './dto/order.response.dto';
-import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
+import {
+  OrderRedisResponseDto,
+  OrderResponseDto,
+} from './dto/order.response.dto';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
   readonly genRedisKey = {
     order: (orderId: string) => `order:${orderId}`,
     orderDetail: (orderDetailId: string) => `orderDetail:${orderDetailId}`,
+    ticketClass: (ticketClassId: string) => `ticketClass:${ticketClassId}`,
   };
 
   constructor(
@@ -30,102 +34,75 @@ export class OrderService extends BaseService<Order> {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  async createOrderOnRedis(dto: CreateOrderRedisDto): Promise<any> {
+  async createOrderOnRedis(dto: CreateOrderRedisDto) {
     const orderId = this.generateTemporaryId();
     const orderKey = this.genRedisKey.order(orderId);
-    const orderDetails = [];
 
     const eventSaleData = await this.eventConfigService.getSaleData(
       dto.eventId,
     );
 
     if (!eventSaleData.isReadyForSale) {
-      throw new BadRequestException('Event has not been for sale');
+      throw new BadRequestException('Event is not ready for sale');
     }
 
-    const orderData = {
-      //...//
-      id: orderId,
-      status: OrderStatus.PENDING,
-      createdAt: new Date(),
-      orderDetails,
-    };
+    const ticketClassesInfo = eventSaleData.ticketClassesInfo;
 
-    await this.redis.hset(orderKey, orderData);
+    await this.redis
+      .multi()
+      .hset(orderKey, {
+        id: orderId,
+        eventId: dto.eventId,
+        userId: dto.userId,
+        status: OrderStatus.PENDING,
+        createdAt: new Date().toISOString(),
+        orderDetails: JSON.stringify(dto.orderDetails),
+      })
+      .expire(orderKey, 3600) //1 hour
+      .exec();
 
-    // Optionally, set an expiration time for the temporary order
-    await this.redis.expire(orderKey, 3600); // Expires in 1 hour
+    await this.reserveTickets(dto.orderDetails, ticketClassesInfo);
 
-    return orderData;
+    return this.redis.hgetall(orderKey);
   }
 
-  async checkAvailableTicket(
-    ticketClassId: string,
-    quantity: number,
-  ): Promise<boolean> {
-    return false;
-  }
+  private async reserveTickets(
+    orderDetails: CreateOrderDetailRedis[],
+    ticketClassesInfo: TicketClassRedisResponseDto[],
+  ) {
+    const multi = this.redis.multi();
 
-  async processOrderDetails(
-    orderDetails: CreateOrderDetailRedis,
-    ticketClassesInfo: any,
-  ): Promise<any[]> {
-    const orderDetailsData = [];
-
-    await Promise.all(
-      orderDetails.map(async (orderDetail) => {
-        const isAvailable = await this.checkAvailableTicket(
-          orderDetail.ticketClassId,
-          orderDetail.quantity,
+    for (const detail of orderDetails) {
+      const ticketClass = ticketClassesInfo.find(
+        (tc) => tc.id === detail.ticketClassId,
+      );
+      if (!ticketClass) {
+        throw new BadRequestException(
+          `Ticket class ${detail.ticketClassId} not found`,
         );
-        if (!isAvailable) {
-          throw new BadRequestException('Ticket is not available');
-        }
-        return isAvailable;
-      }),
-    );
-
-    for (const orderDetail of orderDetails) {
-      orderDetailsData.push({
-        ...orderDetail,
-      });
+      }
+      if (ticketClass.available < detail.quantity) {
+        throw new BadRequestException(
+          `Insufficient tickets for class ${detail.ticketClassId}`,
+        );
+      }
+      multi.hincrby(
+        this.genRedisKey.ticketClass(detail.ticketClassId),
+        'available',
+        -detail.quantity,
+      );
+      multi.hincrby(
+        this.genRedisKey.ticketClass(detail.ticketClassId),
+        'hold',
+        detail.quantity,
+      );
     }
 
-    return orderDetailsData;
+    const results = await multi.exec();
+    if (results === null) {
+      throw new BadRequestException('Failed to reserve tickets');
+    }
   }
 
-  async moveOrderToDb(orderId: string): Promise<any> {
-    // const orderKey = `${this.redisOrderKeyPrefix}${orderId}`;
-    // const orderDataString = await redis.get(orderKey);
-    // if (!orderDataString) {
-    //   throw new NotFoundException('Order not found in Redis');
-    // }
-    // const orderData = JSON.parse(orderDataString);
-    // // Create the order in the main database
-    // const createdOrder = await this.create({
-    //   email: orderData.email,
-    //   userId: orderData.userId,
-    //   quantity: orderData.quantity,
-    //   transactionData: orderData.transactionData,
-    //   // Add other necessary fields
-    // });
-    // // Retrieve and migrate OrderDetails
-    // const orderDetails = await this.findOrderDetailsByOrderIdInRedis(orderId);
-    // for (const detail of orderDetails) {
-    //   await this.databaseService.orderDetail.create({
-    //     data: {
-    //       orderId: createdOrder.id,
-    //       ticketId: detail.ticketId,
-    //       amount: detail.amount,
-    //       // Add other necessary fields
-    //     },
-    //   });
-    //   // Delete the OrderDetail from Redis
-    //   const detailKey = `${this.redisOrderDetailKeyPrefix}${detail.id}`;
-    //   await this.redis.del(detailKey);
-    // }
-    // // Delete the Order from Redis
-    // await this.redis.del(orderKey);
-    // return createdOrder;
-  }
+  async moveOrderToDb(orderId: string): Promise<any> {}
 }
