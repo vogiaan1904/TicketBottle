@@ -1,32 +1,40 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { CreateOrderRequestDto } from './dto/create-order.request.dto';
-import { UpdateOrderRequestDto } from './dto/update-order.request.dto';
-import { OrderService } from './order.service';
+import { RequestWithUser } from '@/types/request.type';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
+import { CreateOrderRedisDto } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
+import { OrderService } from './order.service';
 
 @Controller('order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
+  @UseGuards(JwtAccessTokenGuard)
   @ApiCreatedResponse({ type: OrderResponseDto })
-  create(@Body() createOrderDto: CreateOrderRequestDto) {
-    return this.orderService.create(createOrderDto);
+  create(
+    @Req() request: RequestWithUser,
+    @Body() createOrderDto: CreateOrderRedisDto,
+  ) {
+    return this.orderService.createOrderOnRedis(
+      request.user.id,
+      createOrderDto,
+    );
   }
 
   @Get(':id')
+  @UseGuards(JwtAccessTokenGuard)
   @ApiOkResponse({ type: OrderResponseDto })
   findOne(@Param('id') id: string) {
     return this.orderService.findOne({ id });
-  }
-
-  @Patch(':id')
-  @ApiOkResponse({ type: OrderResponseDto })
-  update(
-    @Param('id') id: string,
-    @Body() updateOrderDto: UpdateOrderRequestDto,
-  ) {
-    return this.orderService.update({ id }, updateOrderDto);
   }
 }

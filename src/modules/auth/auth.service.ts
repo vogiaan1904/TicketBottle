@@ -73,6 +73,8 @@ export class AuthService {
       ...dto,
       password: hashedPassword,
     });
+
+    await this.sendVerificationEmail(newUser.email);
     return newUser;
   }
 

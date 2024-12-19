@@ -19,16 +19,27 @@ import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventService } from './event.service';
+import { EventConfigService } from './event-config.service';
 
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly eventConfigService: EventConfigService,
+  ) {}
 
   @OnlyAdmin()
   @Post()
   @ApiCreatedResponse({ type: EventResponseDto })
   create(@Body() createEventDto: CreateEventRequestDto) {
     return this.eventService.create(createEventDto);
+  }
+
+  @OnlyAdmin()
+  @Post(':id/request-configure')
+  @ApiCreatedResponse({ type: EventResponseDto })
+  requestConfigure(@Param('id') id: string) {
+    return this.eventConfigService.requestConfigure(id);
   }
 
   @OnlyAdmin()

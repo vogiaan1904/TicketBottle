@@ -13,10 +13,6 @@ export class OrderResponseDto implements Order {
 
   @Expose()
   @ApiProperty()
-  quantity: number;
-
-  @Expose()
-  @ApiProperty()
   totalCheckOut: number;
 
   @Expose()
@@ -64,6 +60,10 @@ export class OrderRedisResponseDto {
   @Expose()
   @ApiProperty()
   status: $Enums.OrderStatus;
+
+  @Expose()
+  @ApiProperty()
+  totalCheckout: number;
 
   @Expose()
   @ApiProperty()

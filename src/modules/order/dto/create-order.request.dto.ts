@@ -19,10 +19,6 @@ export class CreateOrderDetailRedis {
 export class CreateOrderRedisDto {
   @IsString()
   @IsNotEmpty()
-  userId: string;
-
-  @IsString()
-  @IsNotEmpty()
   eventId: string;
 
   @IsArray()
