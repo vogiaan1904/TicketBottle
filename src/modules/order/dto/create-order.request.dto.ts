@@ -1,24 +1,34 @@
+import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsString,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 
-export class CreateOrderDetail {
+export class CreateOrderDetailRedis {
   @IsNotEmpty()
   @IsString()
   ticketClassId: string;
 
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   quantity: number;
 }
 
-export class CreateOrderRequestDto {
+export class CreateOrderRedisDto {
+  @IsString()
+  @IsNotEmpty()
+  eventId: string;
+
   @IsArray()
   @IsNotEmpty()
   @ArrayMinSize(1)
-  orderDetails: CreateOrderDetail[];
+  @Type(() => CreateOrderDetailRedis)
+  @ValidateNested({ each: true })
+  orderDetails: CreateOrderDetailRedis[];
 }

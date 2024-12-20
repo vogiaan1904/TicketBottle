@@ -42,6 +42,13 @@ export class EventController {
   }
 
   @OnlyAdmin()
+  @Post(':id/request-configure')
+  @ApiCreatedResponse({ type: EventResponseDto })
+  requestConfigure(@Param('id') id: string) {
+    return this.eventConfigService.requestConfigure(id);
+  }
+
+  @OnlyAdmin()
   @Post(':id/create-info')
   @ApiCreatedResponse({ type: EventResponseDto })
   createInfo(

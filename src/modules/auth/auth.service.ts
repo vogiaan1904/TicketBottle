@@ -73,6 +73,8 @@ export class AuthService {
       ...dto,
       password: hashedPassword,
     });
+
+    await this.sendVerificationEmail(newUser.email);
     return newUser;
   }
 
@@ -94,6 +96,9 @@ export class AuthService {
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new BadRequestException('User not found');
+    }
+    if (!user.isVerified) {
+      throw new BadRequestException('User not verified');
     }
     await this.verifyPlainContentWithHashedContent(password, user.password);
     return user;

@@ -48,6 +48,7 @@
     "fs": "^0.0.1-security",
     "ioredis": "^5.4.1",
     "joi": "^17.13.3",
+    "madge": "^8.0.0",
     "nest-winston": "^1.9.7",
     "nodemailer": "^6.9.16",
     "passport": "^0.7.0",

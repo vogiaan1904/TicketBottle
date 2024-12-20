@@ -1,6 +1,5 @@
 enum OrderStatus {
     PENDING
-    PROCESSING
     COMPLETED
     CANCELLED
 }
@@ -9,12 +8,13 @@ model Order {
     id              String        @id @default(uuid())
     orderDetails    OrderDetail[]
     totalCheckOut   Float
-    quantity        Int
     transactionData Json
     email           String
-    userId          String
     status          OrderStatus   @default(PENDING)
+    userId          String
+    eventId         String
     user            User          @relation(fields: [userId], references: [id])
+    event           Event         @relation(fields: [eventId], references: [id])
     createdAt       DateTime      @default(now())
 
     @@map("orders")
@@ -26,7 +26,7 @@ model OrderDetail {
     order     Order    @relation(fields: [orderId], references: [id])
     ticketId  String   @unique
     ticket    Ticket   @relation(fields: [ticketId], references: [id])
-    amount    Float
+    amount    Float?
     createdAt DateTime @default(now())
 
     @@map("order_details")

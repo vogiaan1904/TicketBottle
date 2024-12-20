@@ -11,6 +11,7 @@ import { CreateUserRequestDto } from './dto/create-user.request.dto';
 import { UpdateUserRequestDto } from './dto/update-user.request.dto';
 import { UserService } from './user.service';
 import { OrderService } from '../order/order.service';
+import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 
 @Controller('user')
 export class UserController {
@@ -24,9 +25,10 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  @OnlyAdmin()
   @Get()
   findAll() {
-    return this.userService.findMany();
+    return this.userService.findMany({});
   }
 
   @Get(':id')
