@@ -98,6 +98,9 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('User not found');
     }
+    if (!user.isVerified) {
+      throw new BadRequestException('User not verified');
+    }
     await this.verifyPlainContentWithHashedContent(password, user.password);
     return user;
   }

@@ -38,6 +38,7 @@ export class TicketReleaseProcessor extends WorkerHost {
         `Failed to release tickets for order ID: ${orderId}`,
         error,
       );
+      console.error(error);
       throw error;
     }
   }

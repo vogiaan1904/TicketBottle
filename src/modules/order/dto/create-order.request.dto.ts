@@ -1,9 +1,12 @@
+import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsString,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 
 export class CreateOrderDetailRedis {
@@ -12,7 +15,8 @@ export class CreateOrderDetailRedis {
   ticketClassId: string;
 
   @IsNotEmpty()
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   quantity: number;
 }
 
@@ -24,5 +28,7 @@ export class CreateOrderRedisDto {
   @IsArray()
   @IsNotEmpty()
   @ArrayMinSize(1)
+  @Type(() => CreateOrderDetailRedis)
+  @ValidateNested({ each: true })
   orderDetails: CreateOrderDetailRedis[];
 }

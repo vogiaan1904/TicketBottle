@@ -1,7 +1,9 @@
 import { BaseService } from '@/services/base.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Order, OrderStatus } from '@prisma/client';
+import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
 import { TicketClassRedisResponseDto } from '../event/dto/ticket-class-redis.response.dto';
@@ -11,9 +13,6 @@ import {
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
 
 export enum ticketQueue {
   name = 'ticket-release',
@@ -21,17 +20,16 @@ export enum ticketQueue {
 }
 @Injectable()
 export class OrderService extends BaseService<Order> {
+  private readonly logger = new Logger(OrderService.name);
   readonly genRedisKey = {
     order: (orderId: string) => `order:${orderId}`,
     orderDetail: (orderDetailId: string) => `orderDetail:${orderDetailId}`,
     ticketClass: (ticketClassId: string) => `ticketClass:${ticketClassId}`,
   };
-  orderTimeout = 600000;
-
+  orderTimeout = 600000; // 10 minutes
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventConfigService: EventConfigService,
-    private readonly configService: ConfigService,
     @InjectRedis() private readonly redis: Redis,
     @InjectQueue(ticketQueue.name)
     private readonly ticketReleaseQueue: Queue,
@@ -52,6 +50,10 @@ export class OrderService extends BaseService<Order> {
 
     if (!eventSaleData.isReadyForSale) {
       throw new BadRequestException('Event is not ready for sale');
+    }
+
+    if (eventSaleData.isFree) {
+      await this.checkIfUserPlacedFreeEvent(userId, dto.eventId);
     }
 
     const ticketClassesInfo = eventSaleData.ticketClassesInfo;
@@ -76,7 +78,6 @@ export class OrderService extends BaseService<Order> {
       );
       return { ...detail, price: ticketClass.price };
     });
-
     await this.redis
       .multi()
       .hset(orderKey, {
@@ -103,13 +104,26 @@ export class OrderService extends BaseService<Order> {
     return this.redis.hgetall(orderKey);
   }
 
+  async findOrdersByUserId(userId: string) {
+    return await this.findMany({ filter: { userId } });
+  }
+
+  async checkIfUserPlacedFreeEvent(userId: string, eventId: string) {
+    const orders = await this.findOrdersByUserId(userId);
+    const isPlaced = orders.some((order) => order.eventId === eventId);
+    if (isPlaced) {
+      throw new BadRequestException('User already placed order for this event');
+    }
+  }
+
   private async reserveTickets(
     orderDetails: CreateOrderDetailRedis[],
     ticketClassesInfo: TicketClassRedisResponseDto[],
   ) {
+    this.logger.log('Reserving tickets...');
     const multi = this.redis.multi();
-
     for (const detail of orderDetails) {
+      console.log(detail);
       const ticketClass = ticketClassesInfo.find(
         (tc) => tc.id === detail.ticketClassId,
       );
@@ -123,6 +137,7 @@ export class OrderService extends BaseService<Order> {
           `Insufficient tickets for class ${detail.ticketClassId}`,
         );
       }
+
       multi.hincrby(
         this.genRedisKey.ticketClass(detail.ticketClassId),
         'available',
@@ -136,6 +151,7 @@ export class OrderService extends BaseService<Order> {
     }
 
     const results = await multi.exec();
+    console.log(results);
     if (results === null) {
       throw new BadRequestException('Failed to reserve tickets');
     }
@@ -151,26 +167,25 @@ export class OrderService extends BaseService<Order> {
 
     await this.releaseTickets(orderId);
 
-    await this.redis.hset(orderKey, 'status', OrderStatus.CANCELLED);
+    //delete order on redis
+    await this.redis.del(orderKey);
 
+    // move order to primary db
     const canceledOrder = await this.create({
-      data: {
-        user: {
-          connect: {
-            id: orderData.userId,
-          },
+      user: {
+        connect: {
+          id: orderData.userId,
         },
-        event: {
-          connect: {
-            id: orderData.eventId,
-          },
-        },
-        orderDetails: [],
-        status: orderData.status,
-        email: 'notbuyticket@gmail.com',
-        transactionData: {},
-        totalCheckout: orderData.totalCheckout,
       },
+      event: {
+        connect: {
+          id: orderData.eventId,
+        },
+      },
+      status: OrderStatus.CANCELLED,
+      email: 'notbuyticket@gmail.com',
+      transactionData: {},
+      totalCheckOut: Number(orderData.totalCheckout),
     });
 
     return canceledOrder;
@@ -181,6 +196,7 @@ export class OrderService extends BaseService<Order> {
     const orderKey = this.genRedisKey.order(orderId);
 
     const orderData = await this.redis.hgetall(orderKey);
+
     if (!orderData || orderData.status !== OrderStatus.PENDING) {
       throw new BadRequestException('Order not found or already completed');
     }
@@ -201,6 +217,7 @@ export class OrderService extends BaseService<Order> {
       );
     }
     const results = await multi.exec();
+    console.log(results);
     if (results === null) {
       throw new BadRequestException('Failed to release tickets');
     }
@@ -266,16 +283,5 @@ export class OrderService extends BaseService<Order> {
         },
       });
     });
-  }
-
-  async moveOrderToPrimaryDb(orderId: string) {
-    const orderKey = this.genRedisKey.order(orderId);
-
-    const orderData = await this.redis.hgetall(orderKey);
-    if (!orderData || orderData.status !== OrderStatus.PENDING) {
-      throw new BadRequestException('Order not found or already completed');
-    }
-
-    const orderDetails = JSON.parse(orderData.orderDetails);
   }
 }

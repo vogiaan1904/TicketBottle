@@ -86,6 +86,11 @@ export class EventConfigService {
     const ticketClassList =
       await this.ticketClassService.findTicketClassesByEventId(eventID);
 
+    const isFree = await this.redis.hget(
+      this.genRedisKey.event(eventID),
+      'isFree',
+    );
+
     const ticketClassesInfo = await Promise.all(
       ticketClassList.map(async (c) => {
         return await this.redis.hgetall(this.genRedisKey.ticketClassData(c.id));
@@ -95,6 +100,7 @@ export class EventConfigService {
     return {
       isReadyForSale,
       ticketClassesInfo,
+      isFree,
     };
   }
 

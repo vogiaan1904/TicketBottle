@@ -31,6 +31,13 @@ export class OrderController {
     );
   }
 
+  @Post(':id/cancel')
+  @UseGuards(JwtAccessTokenGuard)
+  @ApiCreatedResponse({ type: OrderResponseDto })
+  cancel(@Req() request: RequestWithUser, @Param('id') id: string) {
+    return this.orderService.cancelOrder(id);
+  }
+
   @Get(':id')
   @UseGuards(JwtAccessTokenGuard)
   @ApiOkResponse({ type: OrderResponseDto })
