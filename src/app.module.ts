@@ -1,3 +1,4 @@
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
@@ -23,7 +24,6 @@ import { TicketClassModule } from './modules/ticket-class/ticket-class.module';
 import { TicketModule } from './modules/ticket/ticket.module';
 import { TokenModule } from './modules/token/token.module';
 import { UserModule } from './modules/user/user.module';
-import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
@@ -77,6 +77,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
         };
       },
     }),
+
     DatabaseModule,
     AuthModule,
     UserModule,

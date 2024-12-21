@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
@@ -31,4 +32,8 @@ export class CreateOrderRedisDto {
   @Type(() => CreateOrderDetailRedis)
   @ValidateNested({ each: true })
   orderDetails: CreateOrderDetailRedis[];
+
+  @Optional()
+  @IsString()
+  returnUrl: string;
 }

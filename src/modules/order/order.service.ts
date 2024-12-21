@@ -26,7 +26,7 @@ export class OrderService extends BaseService<Order> {
     orderDetail: (orderDetailId: string) => `orderDetail:${orderDetailId}`,
     ticketClass: (ticketClassId: string) => `ticketClass:${ticketClassId}`,
   };
-  orderTimeout = 600000; // 10 minutes
+  orderTimeout = 720000; // 12 minutes
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventConfigService: EventConfigService,
@@ -51,8 +51,7 @@ export class OrderService extends BaseService<Order> {
     if (!eventSaleData.isReadyForSale) {
       throw new BadRequestException('Event is not ready for sale');
     }
-
-    if (eventSaleData.isFree) {
+    if (eventSaleData.isFree === 'true') {
       await this.checkIfUserPlacedFreeEvent(userId, dto.eventId);
     }
 
@@ -101,7 +100,11 @@ export class OrderService extends BaseService<Order> {
 
     await this.redis.hset(orderKey, 'releaseJobId', job.id);
 
-    return this.redis.hgetall(orderKey);
+    return await this.redis.hgetall(orderKey);
+  }
+
+  async getOrderOnRedis(orderId: string) {
+    return await this.redis.hgetall(this.genRedisKey.order(orderId));
   }
 
   async findOrdersByUserId(userId: string) {
@@ -123,7 +126,6 @@ export class OrderService extends BaseService<Order> {
     this.logger.log('Reserving tickets...');
     const multi = this.redis.multi();
     for (const detail of orderDetails) {
-      console.log(detail);
       const ticketClass = ticketClassesInfo.find(
         (tc) => tc.id === detail.ticketClassId,
       );
@@ -151,7 +153,6 @@ export class OrderService extends BaseService<Order> {
     }
 
     const results = await multi.exec();
-    console.log(results);
     if (results === null) {
       throw new BadRequestException('Failed to reserve tickets');
     }
@@ -217,7 +218,6 @@ export class OrderService extends BaseService<Order> {
       );
     }
     const results = await multi.exec();
-    console.log(results);
     if (results === null) {
       throw new BadRequestException('Failed to release tickets');
     }
