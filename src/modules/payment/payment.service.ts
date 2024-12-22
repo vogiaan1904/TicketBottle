@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PaymentGatewayFactory } from './gateways/gateway.factory';
 import { CreatePaymentLinkOptions } from './interfaces/paymentGateway.interface';
+import { TransactionService } from '../transaction/transaction.service';
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly paymentGatewayFactory: PaymentGatewayFactory) {}
+  constructor(
+    private readonly paymentGatewayFactory: PaymentGatewayFactory,
+    private readonly transactionService: TransactionService,
+  ) {}
+  private async handleSucessPayment(transID: string): Promise<void> {
+    return await this.transactionService.addTransactionToQueue(transID);
+  }
 
   async createPaymentLink(gatewayType: string, dto: CreatePaymentLinkOptions) {
     const gateway = this.paymentGatewayFactory.getGateway(gatewayType);
@@ -16,7 +23,9 @@ export class PaymentService {
   async handleCallback(gatewayType: string, query: any) {
     const gateway = this.paymentGatewayFactory.getGateway(gatewayType);
     const data = await gateway.handleCallback(query);
-    console.log('done', data);
+    if (data.success) {
+      await this.handleSucessPayment('123ABc'); // For testing purpose
+    }
     return data.response;
   }
 }

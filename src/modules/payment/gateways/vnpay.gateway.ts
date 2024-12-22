@@ -1,11 +1,9 @@
+import { TransactionService } from '@/modules/transaction/transaction.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { VnpayService } from 'nestjs-vnpay';
 import {
   dateFormat,
-  InpOrderAlreadyConfirmed,
   IpnFailChecksum,
-  IpnInvalidAmount,
-  IpnOrderNotFound,
   IpnSuccess,
   IpnUnknownError,
   ProductCode,
@@ -17,8 +15,6 @@ import {
   CreatePaymentLinkOptions,
   PaymentGatewayInterface,
 } from '../interfaces/paymentGateway.interface';
-import { TransactionService } from '@/modules/transaction/transaction.service';
-import { TransactionStatus } from '@prisma/client';
 
 @Injectable()
 export class VnpayGateway implements PaymentGatewayInterface {
@@ -61,30 +57,34 @@ export class VnpayGateway implements PaymentGatewayInterface {
         };
       }
 
-      const foundTrans = await this.transactionService.findOne({
-        refCode: verify.vnp_TxnRef,
-      });
+      // Đang test nhanh nên commnet lại đoạn này
+      // Đoạnn này cần check trong Db/Redis xem có transaction nào tương ứng với refCode không
 
-      if (!foundTrans || verify.vnp_TxnRef !== foundTrans.id) {
-        return {
-          response: IpnOrderNotFound,
-          success: false,
-        };
-      }
+      //============
+      // const foundTrans = await this.transactionService.findOne({
+      //   refCode: verify.vnp_TxnRef,
+      // });
 
-      if (verify.vnp_Amount !== foundTrans.amount) {
-        return {
-          response: IpnInvalidAmount,
-          success: false,
-        };
-      }
+      // if (!foundTrans || verify.vnp_TxnRef !== foundTrans.id) {
+      //   return {
+      //     response: IpnOrderNotFound,
+      //     success: false,
+      //   };
+      // }
 
-      if (foundTrans.status === TransactionStatus.COMPLETED) {
-        return {
-          response: InpOrderAlreadyConfirmed,
-          success: false,
-        };
-      }
+      // if (verify.vnp_Amount !== foundTrans.amount) {
+      //   return {
+      //     response: IpnInvalidAmount,
+      //     success: false,
+      //   };
+      // }
+
+      // if (foundTrans.status === TransactionStatus.COMPLETED) {
+      //   return {
+      //     response: InpOrderAlreadyConfirmed,
+      //     success: false,
+      //   };
+      // }
 
       return {
         response: IpnSuccess,
