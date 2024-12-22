@@ -17,11 +17,10 @@ export class OrderResponseDto implements Order {
 
   @Expose()
   @ApiProperty()
-  transactionData: JsonValue;
+  status: $Enums.OrderStatus;
 
   @Expose()
-  @ApiProperty()
-  status: $Enums.OrderStatus;
+  transctionId: string;
 
   @Expose()
   @ApiProperty()

@@ -7,6 +7,7 @@ import { TicketReleaseProcessor } from './workers/ticket-release.processor';
 import { VnpayModule } from 'nestjs-vnpay';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ignoreLogger } from 'vnpay';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
   controllers: [OrderController],
@@ -17,6 +18,7 @@ import { ignoreLogger } from 'vnpay';
     BullModule.registerQueue({
       name: ticketQueue.name,
     }),
+    PaymentModule,
     VnpayModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

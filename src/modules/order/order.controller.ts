@@ -11,11 +11,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
-import { CreateOrderRedisDto } from './dto/create-order.request.dto';
-import { OrderResponseDto } from './dto/order.response.dto';
-import { OrderService } from './order.service';
+import { Request, Response } from 'express';
+import { VnpayService } from 'nestjs-vnpay';
 import {
   dateFormat,
   InpOrderAlreadyConfirmed,
@@ -29,9 +28,11 @@ import {
   VerifyReturnUrl,
   VnpLocale,
 } from 'vnpay';
-import { ConfigService } from '@nestjs/config';
-import { Request, Response } from 'express';
-import { VnpayService } from 'nestjs-vnpay';
+import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
+import { PaymentService } from '../payment/payment.service';
+import { CreateOrderRedisDto } from './dto/create-order.request.dto';
+import { OrderResponseDto } from './dto/order.response.dto';
+import { OrderService } from './order.service';
 
 @Injectable()
 @Controller('order')
@@ -41,6 +42,7 @@ export class OrderController {
     private readonly orderService: OrderService,
     private readonly configService: ConfigService,
     private readonly vnpayService: VnpayService,
+    private readonly paymentService: PaymentService,
   ) {
     this.returnUrl = configService.get<string>('VNP_RETURN_URL');
   }
@@ -51,7 +53,6 @@ export class OrderController {
   async create(
     @Req() request: RequestWithUser,
     @Body() createOrderDto: CreateOrderRedisDto,
-    @Res() response: Response,
   ) {
     const order = await this.orderService.createOrderOnRedis(
       request.user.id,

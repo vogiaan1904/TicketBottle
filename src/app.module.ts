@@ -24,6 +24,8 @@ import { TicketClassModule } from './modules/ticket-class/ticket-class.module';
 import { TicketModule } from './modules/ticket/ticket.module';
 import { TokenModule } from './modules/token/token.module';
 import { UserModule } from './modules/user/user.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { TransactionModule } from './modules/transaction/transaction.module';
 
 @Module({
   imports: [
@@ -90,6 +92,8 @@ import { UserModule } from './modules/user/user.module';
     StaffModule,
     OrderModule,
     OrderDetailModule,
+    PaymentModule,
+    TransactionModule,
   ],
   controllers: [AppController],
   providers: [

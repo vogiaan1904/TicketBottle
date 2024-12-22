@@ -185,7 +185,6 @@ export class OrderService extends BaseService<Order> {
       },
       status: OrderStatus.CANCELLED,
       email: 'notbuyticket@gmail.com',
-      transactionData: {},
       totalCheckOut: Number(orderData.totalCheckout),
     });
 
@@ -278,7 +277,6 @@ export class OrderService extends BaseService<Order> {
           },
           status: OrderStatus.COMPLETED,
           email: 'notbuyticket@gmail.com',
-          transactionData: {},
           totalCheckOut: Number(orderData.totalCheckout),
         },
       });
