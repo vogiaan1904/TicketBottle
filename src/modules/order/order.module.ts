@@ -8,6 +8,8 @@ import { VnpayModule } from 'nestjs-vnpay';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ignoreLogger } from 'vnpay';
 import { PaymentModule } from '../payment/payment.module';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 
 @Module({
   controllers: [OrderController],
@@ -17,6 +19,10 @@ import { PaymentModule } from '../payment/payment.module';
     EventModule,
     BullModule.registerQueue({
       name: ticketQueue.name,
+    }),
+    BullBoardModule.forFeature({
+      name: ticketQueue.name,
+      adapter: BullMQAdapter,
     }),
     PaymentModule,
     VnpayModule.registerAsync({
