@@ -160,7 +160,7 @@ export class OrderService extends BaseService<Order> {
 
   async cancelOrder(orderId: string): Promise<OrderResponseDto> {
     const orderKey = this.genRedisKey.order(orderId);
-    console.log(orderKey);
+
     const orderData = await this.redis.hgetall(orderKey);
     if (!orderData || orderData.status !== OrderStatus.PENDING) {
       throw new BadRequestException('Order not found or already completed');
