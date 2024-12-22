@@ -11,11 +11,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
-import { CreateOrderRedisDto } from './dto/create-order.request.dto';
-import { OrderResponseDto } from './dto/order.response.dto';
-import { OrderService } from './order.service';
+import { Request, Response } from 'express';
+import { VnpayService } from 'nestjs-vnpay';
 import {
   dateFormat,
   InpOrderAlreadyConfirmed,
@@ -29,9 +28,11 @@ import {
   VerifyReturnUrl,
   VnpLocale,
 } from 'vnpay';
-import { ConfigService } from '@nestjs/config';
-import { Request, Response } from 'express';
-import { VnpayService } from 'nestjs-vnpay';
+import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
+import { PaymentService } from '../payment/payment.service';
+import { CreateOrderRedisDto } from './dto/create-order.request.dto';
+import { OrderResponseDto } from './dto/order.response.dto';
+import { OrderService } from './order.service';
 
 @Injectable()
 @Controller('order')
@@ -41,6 +42,7 @@ export class OrderController {
     private readonly orderService: OrderService,
     private readonly configService: ConfigService,
     private readonly vnpayService: VnpayService,
+    private readonly paymentService: PaymentService,
   ) {
     this.returnUrl = configService.get<string>('VNP_RETURN_URL');
   }
@@ -56,24 +58,22 @@ export class OrderController {
       request.user.id,
       createOrderDto,
     );
-    const expDate = new Date();
-    expDate.setMinutes(expDate.getMinutes() + 10);
 
-    const paymentUrl = this.vnpayService.buildPaymentUrl({
-      vnp_Amount: Number(order.totalCheckout),
-      vnp_IpAddr: Array.isArray(request.headers['x-forwarded-for'])
-        ? request.headers['x-forwarded-for'][0]
-        : request.headers['x-forwarded-for'] ||
-          request.connection.remoteAddress ||
-          request.socket.remoteAddress ||
-          request.ip,
-      vnp_TxnRef: order.id,
-      vnp_OrderInfo: `Payment for order ${order.id}`,
-      vnp_OrderType: ProductCode.Entertainment_Training,
-      vnp_ReturnUrl: this.returnUrl,
-      vnp_Locale: VnpLocale.VN,
-      vnp_ExpireDate: dateFormat(expDate),
+    const ip = Array.isArray(request.headers['x-forwarded-for'])
+      ? request.headers['x-forwarded-for'][0]
+      : request.headers['x-forwarded-for'] ||
+        request.connection.remoteAddress ||
+        request.socket.remoteAddress ||
+        request.ip;
+    const amount = Number(order.totalCheckout);
+    const returnUrl = this.returnUrl;
+    const paymentUrl = await this.paymentService.createPaymentLink('vnpay', {
+      ip,
+      amount,
+      orderCode: ProductCode.Entertainment_Training,
+      returnUrl,
     });
+
     return paymentUrl;
   }
 
@@ -134,7 +134,6 @@ export class OrderController {
   @UseGuards(JwtAccessTokenGuard)
   @ApiCreatedResponse({ type: OrderResponseDto })
   cancel(@Req() request: RequestWithUser, @Param('id') id: string) {
-    console.log('cancel order');
     return this.orderService.cancelOrder(id);
   }
 

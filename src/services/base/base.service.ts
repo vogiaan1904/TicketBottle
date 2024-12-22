@@ -1,4 +1,4 @@
-import { DatabaseService } from '../modules/database/database.service';
+import { DatabaseService } from '../../modules/database/database.service';
 import { BaseServiceInterface } from './interfaces/base.interface';
 import { paginator, PaginatorTypes } from '@nodeteam/nestjs-prisma-pagination';
 

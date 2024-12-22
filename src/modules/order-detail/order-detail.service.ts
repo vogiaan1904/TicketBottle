@@ -1,4 +1,4 @@
-import { BaseService } from '@/services/base.service';
+import { BaseService } from '@/services/base/base.service';
 import { Injectable } from '@nestjs/common';
 import { OrderDetail } from '@prisma/client';
 import { OrderDetailResponseDto } from './dto/order-detail.response.dto';
