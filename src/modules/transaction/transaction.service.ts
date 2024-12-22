@@ -1,10 +1,10 @@
-import { BaseService } from '@/services/base/base.service';
-import { InjectQueue } from '@nestjs/bullmq';
+import { BaseService } from '@/services/base.service';
 import { Injectable } from '@nestjs/common';
 import { Transaction } from '@prisma/client';
-import { Queue } from 'bullmq';
 import { DatabaseService } from '../database/database.service';
+import { InjectQueue } from '@nestjs/bullmq';
 import { TransactionQueue } from './enum/queue';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class TransactionService extends BaseService<Transaction> {

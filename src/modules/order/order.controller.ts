@@ -53,7 +53,6 @@ export class OrderController {
   async create(
     @Req() request: RequestWithUser,
     @Body() createOrderDto: CreateOrderRedisDto,
-    @Res() response: Response,
   ) {
     const order = await this.orderService.createOrderOnRedis(
       request.user.id,

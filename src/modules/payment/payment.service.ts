@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PaymentGatewayFactory } from './gateways/gateway.factory';
+
+import { CreatePaymentLinkOptions } from './interfaces/paymentGateway.interface';
 import { TransactionService } from '../transaction/transaction.service';
 
 @Injectable()
