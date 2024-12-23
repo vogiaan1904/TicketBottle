@@ -13,6 +13,8 @@ import {
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
+import { PaymentService } from '../payment/payment.service';
+import { CreateTransactionDto } from '../transaction/dto/create-transaction.request.dto';
 
 export enum ticketQueue {
   name = 'ticket-release',
@@ -30,6 +32,7 @@ export class OrderService extends BaseService<Order> {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventConfigService: EventConfigService,
+    private readonly paymentService: PaymentService,
     @InjectRedis() private readonly redis: Redis,
     @InjectQueue(ticketQueue.name)
     private readonly ticketReleaseQueue: Queue,
@@ -40,9 +43,14 @@ export class OrderService extends BaseService<Order> {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  async createOrderOnRedis(userId: string, dto: CreateOrderRedisDto) {
-    const orderId = this.generateTemporaryId();
-    const orderKey = this.genRedisKey.order(orderId);
+  async createOrderOnRedis(
+    userId: string,
+    dto: CreateOrderRedisDto,
+    paymentData: { ip: string; host: string },
+  ) {
+    const orderCode = this.generateTemporaryId();
+    const transactionCode = this.generateTemporaryId();
+    const orderKey = this.genRedisKey.order(orderCode);
 
     const eventSaleData = await this.eventConfigService.getSaleData(
       dto.eventId,
@@ -80,13 +88,14 @@ export class OrderService extends BaseService<Order> {
     await this.redis
       .multi()
       .hset(orderKey, {
-        id: orderId,
+        code: orderCode,
         eventId: dto.eventId,
         userId,
         status: OrderStatus.PENDING,
         totalCheckout,
         createdAt: new Date().toISOString(),
         orderDetails: JSON.stringify(orderDetails),
+        transactionCode,
       })
       .exec();
 
@@ -94,13 +103,25 @@ export class OrderService extends BaseService<Order> {
 
     const job = await this.ticketReleaseQueue.add(
       ticketQueue.jobName,
-      { orderId },
+      { orderCode },
       { delay: this.orderTimeout }, // 10 minutes
     );
 
     await this.redis.hset(orderKey, 'releaseJobId', job.id);
 
-    return await this.redis.hgetall(orderKey);
+    const orderData = await this.redis.hgetall(orderKey);
+
+    const paymentUrl = await this.paymentService.createPaymentLink(
+      dto.paymentGateway,
+      {
+        ip: paymentData.ip,
+        host: paymentData.host,
+        returnUrl: dto.returnUrl,
+        orderCode,
+        amount: totalCheckout,
+      },
+    );
+    return { orderData, paymentUrl };
   }
 
   async getOrderOnRedis(orderId: string) {
@@ -168,7 +189,7 @@ export class OrderService extends BaseService<Order> {
 
     await this.releaseTickets(orderId);
 
-    //delete order on redis
+    // delete order on redis
     await this.redis.del(orderKey);
 
     // move order to primary db
@@ -191,9 +212,9 @@ export class OrderService extends BaseService<Order> {
     return canceledOrder;
   }
 
-  async releaseTickets(orderId: string) {
+  async releaseTickets(orderCode: string) {
     // timeout or cancel order
-    const orderKey = this.genRedisKey.order(orderId);
+    const orderKey = this.genRedisKey.order(orderCode);
 
     const orderData = await this.redis.hgetall(orderKey);
 
@@ -222,8 +243,8 @@ export class OrderService extends BaseService<Order> {
     }
   }
 
-  async completeOrder(orderId: string) {
-    const orderKey = this.genRedisKey.order(orderId);
+  async completeOrder(orderCode: string, transaction: CreateTransactionDto) {
+    const orderKey = this.genRedisKey.order(orderCode);
 
     const orderData = await this.redis.hgetall(orderKey);
     if (!orderData || orderData.status !== OrderStatus.PENDING) {
@@ -278,6 +299,9 @@ export class OrderService extends BaseService<Order> {
           status: OrderStatus.COMPLETED,
           email: 'notbuyticket@gmail.com',
           totalCheckOut: Number(orderData.totalCheckout),
+          transaction: {
+            create: {},
+          },
         },
       });
     });

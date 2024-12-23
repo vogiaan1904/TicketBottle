@@ -16,6 +16,7 @@ enum TransactionAction {
 
 model Transaction {
   id        String            @id @default(uuid())
+  code      BigInt            @unique
   refCode   String            @unique
   action    TransactionAction @default(BUY_TICKET)
   gateway   String
@@ -30,14 +31,15 @@ model Transaction {
 
 model Order {
   id            String        @id @default(uuid())
+  code          String        @unique
   orderDetails  OrderDetail[]
   totalCheckOut Float
   email         String
   status        OrderStatus   @default(PENDING)
   userId        String
   eventId       String
-  transctionId  String?       @unique
-  transaction   Transaction?  @relation(fields: [transctionId], references: [id])
+  transactionId String        @unique
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
   user          User          @relation(fields: [userId], references: [id])
   event         Event         @relation(fields: [eventId], references: [id])
   createdAt     DateTime      @default(now())

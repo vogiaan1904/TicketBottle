@@ -51,63 +51,16 @@ export class OrderController {
     @Req() request: RequestWithUser,
     @Body() createOrderDto: CreateOrderRedisDto,
   ) {
-    const order = await this.orderService.createOrderOnRedis(
+    const host =
+      this.configService.get<string>(`NODE_ENV`) === 'production'
+        ? `${request.protocol}://${request.get('host')}`
+        : this.configService.get<string>(`NGROK_TEST_URL`);
+
+    return await this.orderService.createOrderOnRedis(
       request.user.id,
       createOrderDto,
+      { ip: request.ip, host },
     );
-  }
-
-  @Get('/vnpay-ipn')
-  async verifyVnpayIPN(
-    @Query() query: ReturnQueryFromVNPay,
-    @Req() request: Request,
-    @Res() response: Response,
-  ) {
-    try {
-      const verify: VerifyReturnUrl =
-        await this.vnpayService.verifyIpnCall(query);
-
-      if (!verify.isVerified) {
-        return response.json(IpnFailChecksum);
-      }
-
-      // Find the order in your database
-      const foundOrder = await this.orderService.getOrderOnRedis(
-        verify.vnp_TxnRef,
-      ); // Method to find an order by id, you need to implement it
-
-      // If the order is not found or the order code does not match
-      if (!foundOrder || verify.vnp_TxnRef !== foundOrder.id) {
-        return response.json(IpnOrderNotFound);
-      }
-
-      // If the payment amount does not match
-      if (verify.vnp_Amount !== foundOrder.amount) {
-        return response.json(IpnInvalidAmount);
-      }
-
-      // If the order has been confirmed before
-      if (foundOrder.status === 'COMPLETED') {
-        return response.json(InpOrderAlreadyConfirmed);
-      }
-
-      /**
-       * After verifying the order is complete,
-       * you can update the order status in your database
-       */
-      foundOrder.status = 'COMPLETED';
-      await this.orderService.completeOrder(foundOrder.id); // Function to update the order status, you need to implement it
-
-      // Then update the status back to VNPay to let them know that you have confirmed the order
-      return response.json(IpnSuccess);
-    } catch (error) {
-      /**
-       * Handle exceptions
-       * For example, insufficient data, invalid data, database update failure
-       */
-      console.log(`verify error: ${error}`);
-      return response.json(IpnUnknownError);
-    }
   }
 
   @Post(':id/cancel')

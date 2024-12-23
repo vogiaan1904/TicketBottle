@@ -22,4 +22,13 @@ export class TransactionService extends BaseService<Transaction> {
   async addTransactionToQueue(transactionID: string): Promise<void> {
     await this.transactionQueue.add(this.PROCESS_JOB_NAME, { transactionID });
   }
+
+  refCode: string;
+  async processTransaction(transactionID: string): Promise<void> {
+    if (!transaction) {
+      throw new Error(`Transaction with ID ${transactionID} not found`);
+    }
+
+    // Process transaction
+  }
 }

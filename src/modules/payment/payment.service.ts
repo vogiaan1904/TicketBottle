@@ -12,6 +12,7 @@ export class PaymentService {
     private readonly paymentGatewayFactory: PaymentGatewayFactory,
     private readonly transactionService: TransactionService,
   ) {}
+
   private async handleSucessPayment(transID: string): Promise<void> {
     return await this.transactionService.addTransactionToQueue(transID);
   }
@@ -24,10 +25,11 @@ export class PaymentService {
 
   async handleCallback(gatewayType: string, callbackData: CallbackData) {
     const gateway = this.paymentGatewayFactory.getGateway(gatewayType);
-    const data = await gateway.handleCallback(callbackData.data);
-    if (data.success) {
-      await this.handleSucessPayment('123ABc'); // For testing purpose
+    const callBackResponse = await gateway.handleCallback(callbackData.data);
+
+    if (callBackResponse.success && callBackResponse.data) {
+      await this.handleSucessPayment(callBackResponse.data.vnp_TxnRef);
     }
-    return data.response;
+    return callBackResponse.response;
   }
 }

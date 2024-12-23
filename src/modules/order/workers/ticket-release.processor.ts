@@ -16,26 +16,30 @@ export class TicketReleaseProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ orderId: string }>): Promise<void> {
-    const { orderId } = job.data;
+  async process(job: Job<{ orderCode: string }>): Promise<void> {
+    const { orderCode } = job.data;
     const orderData = await this.redis.hgetall(
-      this.orderService.genRedisKey.order(orderId),
+      this.orderService.genRedisKey.order(orderCode),
     );
 
     if (orderData.status !== OrderStatus.PENDING) {
       this.logger.log(
-        `Skipping releaseTickets job for order ID: ${orderId} as the order status is not PENDING`,
+        `Skipping releaseTickets job for order code: ${orderCode} as the order status is not PENDING`,
       );
       return;
     }
 
-    this.logger.log(`Processing releaseTickets job for order ID: ${orderId}`);
+    this.logger.log(
+      `Processing releaseTickets job for order code: ${orderCode}`,
+    );
     try {
-      await this.orderService.cancelOrder(orderId);
-      this.logger.log(`Successfully released tickets for order ID: ${orderId}`);
+      await this.orderService.cancelOrder(orderCode);
+      this.logger.log(
+        `Successfully released tickets for order code: ${orderCode}`,
+      );
     } catch (error) {
       this.logger.error(
-        `Failed to release tickets for order ID: ${orderId}`,
+        `Failed to release tickets for order code: ${orderCode}`,
         error,
       );
       console.error(error);

@@ -3,7 +3,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { VnpayService } from 'nestjs-vnpay';
 import {
   dateFormat,
+  InpOrderAlreadyConfirmed,
   IpnFailChecksum,
+  IpnInvalidAmount,
+  IpnOrderNotFound,
   IpnSuccess,
   IpnUnknownError,
   ProductCode,
@@ -15,15 +18,22 @@ import {
   CreatePaymentLinkOptions,
   PaymentGatewayInterface,
 } from '../interfaces/paymentGateway.interface';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
+import { TransactionStatus } from '@prisma/client';
+import { v } from '@faker-js/faker/dist/airline-BnpeTvY9';
 
 @Injectable()
 export class VnpayGateway implements PaymentGatewayInterface {
   private readonly logger = new Logger(VnpayGateway.name);
   private readonly ORDER_TIMEOUT_MINUTES = 10;
-
+  readonly genRedisKey = {
+    order: (orderId: string) => `order:${orderId}`,
+  };
   constructor(
     private readonly vnpayService: VnpayService,
     private readonly transactionService: TransactionService,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async createPaymentLink(dto: CreatePaymentLinkOptions): Promise<string> {
@@ -58,37 +68,36 @@ export class VnpayGateway implements PaymentGatewayInterface {
         };
       }
 
-      // Đang test nhanh nên commnet lại đoạn này
       // Đoạnn này cần check trong Db/Redis xem có transaction nào tương ứng với refCode không
-
       //============
-      // const foundTrans = await this.transactionService.findOne({
-      //   refCode: verify.vnp_TxnRef,
-      // });
+      const foundTrans = await this.redis.hgetall(
+        this.genRedisKey.order(verify.vnp_TxnRef),
+      );
 
-      // if (!foundTrans || verify.vnp_TxnRef !== foundTrans.id) {
-      //   return {
-      //     response: IpnOrderNotFound,
-      //     success: false,
-      //   };
-      // }
+      if (!foundTrans || verify.vnp_TxnRef !== foundTrans.code) {
+        return {
+          response: IpnOrderNotFound,
+          success: false,
+        };
+      }
 
-      // if (verify.vnp_Amount !== foundTrans.amount) {
-      //   return {
-      //     response: IpnInvalidAmount,
-      //     success: false,
-      //   };
-      // }
+      if (verify.vnp_Amount !== foundTrans.amount) {
+        return {
+          response: IpnInvalidAmount,
+          success: false,
+        };
+      }
 
-      // if (foundTrans.status === TransactionStatus.COMPLETED) {
-      //   return {
-      //     response: InpOrderAlreadyConfirmed,
-      //     success: false,
-      //   };
-      // }
+      if (foundTrans.status === TransactionStatus.COMPLETED) {
+        return {
+          response: InpOrderAlreadyConfirmed,
+          success: false,
+        };
+      }
 
       return {
         response: IpnSuccess,
+        data: verify,
         success: true,
       };
     } catch (error) {
