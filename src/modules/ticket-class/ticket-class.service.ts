@@ -1,4 +1,4 @@
-import { BaseService } from '@/services/base.service';
+import { BaseService } from '@/services/base/base.service';
 import { Injectable } from '@nestjs/common';
 import { TicketClass } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';

@@ -34,7 +34,8 @@ export class VnpayGateway implements PaymentGatewayInterface {
       vnp_Amount: dto.amount,
       vnp_IpAddr: dto.ip,
       vnp_TxnRef: dto.orderCode,
-      vnp_OrderInfo: `Thanh don don hang ${dto.orderCode}`,
+      vnp_OrderInfo: `Thanh toan don hang ${dto.orderCode}`,
+
       vnp_OrderType: ProductCode.Entertainment_Training,
       vnp_ReturnUrl: dto.returnUrl,
       vnp_Locale: VnpLocale.VN,

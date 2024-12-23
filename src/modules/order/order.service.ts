@@ -1,4 +1,4 @@
-import { BaseService } from '@/services/base.service';
+import { BaseService } from '@/services/base/base.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';

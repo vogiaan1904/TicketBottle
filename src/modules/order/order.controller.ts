@@ -16,17 +16,14 @@ import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { VnpayService } from 'nestjs-vnpay';
 import {
-  dateFormat,
   InpOrderAlreadyConfirmed,
   IpnFailChecksum,
   IpnInvalidAmount,
   IpnOrderNotFound,
   IpnSuccess,
   IpnUnknownError,
-  ProductCode,
   ReturnQueryFromVNPay,
   VerifyReturnUrl,
-  VnpLocale,
 } from 'vnpay';
 import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
 import { PaymentService } from '../payment/payment.service';
@@ -58,25 +55,6 @@ export class OrderController {
       request.user.id,
       createOrderDto,
     );
-    const expDate = new Date();
-    expDate.setMinutes(expDate.getMinutes() + 10);
-
-    const paymentUrl = this.vnpayService.buildPaymentUrl({
-      vnp_Amount: Number(order.totalCheckout),
-      vnp_IpAddr: Array.isArray(request.headers['x-forwarded-for'])
-        ? request.headers['x-forwarded-for'][0]
-        : request.headers['x-forwarded-for'] ||
-          request.connection.remoteAddress ||
-          request.socket.remoteAddress ||
-          request.ip,
-      vnp_TxnRef: order.id,
-      vnp_OrderInfo: `Payment for order ${order.id}`,
-      vnp_OrderType: ProductCode.Entertainment_Training,
-      vnp_ReturnUrl: this.returnUrl,
-      vnp_Locale: VnpLocale.VN,
-      vnp_ExpireDate: dateFormat(expDate),
-    });
-    return paymentUrl;
   }
 
   @Get('/vnpay-ipn')

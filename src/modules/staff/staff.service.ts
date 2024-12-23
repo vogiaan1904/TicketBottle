@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { BaseService } from '@/services/base.service';
+import { BaseService } from '@/services/base/base.service';
 import { Staff } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { StaffResponseDto } from './dto/staff.response.dto';
