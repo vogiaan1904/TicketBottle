@@ -10,11 +10,11 @@ import {
   VerifyReturnUrl,
   VnpLocale,
 } from 'vnpay';
-import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto';
 import {
   CreatePaymentLinkOptions,
   PaymentGatewayInterface,
 } from '../interfaces/paymentGateway.interface';
+import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto copy';
 
 @Injectable()
 export class VnpayGateway implements PaymentGatewayInterface {
@@ -90,6 +90,7 @@ export class VnpayGateway implements PaymentGatewayInterface {
       return {
         response: IpnSuccess,
         success: true,
+        orderCode: verify.vnp_TxnRef,
       };
     } catch (error) {
       this.logger.error('Vnpay IPN Unknow Error: ', error);

@@ -26,7 +26,7 @@ export class PaymentService {
     const gateway = this.paymentGatewayFactory.getGateway(gatewayType);
     const data = await gateway.handleCallback(callbackData.data);
     if (data.success) {
-      await this.handleSucessPayment('123ABc'); // For testing purpose
+      await this.handleSucessPayment(data.orderCode); // For testing purpose
     }
     return data.response;
   }
