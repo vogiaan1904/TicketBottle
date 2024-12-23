@@ -7,9 +7,12 @@ import { PaymentService } from './payment.service';
 import { PaymentGatewayFactory } from './gateways/gateway.factory';
 import { PaymentController } from './payment.controller';
 import { TransactionModule } from '../transaction/transaction.module';
+import { HttpModule } from '@nestjs/axios';
+import { ZalopayGateWay } from './gateways/zalopay.gateway';
 
 @Module({
   imports: [
+    HttpModule,
     TransactionModule,
     VnpayModule.registerAsync({
       imports: [ConfigModule],
@@ -22,7 +25,12 @@ import { TransactionModule } from '../transaction/transaction.module';
     }),
   ],
   controllers: [PaymentController],
-  providers: [PaymentService, VnpayGateway, PaymentGatewayFactory],
+  providers: [
+    PaymentService,
+    VnpayGateway,
+    PaymentGatewayFactory,
+    ZalopayGateWay,
+  ],
   exports: [PaymentService],
 })
 export class PaymentModule {}

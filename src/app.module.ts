@@ -39,6 +39,7 @@ import { ExpressAdapter } from '@bull-board/express';
         PORT: Joi.number().default(3000),
         REDIS_CACHE_URL: Joi.string().uri().required(),
         REDIS_CORE_URL: Joi.string().uri().required(),
+        NGROK_TEST_URL: Joi.string().uri().required(),
       }),
       validationOptions: {
         abortEarly: false,
