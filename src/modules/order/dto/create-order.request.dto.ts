@@ -1,8 +1,10 @@
+import { GatewayName } from '@/modules/payment/enums/gatewayName';
 import { Optional } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsString,
@@ -36,4 +38,8 @@ export class CreateOrderRedisDto {
   @Optional()
   @IsString()
   returnUrl: string;
+
+  @IsEnum(GatewayName)
+  @IsNotEmpty()
+  paymentGateway: GatewayName;
 }

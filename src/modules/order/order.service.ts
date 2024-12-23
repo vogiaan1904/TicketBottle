@@ -5,6 +5,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Order, OrderStatus } from '@prisma/client';
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
+import orderId from 'order-id';
 import { DatabaseService } from '../database/database.service';
 import { TicketClassRedisResponseDto } from '../event/dto/ticket-class-redis.response.dto';
 import { EventConfigService } from '../event/event-config.service';
@@ -36,13 +37,10 @@ export class OrderService extends BaseService<Order> {
   ) {
     super(databaseService, 'order', OrderResponseDto);
   }
-  private generateTemporaryId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 
   async createOrderOnRedis(userId: string, dto: CreateOrderRedisDto) {
-    const orderId = this.generateTemporaryId();
-    const orderKey = this.genRedisKey.order(orderId);
+    const ordId = orderId('key').generate();
+    const orderKey = this.genRedisKey.order(ordId);
 
     const eventSaleData = await this.eventConfigService.getSaleData(
       dto.eventId,
@@ -80,7 +78,7 @@ export class OrderService extends BaseService<Order> {
     await this.redis
       .multi()
       .hset(orderKey, {
-        id: orderId,
+        id: ordId,
         eventId: dto.eventId,
         userId,
         status: OrderStatus.PENDING,
@@ -94,7 +92,7 @@ export class OrderService extends BaseService<Order> {
 
     const job = await this.ticketReleaseQueue.add(
       ticketQueue.jobName,
-      { orderId },
+      { orderId: ordId },
       { delay: this.orderTimeout }, // 10 minutes
     );
 
