@@ -25,11 +25,11 @@ export class PaymentService {
 
   async handleCallback(gatewayType: string, callbackData: CallbackData) {
     const gateway = this.paymentGatewayFactory.getGateway(gatewayType);
-    const callBackResponse = await gateway.handleCallback(callbackData.data);
 
-    if (callBackResponse.success && callBackResponse.data) {
-      await this.handleSucessPayment(callBackResponse.data.vnp_TxnRef);
+    const data = await gateway.handleCallback(callbackData.data);
+    if (data.success) {
+      await this.handleSucessPayment(data.orderCode); // For testing purpose
     }
-    return callBackResponse.response;
+    return data.response;
   }
 }

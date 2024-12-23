@@ -13,15 +13,12 @@ import {
   VerifyReturnUrl,
   VnpLocale,
 } from 'vnpay';
-import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto';
 import {
   CreatePaymentLinkOptions,
   PaymentGatewayInterface,
 } from '../interfaces/paymentGateway.interface';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
-import { TransactionStatus } from '@prisma/client';
-import { v } from '@faker-js/faker/dist/airline-BnpeTvY9';
+
+import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto copy';
 
 @Injectable()
 export class VnpayGateway implements PaymentGatewayInterface {
@@ -99,6 +96,7 @@ export class VnpayGateway implements PaymentGatewayInterface {
         response: IpnSuccess,
         data: verify,
         success: true,
+        orderCode: verify.vnp_TxnRef,
       };
     } catch (error) {
       this.logger.error('Vnpay IPN Unknow Error: ', error);

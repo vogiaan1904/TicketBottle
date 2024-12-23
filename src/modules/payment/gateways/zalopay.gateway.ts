@@ -9,6 +9,7 @@ import { AxiosResponse } from 'axios';
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import { PaymentGatewayInterface } from '../interfaces/paymentGateway.interface';
+import { ZalopayCallbackResponseDto } from '../dto/response/zalopay.callback.response.dto';
 
 interface ZaloPayRequestConfigInterface {
   amount: number;
@@ -56,14 +57,12 @@ export class ZalopayGateWay implements PaymentGatewayInterface {
         preferred_payment_method: [],
         redirecturl: data.returnUrl,
       }),
-      description: `Thanh toán đơn hàng ${data.orderCode}`,
+      description: data.orderCode,
       bank_code: '',
       callback_url: data.host + '/payment/zalopay/callback',
       item: JSON.stringify([]),
       mac: '',
     };
-
-    console.log(config.callback_url);
 
     const macInput =
       config.app_id +
@@ -106,20 +105,27 @@ export class ZalopayGateWay implements PaymentGatewayInterface {
     return res.data.order_url;
   }
 
-  async handleCallback(callbackData: any): Promise<any> {
+  async handleCallback(callbackData: any): Promise<ZalopayCallbackResponseDto> {
     const requestMac = crypto
       .createHmac('sha256', this.key2)
       .update(callbackData.data)
       .digest('hex');
     if (requestMac !== callbackData.mac) {
-      return this.initZaloPayCallbackRes(
-        this.callbackErrorCode,
-        'MAC not match',
-      );
+      return {
+        success: false,
+        response: this.initZaloPayCallbackRes(
+          this.callbackErrorCode,
+          'Invalid mac',
+        ),
+      };
     }
+
+    const transData = JSON.parse(callbackData.data);
+
     return {
       success: true,
-      resonse: this.initZaloPayCallbackRes(1, 'Success'),
+      response: this.initZaloPayCallbackRes(1, 'Success'),
+      orderCode: transData.app_trans_id.split('_')[1],
     };
   }
 }
