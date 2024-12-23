@@ -67,10 +67,12 @@ export class OrderController {
         request.ip;
     const amount = Number(order.totalCheckout);
     const returnUrl = this.returnUrl;
+    const orderCode = order.id;
+
     const paymentUrl = await this.paymentService.createPaymentLink('vnpay', {
       ip,
       amount,
-      orderCode: ProductCode.Entertainment_Training,
+      orderCode,
       returnUrl,
     });
 
