@@ -19,6 +19,7 @@ import {
 } from '../interfaces/paymentGateway.interface';
 
 import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto copy';
+import { TransactionStatus } from '@prisma/client';
 
 @Injectable()
 export class VnpayGateway implements PaymentGatewayInterface {
