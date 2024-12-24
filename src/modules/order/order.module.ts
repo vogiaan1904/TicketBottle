@@ -1,39 +1,32 @@
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { EventModule } from '../event/event.module';
-import { OrderController } from './order.controller';
-import { OrderService, ticketQueue } from './order.service';
-import { TicketReleaseProcessor } from './workers/ticket-release.processor';
-import { VnpayModule } from 'nestjs-vnpay';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ignoreLogger } from 'vnpay';
 import { PaymentModule } from '../payment/payment.module';
-import { BullBoardModule } from '@bull-board/nestjs';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { OrderController } from './order.controller';
+import { OrderService } from './order.service';
+import { TicketReleaseProcessor } from './workers/ticket-release.worker';
+import { ProcessTransactionWorker } from './workers/process-transaction.worker';
+import { TicketQueue } from './enums/queue';
+import { TransactionModule } from '../transaction/transaction.module';
 
 @Module({
   controllers: [OrderController],
-  providers: [OrderService, TicketReleaseProcessor],
+  providers: [OrderService, TicketReleaseProcessor, ProcessTransactionWorker],
   exports: [OrderService],
   imports: [
+    //ticket
     EventModule,
     BullModule.registerQueue({
-      name: ticketQueue.name,
+      name: TicketQueue.name,
     }),
     BullBoardModule.forFeature({
-      name: ticketQueue.name,
+      name: TicketQueue.name,
       adapter: BullMQAdapter,
     }),
+    TransactionModule,
     PaymentModule,
-    VnpayModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secureSecret: configService.getOrThrow<string>('VNP_SECURE_SECRET'),
-        tmnCode: configService.getOrThrow<string>('VNP_TMN_CODE'),
-        loggerFn: ignoreLogger,
-      }),
-      inject: [ConfigService],
-    }),
   ],
 })
 export class OrderModule {}

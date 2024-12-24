@@ -20,6 +20,8 @@ import {
 
 import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto copy';
 import { TransactionStatus } from '@prisma/client';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class VnpayGateway implements PaymentGatewayInterface {
@@ -30,7 +32,6 @@ export class VnpayGateway implements PaymentGatewayInterface {
   };
   constructor(
     private readonly vnpayService: VnpayService,
-    private readonly transactionService: TransactionService,
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
@@ -95,7 +96,6 @@ export class VnpayGateway implements PaymentGatewayInterface {
 
       return {
         response: IpnSuccess,
-        data: verify,
         success: true,
         orderCode: verify.vnp_TxnRef,
       };

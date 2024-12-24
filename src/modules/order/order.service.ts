@@ -2,43 +2,49 @@ import { BaseService } from '@/services/base/base.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Order, OrderStatus } from '@prisma/client';
+import {
+  Order,
+  OrderStatus,
+  TransactionAction,
+  TransactionStatus,
+} from '@prisma/client';
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
 import { TicketClassRedisResponseDto } from '../event/dto/ticket-class-redis.response.dto';
 import { EventConfigService } from '../event/event-config.service';
+import { PaymentService } from '../payment/payment.service';
 import {
   CreateOrderDetailRedis,
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
-import { PaymentService } from '../payment/payment.service';
-import { CreateTransactionDto } from '../transaction/dto/create-transaction.request.dto';
+import { TicketQueue } from './enums/queue';
+import { TransactionService } from '../transaction/transaction.service';
 
-export enum ticketQueue {
-  name = 'ticket-release',
-  jobName = 'release-tickets',
-}
 @Injectable()
 export class OrderService extends BaseService<Order> {
   private readonly logger = new Logger(OrderService.name);
   readonly genRedisKey = {
-    order: (orderId: string) => `order:${orderId}`,
+    order: (orderCode: string) => `order:${orderCode}`,
     orderDetail: (orderDetailId: string) => `orderDetail:${orderDetailId}`,
     ticketClass: (ticketClassId: string) => `ticketClass:${ticketClassId}`,
   };
+
   orderTimeout = 720000; // 12 minutes
+
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventConfigService: EventConfigService,
     private readonly paymentService: PaymentService,
+    private readonly transactionService: TransactionService,
     @InjectRedis() private readonly redis: Redis,
-    @InjectQueue(ticketQueue.name)
+    @InjectQueue(TicketQueue.name)
     private readonly ticketReleaseQueue: Queue,
   ) {
     super(databaseService, 'order', OrderResponseDto);
   }
+
   private generateTemporaryId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
@@ -75,6 +81,11 @@ export class OrderService extends BaseService<Order> {
           `Ticket class ${detail.ticketClassId} not found`,
         );
       }
+      if (detail.quantity > Number(eventSaleData.maxTicketsPerOrder)) {
+        throw new BadRequestException(
+          `Quantity exceeds max ticket per order for class ${detail.ticketClassId}`,
+        );
+      }
       return total + ticketClass.price * detail.quantity;
     }, 0);
 
@@ -96,13 +107,15 @@ export class OrderService extends BaseService<Order> {
         createdAt: new Date().toISOString(),
         orderDetails: JSON.stringify(orderDetails),
         transactionCode,
+        transactionAction: TransactionAction.BUY_TICKET,
+        paymentGateway: dto.paymentGateway,
       })
       .exec();
 
     await this.reserveTickets(dto.orderDetails, ticketClassesInfo);
 
     const job = await this.ticketReleaseQueue.add(
-      ticketQueue.jobName,
+      TicketQueue.jobName,
       { orderCode },
       { delay: this.orderTimeout }, // 10 minutes
     );
@@ -121,11 +134,8 @@ export class OrderService extends BaseService<Order> {
         amount: totalCheckout,
       },
     );
+    console.log('paymentUrl', paymentUrl);
     return { orderData, paymentUrl };
-  }
-
-  async getOrderOnRedis(orderId: string) {
-    return await this.redis.hgetall(this.genRedisKey.order(orderId));
   }
 
   async findOrdersByUserId(userId: string) {
@@ -179,15 +189,14 @@ export class OrderService extends BaseService<Order> {
     }
   }
 
-  async cancelOrder(orderId: string): Promise<OrderResponseDto> {
-    const orderKey = this.genRedisKey.order(orderId);
-
+  async cancelOrder(orderCode: string): Promise<OrderResponseDto> {
+    const orderKey = this.genRedisKey.order(orderCode);
     const orderData = await this.redis.hgetall(orderKey);
     if (!orderData || orderData.status !== OrderStatus.PENDING) {
       throw new BadRequestException('Order not found or already completed');
     }
 
-    await this.releaseTickets(orderId);
+    await this.releaseTickets(orderCode);
 
     // delete order on redis
     await this.redis.del(orderKey);
@@ -207,6 +216,7 @@ export class OrderService extends BaseService<Order> {
       status: OrderStatus.CANCELLED,
       email: 'notbuyticket@gmail.com',
       totalCheckOut: Number(orderData.totalCheckout),
+      code: orderCode,
     });
 
     return canceledOrder;
@@ -243,7 +253,42 @@ export class OrderService extends BaseService<Order> {
     }
   }
 
-  async completeOrder(orderCode: string, transaction: CreateTransactionDto) {
+  async processTransaction(transactionID: string): Promise<void> {
+    const transactionData = await this.redis.hgetall(
+      this.genRedisKey.order(transactionID),
+    );
+    if (!transactionData) {
+      throw new Error(`Transaction with ID ${transactionID} not found`);
+    }
+
+    if (transactionData.status !== 'PENDING') {
+      throw new Error(`Transaction with ID ${transactionID} is not PENDING`);
+    }
+
+    // Ticket purchase
+    if (transactionData.transactionAction === 'BUY_TICKET') {
+      const amount = parseFloat(transactionData.totalCheckout);
+      console.log('amount', amount);
+      const refCode = transactionData.code;
+      const gateway = transactionData.paymentGateway;
+      const transaction = await this.transactionService.create({
+        status: TransactionStatus.COMPLETED,
+        action: TransactionAction.BUY_TICKET,
+        refCode,
+        gateway,
+        details: {},
+        code: parseInt(this.generateTemporaryId()),
+        amount,
+      });
+
+      await this.completeOrder(
+        transactionData.code, // orderCode
+        transaction.id, // transactionID
+      );
+    }
+  }
+
+  async completeOrder(orderCode: string, transactionId: string) {
     const orderKey = this.genRedisKey.order(orderCode);
 
     const orderData = await this.redis.hgetall(orderKey);
@@ -255,31 +300,37 @@ export class OrderService extends BaseService<Order> {
 
     const orderDetails = JSON.parse(orderData.orderDetails);
 
-    return await this.databaseService.$transaction(async (tx) => {
-      const createAndGetTicketIds = orderDetails.map(async (detail) => {
+    const createdOrder = await this.databaseService.$transaction(async (tx) => {
+      const createdTickets = orderDetails.map(async (detail) => {
         const ticketData = [];
         for (let i = 0; i < detail.quantity; i++) {
-          const ticket = await tx.ticket.create({
-            data: {
-              ticketClass: {
-                connect: {
-                  id: detail.ticketClassId,
-                },
+          ticketData.push({
+            ticketClass: {
+              connect: {
+                id: detail.ticketClassId,
               },
-              event: {
-                connect: {
-                  id: orderData.eventId,
-                },
+            },
+            event: {
+              connect: {
+                id: orderData.eventId,
               },
             },
           });
-          ticketData.push({ id: ticket.id, amount: orderDetails.price });
         }
-        return ticketData;
+        return await tx.ticket.createManyAndReturn({
+          data: ticketData,
+        });
       });
+
+      const ticketsData = await Promise.all(createdTickets);
+      console.log('ticketsData', ticketsData);
 
       await tx.order.create({
         data: {
+          status: OrderStatus.COMPLETED,
+          email: 'notbuyticket@gmail.com',
+          totalCheckOut: Number(orderData.totalCheckout),
+          code: orderCode,
           user: {
             connect: {
               id: orderData.userId,
@@ -290,20 +341,23 @@ export class OrderService extends BaseService<Order> {
               id: orderData.eventId,
             },
           },
-          orderDetails: {
-            //each linked to 1 ticket of 1 ticketClass
-            createMany: {
-              data: createAndGetTicketIds.flat(),
-            },
-          },
-          status: OrderStatus.COMPLETED,
-          email: 'notbuyticket@gmail.com',
-          totalCheckOut: Number(orderData.totalCheckout),
+          // orderDetails: {
+          //   //each linked to 1 ticket of 1 ticketClass
+          //   createMany: {
+          //     data: orderDetailDataWithTicketId.flat(),
+          //   },
+          // },
           transaction: {
-            create: {},
+            connect: {
+              id: transactionId,
+            },
           },
         },
       });
     });
+
+    await this.redis.del(orderKey);
+
+    return createdOrder;
   }
 }

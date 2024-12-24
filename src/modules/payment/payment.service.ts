@@ -1,20 +1,35 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
+import { Queue } from 'bullmq';
+import { TransactionQueue } from './enums/queue';
 import { PaymentGatewayFactory } from './gateways/gateway.factory';
 import {
   CallbackData,
   CreatePaymentLinkOptions,
 } from './interfaces/paymentGateway.interface';
-import { TransactionService } from '../transaction/transaction.service';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private readonly paymentGatewayFactory: PaymentGatewayFactory,
-    private readonly transactionService: TransactionService,
+    @InjectQueue(TransactionQueue.name)
+    private readonly transactionQueue: Queue,
   ) {}
+  // Transaction Queue
+  private readonly JOB_NAME_PREFIX = 'transaction';
+  private readonly PROCESS_JOB_NAME = this.JOB_NAME_PREFIX + ':process';
 
-  private async handleSucessPayment(transID: string): Promise<void> {
-    return await this.transactionService.addTransactionToQueue(transID);
+  private async handleSucessPayment(orderCode: string): Promise<void> {
+    //check what type of payment
+    return await this.addTransactionToQueue(orderCode);
+  }
+
+  // Transaction Queue
+  async addTransactionToQueue(transactionID: string): Promise<void> {
+    await this.transactionQueue.add(this.PROCESS_JOB_NAME, {
+      transactionID,
+    });
+    console.log('transaction added to queue');
   }
 
   async createPaymentLink(gatewayType: string, dto: CreatePaymentLinkOptions) {
@@ -24,11 +39,12 @@ export class PaymentService {
   }
 
   async handleCallback(gatewayType: string, callbackData: CallbackData) {
+    console.log('callback called');
     const gateway = this.paymentGatewayFactory.getGateway(gatewayType);
 
     const data = await gateway.handleCallback(callbackData.data);
     if (data.success) {
-      await this.handleSucessPayment(data.orderCode); // For testing purpose
+      await this.handleSucessPayment(data.orderCode);
     }
     return data.response;
   }

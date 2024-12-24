@@ -6,6 +6,7 @@ import {
 
 export class TransactionResponseDto implements Transaction {
   id: string;
+  code: bigint;
   refCode: string;
   action: TransactionAction;
   gateway: string;

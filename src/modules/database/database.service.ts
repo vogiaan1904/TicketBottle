@@ -17,7 +17,7 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
     try {
       await this.$connect();
       this.appLogger.log('Connected to database successfully');
-      // await this.createAdminAccount();
+      await this.createAdminAccount();
     } catch (error) {
       this.appLogger.error('Failed to connect to database', error);
       throw new InternalServerErrorException(error);

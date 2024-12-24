@@ -1,34 +1,32 @@
+import { BaseService } from '@/services/base/base.service';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Injectable } from '@nestjs/common';
 import { Transaction } from '@prisma/client';
+import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
-import { InjectQueue } from '@nestjs/bullmq';
-import { TransactionQueue } from './enum/queue';
-import { Queue } from 'bullmq';
-import { BaseService } from '@/services/base/base.service';
+import { OrderService } from '../order/order.service';
+// import cryptoRandomString from 'crypto-random-string';
 
 @Injectable()
 export class TransactionService extends BaseService<Transaction> {
-  private readonly JOB_NAME_PREFIX = 'transaction';
-  private readonly PROCESS_JOB_NAME = this.JOB_NAME_PREFIX + ':process';
-
+  readonly genRedisKey = {
+    order: (orderId: string) => `order:${orderId}`,
+  };
+  private generateTemporaryId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
   constructor(
     private readonly databaseService: DatabaseService,
-    @InjectQueue(TransactionQueue.name)
-    private readonly transactionQueue: Queue,
+
+    @InjectRedis() private readonly redis: Redis,
   ) {
     super(databaseService, 'transaction', TransactionService);
   }
 
-  async addTransactionToQueue(transactionID: string): Promise<void> {
-    await this.transactionQueue.add(this.PROCESS_JOB_NAME, { transactionID });
-  }
-
-  refCode: string;
-  async processTransaction(transactionID: string): Promise<void> {
-    if (!transaction) {
-      throw new Error(`Transaction with ID ${transactionID} not found`);
-    }
-
-    // Process transaction
-  }
+  // generateTransactionCode(): number {
+  //   const expDate = new Date();
+  //   const formattedDate = `${expDate.getFullYear().toString().slice(2)}${(expDate.getMonth() + 1).toString().padStart(2, '0')}${expDate.getDate().toString().padStart(2, '0')}`;
+  //   const randomString = cryptoRandomString({ length: 10, type: 'numeric' });
+  //   return parseInt(`${formattedDate}${randomString}`);
+  // }
 }

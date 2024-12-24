@@ -6,27 +6,12 @@ import {
   Injectable,
   Param,
   Post,
-  Query,
   Req,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { Request, Response } from 'express';
-import { VnpayService } from 'nestjs-vnpay';
-import {
-  InpOrderAlreadyConfirmed,
-  IpnFailChecksum,
-  IpnInvalidAmount,
-  IpnOrderNotFound,
-  IpnSuccess,
-  IpnUnknownError,
-  ReturnQueryFromVNPay,
-  VerifyReturnUrl,
-} from 'vnpay';
 import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
-import { PaymentService } from '../payment/payment.service';
 import { CreateOrderRedisDto } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
 import { OrderService } from './order.service';
@@ -38,11 +23,7 @@ export class OrderController {
   constructor(
     private readonly orderService: OrderService,
     private readonly configService: ConfigService,
-    private readonly vnpayService: VnpayService,
-    private readonly paymentService: PaymentService,
-  ) {
-    this.returnUrl = configService.get<string>('VNP_RETURN_URL');
-  }
+  ) {}
 
   @Post()
   @UseGuards(JwtAccessTokenGuard)

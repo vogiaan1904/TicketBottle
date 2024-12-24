@@ -13,6 +13,10 @@ export class OrderResponseDto implements Order {
 
   @Expose()
   @ApiProperty()
+  code: string;
+
+  @Expose()
+  @ApiProperty()
   totalCheckOut: number;
 
   @Expose()
@@ -20,7 +24,8 @@ export class OrderResponseDto implements Order {
   status: $Enums.OrderStatus;
 
   @Expose()
-  transctionId: string;
+  @ApiProperty()
+  transactionId: string;
 
   @Expose()
   @ApiProperty()
@@ -42,7 +47,7 @@ export class OrderResponseDto implements Order {
 export class OrderRedisResponseDto {
   @Expose()
   @ApiProperty()
-  id: string;
+  code: string;
 
   @Expose()
   @ApiProperty()
@@ -63,6 +68,14 @@ export class OrderRedisResponseDto {
   @Expose()
   @ApiProperty()
   totalCheckout: number;
+
+  @Expose()
+  @ApiProperty()
+  transactionAction: $Enums.TransactionAction;
+
+  @Expose()
+  @ApiProperty()
+  transactionCode: bigint;
 
   @Expose()
   @ApiProperty()

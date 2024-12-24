@@ -1,19 +1,22 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { TransactionQueue } from '../enum/queue';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
+import { OrderService } from '../order.service';
+import { TransactionQueue } from '@/modules/payment/enums/queue';
 
 @Processor(TransactionQueue.name)
 export class ProcessTransactionWorker extends WorkerHost {
   private readonly logger = new Logger(ProcessTransactionWorker.name);
-
-  consturctor() {}
+  constructor(private readonly orderService: OrderService) {
+    super();
+  }
 
   async process(job: Job<{ transactionID: string }>): Promise<void> {
     const { transactionID } = job.data;
     this.logger.log(`Processing transaction ID: ${transactionID}`);
     try {
       // process transaction
+      await this.orderService.processTransaction(transactionID);
       this.logger.log(`Do something with trans: ${transactionID}`);
     } catch (error) {
       this.logger.error(

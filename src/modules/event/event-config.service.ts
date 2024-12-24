@@ -5,6 +5,7 @@ import { TicketClassService } from '../ticket-class/ticket-class.service';
 import { TicketClassResponseDto } from './../ticket-class/dto/ticket-class.response.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { EventService } from './event.service';
+import { EventStatus } from '@prisma/client';
 
 enum EventConfigStatus {
   Ok = '1',
@@ -68,6 +69,11 @@ export class EventConfigService {
       this.genRedisKey.eventConfigStatus(eventID),
       EventConfigStatus.Ok,
     );
+
+    await this.eventService.update(
+      { id: eventID },
+      { status: EventStatus.PUBLISHED },
+    );
   }
 
   async checkIsReadyForSale(eventID: string): Promise<boolean> {
@@ -83,13 +89,16 @@ export class EventConfigService {
   async getSaleData(eventID: string) {
     const isReadyForSale = await this.checkIsReadyForSale(eventID);
 
+    const eventKey = this.genRedisKey.event(eventID);
+    const maxTicketsPerOrder = await this.redis.hget(
+      eventKey,
+      'maxTicketsPerOrder',
+    );
+
     const ticketClassList =
       await this.ticketClassService.findTicketClassesByEventId(eventID);
 
-    const isFree = await this.redis.hget(
-      this.genRedisKey.event(eventID),
-      'isFree',
-    );
+    const isFree = await this.redis.hget(eventKey, 'isFree');
 
     const ticketClassesInfo = await Promise.all(
       ticketClassList.map(async (c) => {
@@ -101,6 +110,7 @@ export class EventConfigService {
       isReadyForSale,
       ticketClassesInfo,
       isFree,
+      maxTicketsPerOrder,
     };
   }
 
