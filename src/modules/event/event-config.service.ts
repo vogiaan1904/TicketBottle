@@ -44,7 +44,7 @@ export class EventConfigService {
     const eventDataKey = this.genRedisKey.event(eventID);
     await this.redis.hset(eventDataKey, {
       id: event.id,
-      maxTicketsPerOrder: event.maxTicketsPerOrder,
+      maxTicketsPerCustomer: event.maxTicketsPerCustomer,
       isFree: event.isFree,
     });
 
@@ -90,15 +90,15 @@ export class EventConfigService {
     const isReadyForSale = await this.checkIsReadyForSale(eventID);
 
     const eventKey = this.genRedisKey.event(eventID);
-    const maxTicketsPerOrder = await this.redis.hget(
-      eventKey,
-      'maxTicketsPerOrder',
-    );
 
     const ticketClassList =
       await this.ticketClassService.findTicketClassesByEventId(eventID);
 
     const isFree = await this.redis.hget(eventKey, 'isFree');
+    const maxTicketsPerCustomer = await this.redis.hget(
+      eventKey,
+      'maxTicketsPerCustomer',
+    );
 
     const ticketClassesInfo = await Promise.all(
       ticketClassList.map(async (c) => {
@@ -110,7 +110,7 @@ export class EventConfigService {
       isReadyForSale,
       ticketClassesInfo,
       isFree,
-      maxTicketsPerOrder,
+      maxTicketsPerCustomer,
     };
   }
 

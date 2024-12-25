@@ -26,7 +26,7 @@ export class EventResponseDto implements Event {
 
   @Expose()
   @ApiProperty()
-  maxTicketsPerOrder: number;
+  maxTicketsPerCustomer: number;
 
   @Expose()
   @ApiProperty({ enum: EventStatus, enumName: 'EventStatus' })

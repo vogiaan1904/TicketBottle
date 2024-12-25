@@ -65,29 +65,35 @@ export class OrderService extends BaseService<Order> {
     if (!eventSaleData.isReadyForSale) {
       throw new BadRequestException('Event is not ready for sale');
     }
-    if (eventSaleData.isFree === 'true') {
-      await this.checkIfUserPlacedFreeEvent(userId, dto.eventId);
-    }
+
+    await this.checkIfExceedMaxNumOfTickets(
+      userId,
+      dto.eventId,
+      Number(eventSaleData.maxTicketsPerCustomer),
+    );
 
     const ticketClassesInfo = eventSaleData.ticketClassesInfo;
 
-    const totalCheckout = dto.orderDetails.reduce((total, detail) => {
-      //calculate total price
-      const ticketClass = ticketClassesInfo.find(
-        (tc) => tc.id === detail.ticketClassId,
-      );
-      if (!ticketClass) {
-        throw new BadRequestException(
-          `Ticket class ${detail.ticketClassId} not found`,
+    const { totalCheckout, totalQuantity } = dto.orderDetails.reduce(
+      (acc, detail) => {
+        //calculate total price and total quantity
+        const ticketClass = ticketClassesInfo.find(
+          (tc) => tc.id === detail.ticketClassId,
         );
-      }
-      if (detail.quantity > Number(eventSaleData.maxTicketsPerOrder)) {
-        throw new BadRequestException(
-          `Quantity exceeds max ticket per order for class ${detail.ticketClassId}`,
-        );
-      }
-      return total + ticketClass.price * detail.quantity;
-    }, 0);
+        if (!ticketClass) {
+          throw new BadRequestException(
+            `Ticket class ${detail.ticketClassId} not found`,
+          );
+        }
+
+        return {
+          totalCheckout:
+            acc.totalCheckout + ticketClass.price * detail.quantity,
+          totalQuantity: acc.totalQuantity + detail.quantity,
+        };
+      },
+      { totalCheckout: 0, totalQuantity: 0 },
+    );
 
     const orderDetails = dto.orderDetails.map((detail) => {
       //add price to each orderDetail
@@ -104,6 +110,7 @@ export class OrderService extends BaseService<Order> {
         userId,
         status: OrderStatus.PENDING,
         totalCheckout,
+        totalQuantity,
         createdAt: new Date().toISOString(),
         orderDetails: JSON.stringify(orderDetails),
         transactionCode,
@@ -138,15 +145,23 @@ export class OrderService extends BaseService<Order> {
     return { orderData, paymentUrl };
   }
 
-  async findOrdersByUserId(userId: string) {
-    return await this.findMany({ filter: { userId } });
-  }
-
-  async checkIfUserPlacedFreeEvent(userId: string, eventId: string) {
-    const orders = await this.findOrdersByUserId(userId);
-    const isPlaced = orders.some((order) => order.eventId === eventId);
-    if (isPlaced) {
-      throw new BadRequestException('User already placed order for this event');
+  async checkIfExceedMaxNumOfTickets(
+    userId: string,
+    eventId: string,
+    maxTicketsPerCustomer: number,
+  ) {
+    const placedOrders = await this.findMany({
+      filter: { userId, eventId, status: 'COMPLETED' },
+    });
+    console.log('placedOrders', placedOrders);
+    const totalQuantity = placedOrders.reduce(
+      (acc, order) => acc + order.totalQuantity,
+      0,
+    );
+    if (totalQuantity > maxTicketsPerCustomer) {
+      throw new BadRequestException(
+        'Exceed max number of tickets per customer',
+      );
     }
   }
 
@@ -268,10 +283,13 @@ export class OrderService extends BaseService<Order> {
     // Ticket purchase
     if (transactionData.transactionAction === 'BUY_TICKET') {
       const amount = parseFloat(transactionData.totalCheckout);
+      const transactionId = this.generateTemporaryId();
       console.log('amount', amount);
       const refCode = transactionData.code;
       const gateway = transactionData.paymentGateway;
-      const transaction = await this.transactionService.create({
+
+      await this.transactionService.create({
+        id: transactionId,
         status: TransactionStatus.COMPLETED,
         action: TransactionAction.BUY_TICKET,
         refCode,
@@ -283,7 +301,7 @@ export class OrderService extends BaseService<Order> {
 
       await this.completeOrder(
         transactionData.code, // orderCode
-        transaction.id, // transactionID
+        transactionId, // transactionID
       );
     }
   }
@@ -291,6 +309,7 @@ export class OrderService extends BaseService<Order> {
   async completeOrder(orderCode: string, transactionId: string) {
     const orderKey = this.genRedisKey.order(orderCode);
 
+    // Retrieve order data from Redis
     const orderData = await this.redis.hgetall(orderKey);
     if (!orderData || orderData.status !== OrderStatus.PENDING) {
       throw new BadRequestException('Order not found or already completed');
@@ -301,35 +320,23 @@ export class OrderService extends BaseService<Order> {
     const orderDetails = JSON.parse(orderData.orderDetails);
 
     const createdOrder = await this.databaseService.$transaction(async (tx) => {
-      const createdTickets = orderDetails.map(async (detail) => {
-        const ticketData = [];
-        for (let i = 0; i < detail.quantity; i++) {
-          ticketData.push({
-            ticketClass: {
-              connect: {
-                id: detail.ticketClassId,
-              },
-            },
-            event: {
-              connect: {
-                id: orderData.eventId,
-              },
-            },
-          });
-        }
-        return await tx.ticket.createManyAndReturn({
-          data: ticketData,
-        });
+      const ticketPromises = orderDetails.map(async (detail) => {
+        const ticketData = Array.from({ length: detail.quantity }, () => ({
+          ticketClassId: detail.ticketClassId,
+          eventId: orderData.eventId,
+        }));
+
+        return await tx.ticket.createManyAndReturn({ data: ticketData });
       });
 
-      const ticketsData = await Promise.all(createdTickets);
-      console.log('ticketsData', ticketsData);
-
-      await tx.order.create({
+      const a = await Promise.all(ticketPromises);
+      console.log(a);
+      return await tx.order.create({
         data: {
           status: OrderStatus.COMPLETED,
-          email: 'notbuyticket@gmail.com',
+          email: 'notbuyticket@gmail.com', // Replace with actual email if available
           totalCheckOut: Number(orderData.totalCheckout),
+          totalQuantity: Number(orderData.totalQuantity),
           code: orderCode,
           user: {
             connect: {
@@ -341,12 +348,13 @@ export class OrderService extends BaseService<Order> {
               id: orderData.eventId,
             },
           },
-          // orderDetails: {
-          //   //each linked to 1 ticket of 1 ticketClass
-          //   createMany: {
-          //     data: orderDetailDataWithTicketId.flat(),
-          //   },
-          // },
+          orderDetails: {
+            createMany: {
+              data: a.flat().map((ticket) => ({
+                ticketId: ticket.id,
+              })),
+            },
+          },
           transaction: {
             connect: {
               id: transactionId,
@@ -356,8 +364,10 @@ export class OrderService extends BaseService<Order> {
       });
     });
 
+    // Remove the order from Redis
     await this.redis.del(orderKey);
 
+    // Return the created order
     return createdOrder;
   }
 }

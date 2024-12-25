@@ -36,6 +36,7 @@ model Order {
   totalCheckOut Float
   email         String
   status        OrderStatus   @default(PENDING)
+  totalQuantity Int
   userId        String
   eventId       String
   transactionId String        @unique

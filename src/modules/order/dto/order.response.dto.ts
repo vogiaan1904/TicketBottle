@@ -21,6 +21,10 @@ export class OrderResponseDto implements Order {
 
   @Expose()
   @ApiProperty()
+  totalQuantity: number;
+
+  @Expose()
+  @ApiProperty()
   status: $Enums.OrderStatus;
 
   @Expose()
