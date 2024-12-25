@@ -3,11 +3,10 @@ import {
   Inject,
   Injectable,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
+import { UserService } from '../user/user.service';
 import { RegisterRequestDTO } from './dto/request/register.request.dto';
 
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -15,21 +14,24 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
 
-import {
-  ResetPasswordTokenPayload,
-  TokenPayload,
-  VerifyAccountTokenPayload,
-} from './interfaces/token.interface';
 import { Cache } from 'cache-manager';
 import {
   accessTokenKeyPair,
   refreshTokenKeyPair,
 } from 'src/constraints/jwt.constraints';
+import { EventService } from '../event/event.service';
+import { StaffResponseDto } from '../staff/dto/staff.response.dto';
+import { StaffService } from '../staff/staff.service';
 import { TokenService } from '../token/token.service';
-import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
-import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
 import { UserResponseDto } from '../user/dto/user.response.dto';
+import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
+import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
 import { RegisterResponseDTO } from './dto/response/register.response.dto';
+import {
+  ResetPasswordTokenPayload,
+  TokenPayload,
+  VerifyAccountTokenPayload,
+} from './interfaces/token.interface';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +45,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly tokenService: TokenService,
+    private readonly eventService: EventService,
+    private readonly staffService: StaffService,
 
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
   ) {}
@@ -53,12 +57,12 @@ export class AuthService {
   ): Promise<void> {
     const is_matching = await bcrypt.compare(plainText, hashedText);
     if (!is_matching) {
-      throw new BadRequestException();
+      throw new BadRequestException("Email or password doesn't match");
     }
   }
 
   async register(dto: RegisterRequestDTO): Promise<RegisterResponseDTO> {
-    const isExist = await this.userService.findOne({ email: dto.email });
+    const isExist = await this.userService.findByEmail(dto.email);
     if (isExist) {
       throw new BadRequestException('Email already exists');
     }
@@ -69,6 +73,8 @@ export class AuthService {
       ...dto,
       password: hashedPassword,
     });
+
+    await this.sendVerificationEmail(newUser.email);
     return newUser;
   }
 
@@ -87,12 +93,27 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<UserResponseDto> {
-    const user = await this.userService.findOne({ email });
+    const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new BadRequestException('User not found');
     }
+    if (!user.isVerified) {
+      throw new BadRequestException('User not verified');
+    }
     await this.verifyPlainContentWithHashedContent(password, user.password);
     return user;
+  }
+
+  async getStaff(
+    username: string,
+    password: string,
+  ): Promise<StaffResponseDto> {
+    const staff = await this.staffService.findOne({ username });
+    if (!staff) {
+      throw new BadRequestException('Staff not found');
+    }
+    await this.verifyPlainContentWithHashedContent(password, staff.password);
+    return staff;
   }
 
   async getUserIfRefreshTokenMatched(
@@ -100,17 +121,43 @@ export class AuthService {
     refreshToken: string,
   ): Promise<UserResponseDto> {
     this.logger.log(userID);
-    const user = await this.userService.findOne({ id: userID });
+    const user = await this.userService.findById(userID);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new BadRequestException('User not found');
     }
 
     const currentRefreshToken = await this.cacheService.get<string>(userID);
+    if (!currentRefreshToken) {
+      throw new BadRequestException('Invalid token');
+    }
     await this.verifyPlainContentWithHashedContent(
       refreshToken,
       currentRefreshToken,
     );
     return user;
+  }
+
+  async getStaffIfRefreshTokenMatched(
+    staffId: string,
+    refreshToken: string,
+  ): Promise<StaffResponseDto> {
+    this.logger.log(staffId);
+    const staff = await this.staffService.findOne({ id: staffId });
+    if (!staff) {
+      throw new BadRequestException('Staff not found');
+    }
+
+    const currentRefreshToken = await this.cacheService.get<string>(staffId);
+
+    if (!currentRefreshToken) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    await this.verifyPlainContentWithHashedContent(
+      refreshToken,
+      currentRefreshToken,
+    );
+    return staff;
   }
 
   generateAccessToken(payload: TokenPayload): string {
@@ -143,7 +190,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const user = await this.userService.findOne({ email });
+    const user = await this.userService.findByEmail(email);
     const payload: ResetPasswordTokenPayload = {
       email,
     };
@@ -162,7 +209,7 @@ export class AuthService {
 
   async resetPassword(dto: ResetPasswordRequestDTO): Promise<void> {
     const decoded = await this.jwtService.decode(dto.token);
-    const user = await this.userService.findOne({ email: decoded.email });
+    const user = await this.userService.findByEmail(decoded.email);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -185,7 +232,7 @@ export class AuthService {
 
   async verifyAccount(dto: VerifyAccountRequestDTO): Promise<void> {
     const decoded = await this.jwtService.decode(dto.token);
-    const user = await this.userService.findOne(decoded.email);
+    const user = await this.userService.findByEmail(decoded.email);
 
     if (user.isVerified) {
       throw new BadRequestException('Account already verifed');
@@ -204,7 +251,7 @@ export class AuthService {
   }
 
   async sendVerificationEmail(email: string): Promise<void> {
-    const user = await this.userService.findOne({ email });
+    const user = await this.userService.findByEmail(email);
 
     if (user.isVerified) {
       throw new BadRequestException('Account already verifed');

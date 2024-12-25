@@ -1,44 +1,24 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { TicketService } from './ticket.service';
-import { Prisma } from '@prisma/client';
+import { TicketResponseDto } from './dto/ticket.response.dto';
+import { CreateTicketRequestDto } from './dto/create-ticket.request.dto';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 
 @Controller('ticket')
 export class TicketController {
   constructor(private readonly ticketService: TicketService) {}
 
+  @OnlyAdmin()
   @Post()
-  create(@Body() createTicketDto: Prisma.TicketCreateInput) {
+  @ApiCreatedResponse({ type: TicketResponseDto })
+  create(@Body() createTicketDto: CreateTicketRequestDto) {
     return this.ticketService.create(createTicketDto);
   }
 
-  @Get()
-  findAll() {
-    return this.ticketService.findAll();
-  }
-
   @Get(':id')
+  @ApiOkResponse({ type: TicketResponseDto })
   findOne(@Param('id') id: string) {
     return this.ticketService.findOne({ id });
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateTicketDto: Prisma.TicketUpdateInput,
-  ) {
-    return this.ticketService.update(id, updateTicketDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ticketService.remove(id);
   }
 }

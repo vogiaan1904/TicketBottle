@@ -13,11 +13,11 @@ export class PrismaInterceptor<T> implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((data) =>
-        plainToClass(this.dto, data, {
+      map((data) => {
+        return plainToClass(this.dto, data, {
           excludeExtraneousValues: true, // Chỉ map các field có @Expose()
-        }),
-      ),
+        });
+      }),
     );
   }
 }

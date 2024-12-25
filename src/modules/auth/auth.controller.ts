@@ -1,35 +1,30 @@
-import {
-  Body,
-  Controller,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { UserService } from '../user/user.service';
-import { ApiPost } from 'src/decorators/apiPost.decorator';
-import { RegisterRequestDTO } from './dto/request/register.request.dto';
-import { LocalAuthGuard } from './guards/local.guard';
+import { Body, Controller, Req, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
-import { LoginRequestDTO } from './dto/request/login.request.dto';
-import { LoginResponseDTO } from './dto/response/login.response.dto';
+import { ApiPost } from 'src/decorators/apiPost.decorator';
 import { RequestWithUser } from 'src/types/request.type';
-import { JwtAccessTokenGuard } from './guards/jwt-access-token.guard';
-import { JwtRefreshTokenGuard } from './guards/jwt-refresh-token.guard';
-import { RefreshTokenRequestDTO } from './dto/request/refreshToken.request.dto';
-import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
-import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
+import { StaffService } from '../staff/staff.service';
+import { UserService } from '../user/user.service';
+import { AuthService } from './auth.service';
 import { ForgotPasswordRequestDTO } from './dto/request/forgotPassword.request.dto';
+import { LoginRequestDTO } from './dto/request/login.request.dto';
+import { RefreshTokenRequestDTO } from './dto/request/refreshToken.request.dto';
+import { RegisterRequestDTO } from './dto/request/register.request.dto';
+import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
 import { SendEmailVerfiyRequestDTO } from './dto/request/sendEmailVerify.request.dto';
-import { User } from '../user/entities/user.entity';
-import { PrismaInterceptor } from '@/interceptors/prisma.interceptor';
+import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
+import { LoginResponseDTO } from './dto/response/login.response.dto';
+import { JwtAccessTokenGuard } from './guards/jwt-access/jwt-user-access-token.guard';
+import { LocalUserAuthGuard } from './guards/local/local-user.guard';
+import { JwtRefreshTokenGuard } from './guards/jwt-refresh/jwt-user-refresh-token.guard';
+import { UserResponseDto } from '../user/dto/user.response.dto';
 
 @Controller('auth')
-@UseInterceptors(new PrismaInterceptor(User))
+// @UseInterceptors(new PrismaInterceptor(User))
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly staffService: StaffService,
   ) {}
 
   @ApiPost({
@@ -41,7 +36,8 @@ export class AuthController {
     return await this.authService.register(dto);
   }
 
-  @UseGuards(LocalAuthGuard)
+  @ApiPost({ path: 'login' })
+  @UseGuards(LocalUserAuthGuard)
   @ApiBody({
     type: LoginRequestDTO,
     examples: {
@@ -63,7 +59,6 @@ export class AuthController {
     description: 'Login successful',
     type: LoginResponseDTO,
   })
-  @ApiPost({ path: 'login' })
   async login(@Req() request: RequestWithUser) {
     const { user } = request;
     return await this.authService.login(user.id);
@@ -71,10 +66,10 @@ export class AuthController {
 
   @UseGuards(JwtAccessTokenGuard)
   @ApiPost({ path: 'me' })
+  @ApiOkResponse({ type: UserResponseDto })
   async getMe(@Req() request: RequestWithUser) {
     const { user } = request;
-
-    return await this.userService.findOne({ email: user.email });
+    return await this.userService.findByEmail(user.email);
   }
 
   @UseGuards(JwtRefreshTokenGuard)

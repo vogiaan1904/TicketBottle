@@ -1,0 +1,24 @@
+enum StaffRole {
+  ADMIN
+  STAFF
+}
+
+model Staff {
+  id       String       @id @default(uuid())
+  password String
+  username String       @unique
+  role     StaffRole    @default(STAFF)
+  events   StaffEvent[]
+
+  @@map("staffs")
+}
+
+model StaffEvent {
+  id      String @id @default(uuid())
+  staffId String
+  staff   Staff  @relation(fields: [staffId], references: [id])
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  @@map("staff_events")
+}

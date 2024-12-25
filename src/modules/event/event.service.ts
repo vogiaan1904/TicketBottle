@@ -1,36 +1,81 @@
+import { BaseService } from '@/services/base/base.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Event } from '@prisma/client';
 import { DatabaseService } from 'src/modules/database/database.service';
+import { EventResponseDto } from './dto/event.response.dto';
+import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
+import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
+import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
+import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
+import { TicketClassService } from '../ticket-class/ticket-class.service';
 
 @Injectable()
-export class EventService {
-  constructor(private readonly databaseService: DatabaseService) {}
-  async create(createEventDto: Prisma.EventCreateInput) {
-    return await this.databaseService.event.create({
-      data: createEventDto,
-    });
+export class EventService extends BaseService<Event> {
+  private includeInfo = { eventInfo: true };
+  private includeTicketClasses = { ticketClasses: true };
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly ticketClassService: TicketClassService,
+  ) {
+    super(databaseService, 'event', EventResponseDto);
   }
 
-  async findAll() {
-    return await this.databaseService.event.findMany();
+  async createInfo(id: string, data: CreateEventInfoRequestDto) {
+    return await super.update(
+      { id },
+      {
+        eventInfo: {
+          create: data,
+        },
+      },
+      { include: this.includeInfo },
+    );
   }
 
-  async findOne(filter: Prisma.EventWhereUniqueInput) {
-    return await this.databaseService.event.findUnique({
-      where: filter,
-    });
+  async createTicketClass(id: string, data: CreateTicketClassRequestDto) {
+    return await super.update(
+      { id },
+      {
+        ticketClasses: {
+          create: data,
+        },
+      },
+      { include: this.includeTicketClasses },
+    );
   }
 
-  async update(id: string, updateEventDto: Prisma.EventUpdateInput) {
-    return await this.databaseService.event.update({
-      where: { id },
-      data: updateEventDto,
-    });
+  async findALlEvents() {
+    return await super.findMany({ options: { include: this.includeInfo } });
   }
 
-  async remove(id: string) {
-    return await this.databaseService.event.delete({
-      where: { id },
-    });
+  async findEvents(dto: GetEventQueryRequestDto) {
+    const { page, perPage, includeInfo } = dto;
+
+    if (includeInfo === 'true') {
+      return await super.findManyWithPagination({
+        page,
+        perPage,
+        options: { include: this.includeInfo },
+      });
+    }
+    return await super.findManyWithPagination({ page, perPage });
+  }
+
+  async findEventById(id: string) {
+    return await super.findOne({ id }, { include: { ...this.includeInfo } });
+  }
+
+  async getTicketClasses(id: string) {
+    return this.ticketClassService.findTicketClassesByEventId(id);
+  }
+
+  async updateStaffPassword(
+    id: string,
+    newPassword: UpdateStaffPasswordRequestDto,
+  ) {
+    return await super.update(
+      { id },
+      { staffPassword: newPassword.newPassword },
+    );
   }
 }

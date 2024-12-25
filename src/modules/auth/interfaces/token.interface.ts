@@ -9,3 +9,7 @@ export class ResetPasswordTokenPayload {
 export class VerifyAccountTokenPayload {
   email: string;
 }
+
+export class StaffTokenPayload {
+  staffId: string;
+}

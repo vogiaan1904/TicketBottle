@@ -1,37 +1,36 @@
 enum EventStatus {
-    DRAFT
-    PUBLISHED
-    CANCELLED
+  DRAFT
+  PUBLISHED
+  CANCELLED
 }
 
 model Event {
-    id                 String        @id @default(uuid())
-    numberOfTickets    Int
-    startSellDate      DateTime
-    endSellDate        DateTime
-    isFree             Boolean
-    maxTicketsPerOrder Int
-    status             EventStatus   @default(DRAFT)
-    staffUsername      String        @unique
-    staffPassword      String
-    eventInfo          EventInfo?
-    ticketClasses      TicketClass[]
-    tickets            Ticket[]
-    createdAt          DateTime      @default(now())
-    updatedAt          DateTime      @updatedAt
+  id                    String        @id @default(uuid())
+  startSellDate         DateTime
+  endSellDate           DateTime
+  isFree                Boolean
+  maxTicketsPerCustomer Int
+  status                EventStatus   @default(DRAFT)
+  eventInfo             EventInfo?
+  ticketClasses         TicketClass[]
+  tickets               Ticket[]
+  orders                Order[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  staffs                StaffEvent[]
 
-    @@map("events")
+  @@map("events")
 }
 
 model EventInfo {
-    id          String   @id @default(uuid())
-    title       String
-    description String
-    startDate   DateTime
-    location    String
-    thumbnail   String
-    eventId     String   @unique
-    event       Event    @relation(fields: [eventId], references: [id])
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  startDate   DateTime
+  location    String
+  thumbnail   String
+  eventId     String   @unique
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-    @@map("event_infos")
+  @@map("event_infos")
 }

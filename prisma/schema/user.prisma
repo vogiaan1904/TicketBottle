@@ -1,19 +1,19 @@
 enum Gender {
-    FEMALE
-    MALE
-    CUSTOM
+  FEMALE
+  MALE
+  CUSTOM
 }
 
 model User {
-    id          String  @id @default(uuid())
-    email       String  @unique
-    password    String
-    firstName   String
-    lastName    String
-    gender      Gender
-    phoneNumber String?
-    orders      Order[]
-    isVerified  Boolean @default(false)
+  id          String  @id @default(uuid())
+  email       String  @unique
+  password    String
+  firstName   String
+  lastName    String
+  gender      Gender
+  phoneNumber String?
+  orders      Order[]
+  isVerified  Boolean @default(false)
 
-    @@map("users")
+  @@map("users")
 }
