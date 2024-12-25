@@ -13,17 +13,14 @@ export class TicketReleaseProcessor extends WorkerHost {
 
   async process(job: Job<{ orderCode: string }>): Promise<void> {
     const { orderCode } = job.data;
-    this.logger.log(
-      `Processing releaseTickets job for order code: ${orderCode}`,
-    );
+    this.logger.log(`Processing releaseTickets job for order: ${orderCode}`);
     try {
+      this.logger.log(`Cancelling order: ${orderCode}`);
       await this.orderService.cancelOrder(orderCode);
-      this.logger.log(
-        `Successfully released tickets for order code: ${orderCode}`,
-      );
+      this.logger.log(`Successfully released tickets for order: ${orderCode}`);
     } catch (error) {
       this.logger.error(
-        `Failed to release tickets for order code: ${orderCode}`,
+        `Failed to release tickets for order: ${orderCode}`,
         error,
       );
       console.error(error);

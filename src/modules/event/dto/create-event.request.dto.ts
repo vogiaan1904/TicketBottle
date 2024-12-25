@@ -22,5 +22,5 @@ export class CreateEventRequestDto {
   @IsNumber()
   @IsPositive()
   @IsNotEmpty()
-  maxTicketsPerOrder: number;
+  maxTicketsPerCustomer: number;
 }

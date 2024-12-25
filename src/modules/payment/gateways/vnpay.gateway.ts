@@ -1,4 +1,3 @@
-import { TransactionService } from '@/modules/transaction/transaction.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { VnpayService } from 'nestjs-vnpay';
 import {
@@ -18,10 +17,10 @@ import {
   PaymentGatewayInterface,
 } from '../interfaces/paymentGateway.interface';
 
-import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto copy';
-import { TransactionStatus } from '@prisma/client';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { TransactionStatus } from '@prisma/client';
 import Redis from 'ioredis';
+import { VnpayIpnResponseDto } from '../dto/response/vnpayIpn.callback.response.dto copy';
 
 @Injectable()
 export class VnpayGateway implements PaymentGatewayInterface {

@@ -14,13 +14,13 @@ import { DatabaseService } from '../database/database.service';
 import { TicketClassRedisResponseDto } from '../event/dto/ticket-class-redis.response.dto';
 import { EventConfigService } from '../event/event-config.service';
 import { PaymentService } from '../payment/payment.service';
+import { TransactionService } from '../transaction/transaction.service';
 import {
   CreateOrderDetailRedis,
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
 import { TicketQueue } from './enums/queue';
-import { TransactionService } from '../transaction/transaction.service';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -31,7 +31,7 @@ export class OrderService extends BaseService<Order> {
     ticketClass: (ticketClassId: string) => `ticketClass:${ticketClassId}`,
   };
 
-  orderTimeout = 720000; // 12 minutes
+  orderTimeout = 660000; // 11 minutes
 
   constructor(
     private readonly databaseService: DatabaseService,
@@ -66,12 +66,6 @@ export class OrderService extends BaseService<Order> {
       throw new BadRequestException('Event is not ready for sale');
     }
 
-    await this.checkIfExceedMaxNumOfTickets(
-      userId,
-      dto.eventId,
-      Number(eventSaleData.maxTicketsPerCustomer),
-    );
-
     const ticketClassesInfo = eventSaleData.ticketClassesInfo;
 
     const { totalCheckout, totalQuantity } = dto.orderDetails.reduce(
@@ -93,6 +87,13 @@ export class OrderService extends BaseService<Order> {
         };
       },
       { totalCheckout: 0, totalQuantity: 0 },
+    );
+
+    await this.checkIfExceedMaxNumOfTickets(
+      userId,
+      dto.eventId,
+      Number(eventSaleData.maxTicketsPerCustomer),
+      totalQuantity,
     );
 
     const orderDetails = dto.orderDetails.map((detail) => {
@@ -149,16 +150,17 @@ export class OrderService extends BaseService<Order> {
     userId: string,
     eventId: string,
     maxTicketsPerCustomer: number,
+    totalQuantity: number,
   ) {
     const placedOrders = await this.findMany({
       filter: { userId, eventId, status: 'COMPLETED' },
     });
     console.log('placedOrders', placedOrders);
-    const totalQuantity = placedOrders.reduce(
+    const placedQuantity = placedOrders.reduce(
       (acc, order) => acc + order.totalQuantity,
       0,
     );
-    if (totalQuantity > maxTicketsPerCustomer) {
+    if (placedQuantity + totalQuantity > maxTicketsPerCustomer) {
       throw new BadRequestException(
         'Exceed max number of tickets per customer',
       );
@@ -231,7 +233,19 @@ export class OrderService extends BaseService<Order> {
       status: OrderStatus.CANCELLED,
       email: 'notbuyticket@gmail.com',
       totalCheckOut: Number(orderData.totalCheckout),
+      totalQuantity: Number(orderData.totalQuantity),
       code: orderCode,
+      transaction: {
+        create: {
+          status: TransactionStatus.CANCELLED,
+          action: TransactionAction.BUY_TICKET,
+          refCode: orderCode,
+          gateway: orderData.paymentGateway,
+          details: {},
+          code: parseInt(this.generateTemporaryId()),
+          amount: Number(orderData.totalCheckout),
+        },
+      },
     });
 
     return canceledOrder;
