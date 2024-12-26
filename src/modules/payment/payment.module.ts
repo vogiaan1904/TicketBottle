@@ -29,6 +29,13 @@ import { PaymentService } from './payment.service';
     //transaction queue
     BullModule.registerQueue({
       name: TransactionQueue.name,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 3000,
+        },
+      },
     }),
     BullBoardModule.forFeature({
       name: TransactionQueue.name,

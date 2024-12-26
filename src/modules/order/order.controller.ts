@@ -15,6 +15,7 @@ import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-t
 import { CreateOrderRedisDto } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
 import { OrderService } from './order.service';
+import { ApiPost } from '@/decorators/apiPost.decorator';
 
 @Injectable()
 @Controller('order')
@@ -25,7 +26,7 @@ export class OrderController {
     private readonly configService: ConfigService,
   ) {}
 
-  @Post()
+  @ApiPost({ path: '' })
   @UseGuards(JwtAccessTokenGuard)
   @ApiCreatedResponse({ type: OrderResponseDto })
   async create(
@@ -37,11 +38,10 @@ export class OrderController {
         ? `${request.protocol}://${request.get('host')}`
         : this.configService.get<string>(`NGROK_TEST_URL`);
 
-    return await this.orderService.createOrderOnRedis(
-      request.user.id,
-      createOrderDto,
-      { ip: request.ip, host },
-    );
+    return await this.orderService.checkout(request.user.id, createOrderDto, {
+      ip: request.ip,
+      host,
+    });
   }
 
   @Post(':id/cancel')

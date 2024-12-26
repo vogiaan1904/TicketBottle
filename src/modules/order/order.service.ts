@@ -49,11 +49,7 @@ export class OrderService extends BaseService<Order> {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  async createOrderOnRedis(
-    userId: string,
-    dto: CreateOrderRedisDto,
-    paymentData: { ip: string; host: string },
-  ) {
+  async createOrderOnRedis(userId: string, dto: CreateOrderRedisDto) {
     const orderCode = this.generateTemporaryId();
     const transactionCode = this.generateTemporaryId();
     const orderKey = this.genRedisKey.order(orderCode);
@@ -132,17 +128,28 @@ export class OrderService extends BaseService<Order> {
 
     const orderData = await this.redis.hgetall(orderKey);
 
+    return orderData;
+  }
+
+  async checkout(
+    userId: string,
+    dto: CreateOrderRedisDto,
+    paymentData: { ip: string; host: string },
+  ) {
+    const orderData = await this.createOrderOnRedis(userId, dto);
+
+    const { code, totalCheckout } = orderData;
     const paymentUrl = await this.paymentService.createPaymentLink(
       dto.paymentGateway,
       {
         ip: paymentData.ip,
         host: paymentData.host,
         returnUrl: dto.returnUrl,
-        orderCode,
-        amount: totalCheckout,
+        orderCode: code,
+        amount: Number(totalCheckout),
       },
     );
-    console.log('paymentUrl', paymentUrl);
+
     return { orderData, paymentUrl };
   }
 
@@ -155,7 +162,6 @@ export class OrderService extends BaseService<Order> {
     const placedOrders = await this.findMany({
       filter: { userId, eventId, status: 'COMPLETED' },
     });
-    console.log('placedOrders', placedOrders);
     const placedQuantity = placedOrders.reduce(
       (acc, order) => acc + order.totalQuantity,
       0,
@@ -298,7 +304,6 @@ export class OrderService extends BaseService<Order> {
     if (transactionData.transactionAction === 'BUY_TICKET') {
       const amount = parseFloat(transactionData.totalCheckout);
       const transactionId = this.generateTemporaryId();
-      console.log('amount', amount);
       const refCode = transactionData.code;
       const gateway = transactionData.paymentGateway;
 
@@ -344,7 +349,6 @@ export class OrderService extends BaseService<Order> {
       });
 
       const a = await Promise.all(ticketPromises);
-      console.log(a);
       return await tx.order.create({
         data: {
           status: OrderStatus.COMPLETED,

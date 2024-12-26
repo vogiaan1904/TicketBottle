@@ -43,8 +43,8 @@ export class AuthController {
     examples: {
       user_1: {
         value: {
-          email: 'pnviethung@gmail.com',
-          password: '0922981365aA@',
+          email: 'test1@gmail.com',
+          password: '123',
         } as LoginRequestDTO,
       },
       user_2: {
