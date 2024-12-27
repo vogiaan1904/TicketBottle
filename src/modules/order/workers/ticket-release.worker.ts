@@ -24,7 +24,6 @@ export class TicketReleaseProcessor extends WorkerHost {
         error,
       );
       console.error(error);
-      throw error;
     }
   }
 }

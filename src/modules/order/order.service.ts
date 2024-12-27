@@ -20,10 +20,7 @@ import {
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
-import { EmailQueue, TicketQueue } from './enums/queue';
-import { OrderSuccessDataDto } from '../email/interfaces/payment/orderSuccess.interface';
-import { EmailService } from '../email/email.service';
-
+import { TicketQueue } from './enums/queue';
 @Injectable()
 export class OrderService extends BaseService<Order> {
   private readonly logger = new Logger(OrderService.name);
@@ -51,7 +48,7 @@ export class OrderService extends BaseService<Order> {
   }
 
   private generateTemporaryId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36)}`;
   }
 
   async createOrderOnRedis(userId: string, dto: CreateOrderRedisDto) {
@@ -98,7 +95,6 @@ export class OrderService extends BaseService<Order> {
     );
 
     const orderDetails = dto.orderDetails.map((detail) => {
-      //add price to each orderDetail
       const ticketClass = ticketClassesInfo.find(
         (tc) => tc.id === detail.ticketClassId,
       );
@@ -126,7 +122,7 @@ export class OrderService extends BaseService<Order> {
     const job = await this.ticketReleaseQueue.add(
       TicketQueue.jobName,
       { orderCode },
-      { delay: this.orderTimeout }, // 10 minutes
+      { delay: this.orderTimeout },
     );
 
     await this.redis.hset(orderKey, 'releaseJobId', job.id);
@@ -253,7 +249,7 @@ export class OrderService extends BaseService<Order> {
           refCode: orderCode,
           gateway: orderData.paymentGateway,
           details: {},
-          code: parseInt(this.generateTemporaryId()),
+          id: this.generateTemporaryId(),
           amount: Number(orderData.totalCheckout),
         },
       },
@@ -319,7 +315,6 @@ export class OrderService extends BaseService<Order> {
         refCode,
         gateway,
         details: {},
-        code: parseInt(this.generateTemporaryId()),
         amount,
       });
 
@@ -359,7 +354,7 @@ export class OrderService extends BaseService<Order> {
           email: 'notbuyticket@gmail.com', // Replace with actual email if available
           totalCheckOut: Number(orderData.totalCheckout),
           totalQuantity: Number(orderData.totalQuantity),
-          code: orderCode,
+          id: orderCode,
           user: {
             connect: {
               id: orderData.userId,
@@ -386,16 +381,8 @@ export class OrderService extends BaseService<Order> {
       });
     });
 
-    // Remove the order from Redis
     await this.redis.del(orderKey);
 
-    const orderSuccessData: OrderSuccessDataDto = {};
-    const tickets = orderDetails.map((detail) => ({
-      ticketClassName: await this.ticketClassService.getTicketClassName( 
-      quantity: detail.quantity,
-    }));
-    await this.emailQueue.add(EmailQueue.name, {});
-    // Return the created order
     return createdOrder;
   }
 }
