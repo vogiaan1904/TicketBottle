@@ -20,7 +20,9 @@ import {
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
-import { TicketQueue } from './enums/queue';
+import { EmailQueue, TicketQueue } from './enums/queue';
+import { OrderSuccessDataDto } from '../email/interfaces/payment/orderSuccess.interface';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -38,9 +40,12 @@ export class OrderService extends BaseService<Order> {
     private readonly eventConfigService: EventConfigService,
     private readonly paymentService: PaymentService,
     private readonly transactionService: TransactionService,
+    private readonly emailService: EmailService,
     @InjectRedis() private readonly redis: Redis,
     @InjectQueue(TicketQueue.name)
     private readonly ticketReleaseQueue: Queue,
+    @InjectQueue(EmailQueue.name)
+    private readonly emailQueue: Queue,
   ) {
     super(databaseService, 'order', OrderResponseDto);
   }
@@ -97,7 +102,7 @@ export class OrderService extends BaseService<Order> {
       const ticketClass = ticketClassesInfo.find(
         (tc) => tc.id === detail.ticketClassId,
       );
-      return { ...detail, price: ticketClass.price };
+      return { ...detail, price: ticketClass.price, name: ticketClass.name };
     });
     await this.redis
       .multi()
@@ -337,7 +342,6 @@ export class OrderService extends BaseService<Order> {
     await this.redis.hset(orderKey, 'status', OrderStatus.COMPLETED);
 
     const orderDetails = JSON.parse(orderData.orderDetails);
-
     const createdOrder = await this.databaseService.$transaction(async (tx) => {
       const ticketPromises = orderDetails.map(async (detail) => {
         const ticketData = Array.from({ length: detail.quantity }, () => ({
@@ -385,6 +389,12 @@ export class OrderService extends BaseService<Order> {
     // Remove the order from Redis
     await this.redis.del(orderKey);
 
+    const orderSuccessData: OrderSuccessDataDto = {};
+    const tickets = orderDetails.map((detail) => ({
+      ticketClassName: await this.ticketClassService.getTicketClassName( 
+      quantity: detail.quantity,
+    }));
+    await this.emailQueue.add(EmailQueue.name, {});
     // Return the created order
     return createdOrder;
   }

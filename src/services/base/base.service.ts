@@ -65,10 +65,11 @@ export abstract class BaseService<T> implements BaseServiceInterface<T> {
     return new this.responseDto(entity);
   }
 
-  async create(data: any) {
+  async create(data: any, options?: any) {
     return new this.responseDto(
       await this.prisma[this.model].create({
         data,
+        ...options,
       }),
     );
   }

@@ -8,7 +8,7 @@ import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
 import { TicketReleaseProcessor } from './workers/ticket-release.worker';
 import { ProcessTransactionWorker } from './workers/process-transaction.worker';
-import { TicketQueue } from './enums/queue';
+import { EmailQueue, TicketQueue } from './enums/queue';
 import { TransactionModule } from '../transaction/transaction.module';
 
 @Module({
@@ -16,8 +16,7 @@ import { TransactionModule } from '../transaction/transaction.module';
   providers: [OrderService, TicketReleaseProcessor, ProcessTransactionWorker],
   exports: [OrderService],
   imports: [
-    //ticket
-    EventModule,
+    //ticket queue
     BullModule.registerQueue({
       name: TicketQueue.name,
     }),
@@ -25,6 +24,17 @@ import { TransactionModule } from '../transaction/transaction.module';
       name: TicketQueue.name,
       adapter: BullMQAdapter,
     }),
+
+    //email queue
+    BullModule.registerQueue({
+      name: EmailQueue.name,
+    }),
+    BullBoardModule.forFeature({
+      name: EmailQueue.name,
+      adapter: BullMQAdapter,
+    }),
+
+    EventModule,
     TransactionModule,
     PaymentModule,
   ],
