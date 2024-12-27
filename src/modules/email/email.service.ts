@@ -4,6 +4,9 @@ import * as nodemailer from 'nodemailer';
 import * as pug from 'pug';
 import { OrderSuccessDataDto } from '../order/interfaces/order-email-data.interface';
 import { EmailDataInterface } from './interfaces/emailData.interface';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as Handlebars from 'handlebars';
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
@@ -17,9 +20,35 @@ export class EmailService {
         pass: this.configService.get<string>('EMAIL_PASS'),
       },
     });
+
+    Handlebars.registerHelper('formatCurrency', (value: number) => {
+      if (typeof value !== 'number') {
+        value = Number(value);
+      }
+      if (isNaN(value)) {
+        return value;
+      }
+      return value.toLocaleString('en-US');
+    });
   }
 
-  private convertToHTML(template: string, context: object): string {
+  private getHTML(template: string): string {
+    const filePath = path.join(
+      process.cwd(),
+      'src',
+      'templates',
+      `${template}.html`,
+    );
+    return fs.readFileSync(filePath, 'utf-8');
+  }
+
+  private renderHTML(template: string, context: object): string {
+    const htmlTemplate = this.getHTML(template);
+    const templateCompiled = Handlebars.compile(htmlTemplate);
+    return templateCompiled(context);
+  }
+
+  private converPugtToHTML(template: string, context: object): string {
     const html = pug.renderFile(`src/templates/${template}.pug`, context);
     return html;
   }
@@ -38,14 +67,7 @@ export class EmailService {
     await this.sendEmail({
       to: email,
       subject: 'Payment Success',
-      html: this.convertToHTML('payment/neworderSuccess', {
-        orderId: context.orderId,
-        userFirstName: context.userFirstName,
-        eventName: context.eventName,
-        tickets: context.tickets,
-        totalPayment: context.totalPayment,
-        orderTime: context.orderTime,
-      }),
+      html: this.renderHTML('payment/neworderSuccess', context),
     });
   }
 
@@ -53,7 +75,7 @@ export class EmailService {
     await this.sendEmail({
       to: email,
       subject: 'Reset your password',
-      html: this.convertToHTML('auth/verifyEmail', { token }),
+      html: this.converPugtToHTML('auth/verifyEmail', { token }),
     });
   }
 
@@ -64,7 +86,7 @@ export class EmailService {
     await this.sendEmail({
       to: email,
       subject: 'Verify your account',
-      html: this.convertToHTML('auth/forgotPassword', { token }),
+      html: this.converPugtToHTML('auth/forgotPassword', { token }),
     });
   }
 }

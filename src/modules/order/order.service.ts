@@ -223,15 +223,11 @@ export class OrderService extends BaseService<Order> {
     if (results === null) {
       throw new BadRequestException('Failed to reserve tickets');
     }
+    this.logger.log('Successfully reserved tickets');
   }
 
   async cancelOrder(orderCode: string): Promise<OrderResponseDto> {
     const orderKey = this.genRedisKey.order(orderCode);
-    const orderData = await this.redis.hgetall(orderKey);
-    if (!orderData || orderData.status !== OrderStatus.PENDING) {
-      throw new BadRequestException('Order not found or already completed');
-    }
-
     await this.releaseTickets(orderCode);
 
     // delete order on redis
@@ -401,7 +397,6 @@ export class OrderService extends BaseService<Order> {
     // Send email
     await this.sendOrderSuccessEmail(
       user.email,
-      user.firstName,
       orderData.orderDetails,
       createdOrder.id,
     );
@@ -415,7 +410,6 @@ export class OrderService extends BaseService<Order> {
 
   async sendOrderSuccessEmail(
     userEmail: string,
-    userFirstName: string,
     orderDetails: string,
     orderId: string,
   ) {
@@ -439,16 +433,24 @@ export class OrderService extends BaseService<Order> {
         },
       },
     );
+    const formattedOrderTime = dayjs(createdOrder.createdAt).format(
+      'HH:mm, DD/MM/YYYY',
+    );
+    const formattedStartDate = dayjs(
+      createdOrder.event.eventInfo.startDate,
+    ).format('HH:mm, DD/MM/YYYY');
 
     await this.emailQueue.add(EmailQueue.jobName, {
       email: userEmail,
       orderData: {
         orderId: createdOrder.id,
         eventName: createdOrder.event.eventInfo.name,
+        eventDate: formattedStartDate,
+        eventLocation: createdOrder.event.eventInfo.location,
         tickets: orderDetailEmailData,
         paymentGateway: createdOrder.transaction.gateway,
-        totalPayment: createdOrder.totalCheckOut,
-        orderTime: createdOrder.createdAt,
+        totalAmount: createdOrder.totalCheckOut,
+        orderTime: formattedOrderTime,
       },
     });
   }

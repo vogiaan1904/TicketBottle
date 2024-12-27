@@ -7,9 +7,10 @@ class Ticket {
 export class OrderSuccessDataDto {
   orderId: string;
   eventName: string;
-  userFirstName: string;
+  eventDate: string;
+  eventLocation: string;
   tickets: Ticket[];
   paymentGateway: string;
-  totalPayment: number;
-  orderTime: Date;
+  totalAmount: number;
+  orderTime: string;
 }

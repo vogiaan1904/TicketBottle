@@ -53,6 +53,7 @@
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.13",
     "fs": "^0.0.1-security",
+    "handlebars": "^4.7.8",
     "ioredis": "^5.4.1",
     "joi": "^17.13.3",
     "madge": "^8.0.0",
