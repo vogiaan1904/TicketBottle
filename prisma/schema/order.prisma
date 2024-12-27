@@ -16,7 +16,6 @@ enum TransactionAction {
 
 model Transaction {
   id        String            @id @default(uuid())
-  code      BigInt            @unique
   refCode   String            @unique
   action    TransactionAction @default(BUY_TICKET)
   gateway   String
@@ -31,7 +30,6 @@ model Transaction {
 
 model Order {
   id            String        @id @default(uuid())
-  code          String        @unique
   orderDetails  OrderDetail[]
   totalCheckOut Float
   email         String

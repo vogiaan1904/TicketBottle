@@ -15,6 +15,7 @@ export class ProcessTransactionWorker extends WorkerHost {
 
   async process(job: Job<{ transactionID: string }>): Promise<void> {
     const { transactionID } = job.data;
+
     this.logger.log(`Processing transaction ID: ${transactionID}`);
     try {
       // process transaction
