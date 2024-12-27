@@ -22,6 +22,9 @@ import {
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
+
+import * as dayjs from 'dayjs';
+import * as crypto from 'crypto';
 import { EmailQueue, TicketQueue } from './enums/queue';
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -50,13 +53,18 @@ export class OrderService extends BaseService<Order> {
     super(databaseService, 'order', OrderResponseDto);
   }
 
-  private generateTemporaryId(): string {
-    return `${Date.now()}-${Math.random().toString(36)}`;
+  private genOrderID(): string {
+    const now = dayjs().format('YYMMDD').toString();
+    return now + crypto.randomBytes(5).toString('hex');
+  }
+  private genTransactionID(): string {
+    const now = dayjs().format('YYMMDD').toString();
+    return now + '-' + crypto.randomBytes(5).toString('hex');
   }
 
   async createOrderOnRedis(userId: string, dto: CreateOrderRedisDto) {
-    const orderCode = this.generateTemporaryId();
-    const transactionCode = this.generateTemporaryId();
+    const orderCode = this.genOrderID();
+    const transactionCode = this.genTransactionID();
     const orderKey = this.genRedisKey.order(orderCode);
 
     const eventSaleData = await this.eventConfigService.getSaleData(
@@ -252,7 +260,7 @@ export class OrderService extends BaseService<Order> {
           refCode: orderCode,
           gateway: orderData.paymentGateway,
           details: {},
-          id: this.generateTemporaryId(),
+          id: this.genOrderID(),
           amount: Number(orderData.totalCheckout),
         },
       },
@@ -307,7 +315,7 @@ export class OrderService extends BaseService<Order> {
     // Ticket purchase
     if (transactionData.transactionAction === 'BUY_TICKET') {
       const amount = parseFloat(transactionData.totalCheckout);
-      const transactionId = this.generateTemporaryId();
+      const transactionId = this.genOrderID();
       const refCode = transactionData.code;
       const gateway = transactionData.paymentGateway;
 
