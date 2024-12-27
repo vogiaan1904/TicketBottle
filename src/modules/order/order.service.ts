@@ -393,6 +393,7 @@ export class OrderService extends BaseService<Order> {
     // Send email
     await this.sendOrderSuccessEmail(
       user.email,
+      user.firstName,
       orderData.orderDetails,
       createdOrder.id,
     );
@@ -406,6 +407,7 @@ export class OrderService extends BaseService<Order> {
 
   async sendOrderSuccessEmail(
     userEmail: string,
+    userFirstName: string,
     orderDetails: string,
     orderId: string,
   ) {
@@ -413,7 +415,7 @@ export class OrderService extends BaseService<Order> {
     const orderDetailEmailData = orderDetailsJSON.map((detail) => ({
       ticketClassName: detail.name,
       quantity: detail.quantity,
-      total: detail.price * detail.quantity,
+      price: detail.price,
     }));
 
     const createdOrder = await this.findOne(

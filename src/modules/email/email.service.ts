@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as pug from 'pug';
-import { EmailDataInterface } from './interfaces/emailData.interface';
 import { OrderSuccessDataDto } from '../order/interfaces/order-email-data.interface';
+import { EmailDataInterface } from './interfaces/emailData.interface';
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
@@ -38,7 +38,9 @@ export class EmailService {
     await this.sendEmail({
       to: email,
       subject: 'Payment Success',
-      html: this.convertToHTML('payment/orderSuccess', {
+      html: this.convertToHTML('payment/neworderSuccess', {
+        orderId: context.orderId,
+        userFirstName: context.userFirstName,
         eventName: context.eventName,
         tickets: context.tickets,
         totalPayment: context.totalPayment,
