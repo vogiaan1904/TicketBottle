@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as pug from 'pug';
 import { EmailDataInterface } from './interfaces/emailData.interface';
-import { OrderSuccessDataDto } from './interfaces/payment/orderSuccess.interface';
+import { OrderSuccessDataDto } from '../order/interfaces/order-email-data.interface';
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
@@ -31,7 +31,7 @@ export class EmailService {
     });
   }
 
-  async sendOrderSuccessEmail(
+  async sendSuccessOrderEmail(
     email: string,
     context: OrderSuccessDataDto,
   ): Promise<void> {

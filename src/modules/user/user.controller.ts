@@ -15,10 +15,7 @@ import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 
 @Controller('user')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    private readonly orderService: OrderService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @Post()
   create(@Body() createUserDto: CreateUserRequestDto) {

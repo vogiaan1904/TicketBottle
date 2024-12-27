@@ -16,13 +16,16 @@ export class ProcessTransactionWorker extends WorkerHost {
   async process(job: Job<{ transactionID: string }>): Promise<void> {
     const { transactionID } = job.data;
 
-    this.logger.log(`Processing transaction ID: ${transactionID}`);
+    this.logger.log(`Processing transaction Id: ${transactionID}`);
     try {
       // process transaction
       await this.orderService.processTransaction(transactionID);
+      this.logger.log(
+        `Successfully processed transaction Id: ${transactionID}`,
+      );
     } catch (error) {
       this.logger.error(
-        `Failed to process transaction ID: ${transactionID}`,
+        `Failed to process transaction Id: ${transactionID}`,
         error,
       );
       console.error(error);

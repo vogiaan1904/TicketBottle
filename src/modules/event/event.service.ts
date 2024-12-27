@@ -8,6 +8,7 @@ import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassService } from '../ticket-class/ticket-class.service';
+import { EventInfoService } from '../event-info/event-info.service';
 
 @Injectable()
 export class EventService extends BaseService<Event> {

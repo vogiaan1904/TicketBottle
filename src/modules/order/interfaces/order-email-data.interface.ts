@@ -1,6 +1,7 @@
 class Ticket {
   ticketClassName: string;
   quantity: number;
+  total: number;
 }
 
 export class OrderSuccessDataDto {

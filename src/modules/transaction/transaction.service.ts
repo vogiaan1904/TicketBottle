@@ -4,7 +4,6 @@ import { Injectable } from '@nestjs/common';
 import { Transaction } from '@prisma/client';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
-import { OrderService } from '../order/order.service';
 // import cryptoRandomString from 'crypto-random-string';
 
 @Injectable()

@@ -24,7 +24,7 @@ model Event {
 
 model EventInfo {
   id          String   @id @default(uuid())
-  title       String
+  name        String
   description String
   startDate   DateTime
   location    String

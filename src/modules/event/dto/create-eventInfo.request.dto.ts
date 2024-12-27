@@ -3,7 +3,7 @@ import { IsDate, IsNotEmpty, IsString } from 'class-validator';
 export class CreateEventInfoRequestDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()

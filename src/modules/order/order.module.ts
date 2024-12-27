@@ -10,10 +10,18 @@ import { TicketReleaseProcessor } from './workers/ticket-release.worker';
 import { ProcessTransactionWorker } from './workers/process-transaction.worker';
 import { EmailQueue, TicketQueue } from './enums/queue';
 import { TransactionModule } from '../transaction/transaction.module';
+import { EmailModule } from '../email/email.module';
+import { SendSuccessOrderEmailWorker } from './workers/send-order-success-email.worker';
+import { UserModule } from '../user/user.module';
 
 @Module({
   controllers: [OrderController],
-  providers: [OrderService, TicketReleaseProcessor, ProcessTransactionWorker],
+  providers: [
+    OrderService,
+    TicketReleaseProcessor,
+    ProcessTransactionWorker,
+    SendSuccessOrderEmailWorker,
+  ],
   exports: [OrderService],
   imports: [
     //ticket queue
@@ -37,6 +45,8 @@ import { TransactionModule } from '../transaction/transaction.module';
     EventModule,
     TransactionModule,
     PaymentModule,
+    EmailModule,
+    UserModule,
   ],
 })
 export class OrderModule {}

@@ -12,7 +12,7 @@ export class EventInfoResponseDto implements EventInfo {
   eventId: string;
 
   @Expose()
-  title: string;
+  name: string;
 
   @Expose()
   description: string;

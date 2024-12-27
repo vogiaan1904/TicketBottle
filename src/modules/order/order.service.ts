@@ -11,16 +11,18 @@ import {
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
+import { EmailService } from '../email/email.service';
 import { TicketClassRedisResponseDto } from '../event/dto/ticket-class-redis.response.dto';
 import { EventConfigService } from '../event/event-config.service';
 import { PaymentService } from '../payment/payment.service';
 import { TransactionService } from '../transaction/transaction.service';
+import { UserService } from '../user/user.service';
 import {
   CreateOrderDetailRedis,
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
-import { TicketQueue } from './enums/queue';
+import { EmailQueue, TicketQueue } from './enums/queue';
 @Injectable()
 export class OrderService extends BaseService<Order> {
   private readonly logger = new Logger(OrderService.name);
@@ -38,6 +40,7 @@ export class OrderService extends BaseService<Order> {
     private readonly paymentService: PaymentService,
     private readonly transactionService: TransactionService,
     private readonly emailService: EmailService,
+    private readonly userService: UserService,
     @InjectRedis() private readonly redis: Redis,
     @InjectQueue(TicketQueue.name)
     private readonly ticketReleaseQueue: Queue,
@@ -87,12 +90,12 @@ export class OrderService extends BaseService<Order> {
       { totalCheckout: 0, totalQuantity: 0 },
     );
 
-    await this.checkIfExceedMaxNumOfTickets(
-      userId,
-      dto.eventId,
-      Number(eventSaleData.maxTicketsPerCustomer),
-      totalQuantity,
-    );
+    // await this.checkIfExceedMaxNumOfTickets(
+    //   userId,
+    //   dto.eventId,
+    //   Number(eventSaleData.maxTicketsPerCustomer),
+    //   totalQuantity,
+    // );
 
     const orderDetails = dto.orderDetails.map((detail) => {
       const ticketClass = ticketClassesInfo.find(
@@ -100,6 +103,7 @@ export class OrderService extends BaseService<Order> {
       );
       return { ...detail, price: ticketClass.price, name: ticketClass.name };
     });
+
     await this.redis
       .multi()
       .hset(orderKey, {
@@ -241,7 +245,6 @@ export class OrderService extends BaseService<Order> {
       email: 'notbuyticket@gmail.com',
       totalCheckOut: Number(orderData.totalCheckout),
       totalQuantity: Number(orderData.totalQuantity),
-      code: orderCode,
       transaction: {
         create: {
           status: TransactionStatus.CANCELLED,
@@ -336,6 +339,11 @@ export class OrderService extends BaseService<Order> {
 
     await this.redis.hset(orderKey, 'status', OrderStatus.COMPLETED);
 
+    const user = await this.userService.findById(orderData.userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
     const orderDetails = JSON.parse(orderData.orderDetails);
     const createdOrder = await this.databaseService.$transaction(async (tx) => {
       const ticketPromises = orderDetails.map(async (detail) => {
@@ -348,13 +356,14 @@ export class OrderService extends BaseService<Order> {
       });
 
       const a = await Promise.all(ticketPromises);
+
+      // Create order
       return await tx.order.create({
         data: {
           status: OrderStatus.COMPLETED,
-          email: 'notbuyticket@gmail.com', // Replace with actual email if available
+          email: user.email,
           totalCheckOut: Number(orderData.totalCheckout),
           totalQuantity: Number(orderData.totalQuantity),
-          id: orderCode,
           user: {
             connect: {
               id: orderData.userId,
@@ -381,8 +390,56 @@ export class OrderService extends BaseService<Order> {
       });
     });
 
+    // Send email
+    await this.sendOrderSuccessEmail(
+      user.email,
+      orderData.orderDetails,
+      createdOrder.id,
+    );
+
+    // Delete order on redis
     await this.redis.del(orderKey);
 
+    // Return the created order
     return createdOrder;
+  }
+
+  async sendOrderSuccessEmail(
+    userEmail: string,
+    orderDetails: string,
+    orderId: string,
+  ) {
+    const orderDetailsJSON = JSON.parse(orderDetails);
+    const orderDetailEmailData = orderDetailsJSON.map((detail) => ({
+      ticketClassName: detail.name,
+      quantity: detail.quantity,
+      total: detail.price * detail.quantity,
+    }));
+
+    const createdOrder = await this.findOne(
+      { id: orderId },
+      {
+        include: {
+          transaction: true,
+          event: {
+            select: {
+              eventInfo: true,
+            },
+          },
+        },
+      },
+    );
+
+    await this.emailQueue.add(EmailQueue.jobName, {
+      email: userEmail,
+      orderData: {
+        orderId: createdOrder.id,
+        eventName: createdOrder.event.eventInfo.name,
+        tickets: orderDetailEmailData,
+        paymentGateway: createdOrder.transaction.gateway,
+        totalPayment: createdOrder.totalCheckOut,
+        orderTime: createdOrder.createdAt,
+      },
+    });
   }
 }

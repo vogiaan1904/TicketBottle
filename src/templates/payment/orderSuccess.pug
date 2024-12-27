@@ -49,9 +49,9 @@ html
                     tbody
                       each ticket in tickets
                         tr
-                          td(style="padding: 10px; border-bottom: 1px solid #ddd;") #{ticket.className}
+                          td(style="padding: 10px; border-bottom: 1px solid #ddd;") #{ticket.ticketClassName}
                           td(style="text-align: right; padding: 10px; border-bottom: 1px solid #ddd;") #{ticket.quantity}
-                  p(style="font-size: 16px; line-height: 1.5; margin-top: 20px;") Total Payment: $#{totalPayment}
+                  p(style="font-size: 16px; line-height: 1.5; margin-top: 20px;") Total Payment: #{totalPayment} VND
                   p(style="font-size: 16px; line-height: 1.5;") Order Time: #{orderTime}
                   p(style="font-size: 16px; line-height: 1.5; margin-top: 30px;") We look forward to seeing you at the event!
                   p(style="font-size: 16px; line-height: 1.5; margin-top: 10px;") Best regards,
