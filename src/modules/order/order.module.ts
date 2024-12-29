@@ -6,19 +6,19 @@ import { EventModule } from '../event/event.module';
 import { PaymentModule } from '../payment/payment.module';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
-import { TicketReleaseProcessor } from './workers/ticket-release.worker';
 import { ProcessTransactionWorker } from './workers/process-transaction.worker';
 import { EmailQueue, TicketQueue } from './enums/queue';
 import { TransactionModule } from '../transaction/transaction.module';
 import { EmailModule } from '../email/email.module';
 import { SendSuccessOrderEmailWorker } from './workers/send-order-success-email.worker';
 import { UserModule } from '../user/user.module';
+import { TicketReleaseWorkder } from './workers/ticket-release.worker';
 
 @Module({
   controllers: [OrderController],
   providers: [
     OrderService,
-    TicketReleaseProcessor,
+    TicketReleaseWorkder,
     ProcessTransactionWorker,
     SendSuccessOrderEmailWorker,
   ],

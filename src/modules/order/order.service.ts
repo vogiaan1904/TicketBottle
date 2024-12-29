@@ -223,11 +223,12 @@ export class OrderService extends BaseService<Order> {
     if (results === null) {
       throw new BadRequestException('Failed to reserve tickets');
     }
-    this.logger.log('Successfully reserved tickets');
   }
 
   async cancelOrder(orderCode: string): Promise<OrderResponseDto> {
     const orderKey = this.genRedisKey.order(orderCode);
+    const orderData = await this.redis.hgetall(orderKey);
+
     await this.releaseTickets(orderCode);
 
     // delete order on redis

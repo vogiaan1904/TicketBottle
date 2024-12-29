@@ -20,6 +20,7 @@ export class SendSuccessOrderEmailWorker extends WorkerHost {
     const { email, orderData } = job.data;
     this.logger.log(`Sending email for success order Id: ${orderData.orderId}`);
     try {
+      console.log(orderData);
       await this.emailService.sendSuccessOrderEmail(email, orderData);
       this.logger.log(
         `Successfully sent email for order Id: ${orderData.orderId}`,
