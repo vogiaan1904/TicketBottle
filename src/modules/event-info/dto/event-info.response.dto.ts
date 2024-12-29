@@ -21,6 +21,9 @@ export class EventInfoResponseDto implements EventInfo {
   startDate: Date;
 
   @Expose()
+  endDate: Date;
+
+  @Expose()
   thumbnail: string;
 
   @Expose()

@@ -18,6 +18,8 @@ model Event {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
   staffs                StaffEvent[]
+  organizer             Organizer?    @relation(fields: [organizerId], references: [id])
+  organizerId           String?
 
   @@map("events")
 }
@@ -27,10 +29,24 @@ model EventInfo {
   name        String
   description String
   startDate   DateTime
+  endDate     DateTime
   location    String
   thumbnail   String
   eventId     String   @unique
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("event_infos")
+}
+
+model Organizer {
+  id          String  @id @default(uuid())
+  name        String
+  description String
+  email       String?
+  phone       String?
+  address     String?
+  thumbnail   String?
+  events      Event[]
+
+  @@map("organizers")
 }
