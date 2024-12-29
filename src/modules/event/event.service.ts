@@ -1,32 +1,47 @@
 import { BaseService } from '@/services/base/base.service';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Event } from '@prisma/client';
 import { DatabaseService } from 'src/modules/database/database.service';
-import { EventResponseDto } from './dto/event.response.dto';
-import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
-import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
-import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassService } from '../ticket-class/ticket-class.service';
-import { EventInfoService } from '../event-info/event-info.service';
+import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
+import { EventResponseDto } from './dto/event.response.dto';
+import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
+import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
+import { OrganizerService } from '../organizer/organizer.service';
 
 @Injectable()
 export class EventService extends BaseService<Event> {
-  private includeInfo = { eventInfo: true };
+  private includeInfo = { eventInfo: { include: { organizer: true } } };
   private includeTicketClasses = { ticketClasses: true };
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly ticketClassService: TicketClassService,
+    private readonly organizerService: OrganizerService,
   ) {
     super(databaseService, 'event', EventResponseDto);
   }
 
   async createInfo(id: string, data: CreateEventInfoRequestDto) {
+    const { organizerId, ...eventInfoData } = data;
+    const foundOrganizer = await this.organizerService.findOne({
+      id: organizerId,
+    });
+    if (!foundOrganizer) {
+      throw new BadRequestException('Organizer not found');
+    }
     return await super.update(
       { id },
       {
         eventInfo: {
-          create: data,
+          create: {
+            ...eventInfoData,
+            organizer: {
+              connect: {
+                id: organizerId,
+              },
+            },
+          },
         },
       },
       { include: this.includeInfo },

@@ -28,6 +28,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
+import { OrganizerModule } from './modules/organizer/organizer.module';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { ExpressAdapter } from '@bull-board/express';
     OrderDetailModule,
     PaymentModule,
     TransactionModule,
+    OrganizerModule,
   ],
   controllers: [AppController],
   providers: [

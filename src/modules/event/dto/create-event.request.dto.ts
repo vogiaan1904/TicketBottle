@@ -11,10 +11,6 @@ export class CreateEventRequestDto {
   @IsNotEmpty()
   startSellDate: Date;
 
-  @IsDate()
-  @IsNotEmpty()
-  endSellDate: Date;
-
   @IsBoolean()
   @IsNotEmpty()
   isFree: boolean;
