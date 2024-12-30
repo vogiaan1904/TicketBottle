@@ -38,6 +38,10 @@ export class EventResponseDto implements Event {
 
   @Expose()
   @ApiProperty()
+  ticketCount: number;
+
+  @Expose()
+  @ApiProperty()
   ticketClasses: TicketClass[];
 
   @Expose()

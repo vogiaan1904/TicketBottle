@@ -1,10 +1,11 @@
 import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { CreateOrganizerRequestDto } from './dto/create-organizer.request.dto';
 import { OrganizerResponseDto } from './dto/organizer.response.dto';
 import { OrganizerService } from './organizer.service';
 import { ApiPagination } from '@/decorators/apiPagination.decorator';
+import { GetOrganizerQueryRequestDto } from './dto/get-organizer-query.request.dto';
 
 @Controller('organizer')
 export class OrganizerController {
@@ -21,8 +22,8 @@ export class OrganizerController {
   @Get()
   @ApiPagination()
   @ApiOkResponse({ type: OrganizerResponseDto, isArray: true })
-  findMany() {
-    return this.organizerService.findMany();
+  findMany(@Query() dto: GetOrganizerQueryRequestDto) {
+    return this.organizerService.findManyWithPagination(dto);
   }
 
   @OnlyAdmin()

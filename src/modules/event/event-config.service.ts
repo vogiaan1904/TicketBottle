@@ -43,7 +43,7 @@ export class EventConfigService {
     const ticketClassList =
       await this.ticketClassService.findTicketClassesByEventId(eventId);
     const eventInfo = await this.eventInfoService.findOne({ eventId });
-    if (!eventInfo) {
+    if (!eventInfo || !eventInfo.organizerId || ticketClassList.length === 0) {
       throw new BadRequestException('Event has not configured yet');
     }
     const eventDataKey = this.genRedisKey.event(eventId);

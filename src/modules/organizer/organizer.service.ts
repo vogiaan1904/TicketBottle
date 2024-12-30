@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Organizer } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { OrganizerResponseDto } from './dto/organizer.response.dto';
+import { GetOrganizerQueryRequestDto } from './dto/get-organizer-query.request.dto';
 
 @Injectable()
 export class OrganizerService extends BaseService<Organizer> {
@@ -19,5 +20,13 @@ export class OrganizerService extends BaseService<Organizer> {
         },
       },
     );
+  }
+
+  async findOrganizers(dto: GetOrganizerQueryRequestDto) {
+    const { page, perPage } = dto;
+    return await this.findManyWithPagination({
+      page,
+      perPage,
+    });
   }
 }

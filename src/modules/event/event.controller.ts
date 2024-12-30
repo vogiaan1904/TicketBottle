@@ -76,6 +76,24 @@ export class EventController {
     return this.eventService.findEvents(dto);
   }
 
+  @OnlyAdmin()
+  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @Get('upcoming')
+  @ApiPagination()
+  @ApiQuery({ name: 'includeInfo', required: false })
+  findUpComingEvents(@Query() dto: GetEventQueryRequestDto) {
+    return this.eventService.findUpComingEvents(dto);
+  }
+
+  @OnlyAdmin()
+  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @Get('most-sold')
+  @ApiPagination()
+  @ApiQuery({ name: 'includeInfo', required: false })
+  findMostSoldEvents(@Query() dto: GetEventQueryRequestDto) {
+    return this.eventService.findMostSoldEvents(dto);
+  }
+
   @ApiOkResponse({ type: EventResponseDto })
   @Get(':id')
   findOne(@Param('id') id: string) {

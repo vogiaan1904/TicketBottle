@@ -12,7 +12,11 @@ import { OrganizerService } from '../organizer/organizer.service';
 
 @Injectable()
 export class EventService extends BaseService<Event> {
-  private includeInfo = { eventInfo: { include: { organizer: true } } };
+  private includeInfo = { eventInfo: true };
+  private includeInfoAndOrganizer = {
+    eventInfo: { include: { organizer: true } },
+  };
+
   private includeTicketClasses = { ticketClasses: true };
   constructor(
     private readonly databaseService: DatabaseService,
@@ -44,7 +48,7 @@ export class EventService extends BaseService<Event> {
           },
         },
       },
-      { include: this.includeInfo },
+      { include: this.includeInfoAndOrganizer },
     );
   }
 
@@ -60,7 +64,7 @@ export class EventService extends BaseService<Event> {
     );
   }
 
-  async findALlEvents() {
+  async findAllEvents() {
     return await super.findMany({ options: { include: this.includeInfo } });
   }
 
@@ -75,6 +79,51 @@ export class EventService extends BaseService<Event> {
       });
     }
     return await super.findManyWithPagination({ page, perPage });
+  }
+
+  async findUpComingEvents(dto: GetEventQueryRequestDto) {
+    const { page, perPage } = dto;
+
+    return await super.findManyWithPagination({
+      filter: {
+        startSellDate: {
+          gt: new Date(),
+        },
+      },
+      orderBy: {
+        startSellDate: 'asc',
+      },
+      page,
+      perPage,
+      options: {
+        select: { id: true, ...this.includeInfo },
+      },
+    });
+  }
+
+  async findMostSoldEvents(dto: GetEventQueryRequestDto) {
+    const { page, perPage } = dto;
+    return await super.findManyWithPagination({
+      filter: {
+        status: 'PUBLISHED',
+      },
+      orderBy: {
+        tickets: {
+          _count: 'desc',
+        },
+      },
+      page,
+      perPage,
+      options: {
+        select: {
+          id: true,
+          ...this.includeInfo,
+          _count: {
+            select: { tickets: true },
+          },
+        },
+      },
+    });
   }
 
   async findEventById(id: string) {
