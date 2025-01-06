@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TicketClass } from '@prisma/client';
+import { TicketClass, TicketClassStatus } from '@prisma/client';
 import { Expose } from 'class-transformer';
 
 export class TicketClassResponseDto implements TicketClass {
@@ -20,6 +20,10 @@ export class TicketClassResponseDto implements TicketClass {
   name: string;
 
   @Expose()
+  @ApiProperty({ enum: TicketClassStatus, enumName: 'TicketClassStatus' })
+  status: TicketClassStatus;
+
+  @Expose()
   @ApiProperty()
   description: string;
 
@@ -30,6 +34,10 @@ export class TicketClassResponseDto implements TicketClass {
   @Expose()
   @ApiProperty()
   totalQuantity: number;
+
+  @Expose()
+  @ApiProperty()
+  soldQuantity: number;
 
   @Expose()
   @ApiProperty()

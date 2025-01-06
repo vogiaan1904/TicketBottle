@@ -9,7 +9,16 @@ import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
 import { OrganizerService } from '../organizer/organizer.service';
-
+export interface EventStatisticsInterface {
+  totalSoldTickets: number;
+  totalRevenue: number;
+  attendanceRate: number;
+  statisticsPerClass: {
+    ticketClassName: string;
+    soldTickets: number;
+    revenue: number;
+  }[];
+}
 @Injectable()
 export class EventService extends BaseService<Event> {
   private includeInfo = { eventInfo: true };
@@ -142,5 +151,58 @@ export class EventService extends BaseService<Event> {
       { id },
       { staffPassword: newPassword.newPassword },
     );
+  }
+
+  //Data for dashboard
+
+  async getStatistics(eventId: string): Promise<EventStatisticsInterface> {
+    const ticketClasses = await this.ticketClassService.findMany({
+      filter: { eventId },
+      options: {
+        select: {
+          name: true,
+          price: true,
+          soldQuantity: true,
+          _count: { select: { tickets: { where: { isCheckIn: true } } } },
+        },
+      },
+    });
+
+    // Calculate revenue per class
+    const statisticsPerClass = ticketClasses.map((ticketClass) => ({
+      ticketClassName: ticketClass.name,
+      soldTickets: ticketClass.soldQuantity,
+      revenue: ticketClass.price * ticketClass.soldQuantity,
+      attendanceRate: ticketClass._count.tickets / ticketClass.soldQuantity,
+    }));
+
+    // Calculate total sold tickets, total revenue, and attendance rate
+    const { totalSoldTickets, totalRevenue, totalAttendanceRate } =
+      statisticsPerClass.reduce(
+        (acc, curr) => {
+          acc.totalSoldTickets += curr.soldTickets;
+          acc.totalRevenue += curr.revenue;
+          acc.totalAttendanceRate += curr.attendanceRate;
+          return acc;
+        },
+        {
+          totalSoldTickets: 0,
+          totalRevenue: 0,
+          totalAttendanceRate: 0,
+        },
+      );
+
+    // làm đại phần này, sau này optimize lại
+    let attendanceRate = 0;
+    if (totalSoldTickets > 0) {
+      attendanceRate = totalAttendanceRate;
+    }
+
+    return {
+      totalSoldTickets,
+      totalRevenue,
+      attendanceRate,
+      statisticsPerClass,
+    };
   }
 }

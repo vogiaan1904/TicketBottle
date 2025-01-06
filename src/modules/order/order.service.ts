@@ -352,6 +352,18 @@ export class OrderService extends BaseService<Order> {
     const orderDetails = JSON.parse(orderData.orderDetails);
     const createdOrder = await this.databaseService.$transaction(async (tx) => {
       const ticketPromises = orderDetails.map(async (detail) => {
+        await tx.ticketClass.update({
+          //update number of sold tickets for each ticket class
+          where: {
+            id: detail.ticketClassId,
+          },
+          data: {
+            soldQuantity: {
+              increment: detail.quantity,
+            },
+          },
+        });
+
         const ticketData = Array.from({ length: detail.quantity }, () => ({
           ticketClassId: detail.ticketClassId,
           eventId: orderData.eventId,

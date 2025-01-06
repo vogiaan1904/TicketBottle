@@ -52,3 +52,9 @@ export class EventResponseDto implements Event {
   @ApiProperty()
   updatedAt: Date;
 }
+
+export class EventRevenueResponseDto {
+  @Expose()
+  @ApiProperty()
+  totalRevenue: number;
+}

@@ -1,4 +1,5 @@
 import { ApiPagination } from '@/decorators/apiPagination.decorator';
+import { ApiPost } from '@/decorators/apiPost.decorator';
 import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 import {
   Body,
@@ -16,16 +17,15 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
+import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
-import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
-import { EventService } from './event.service';
 import { EventConfigService } from './event-config.service';
-import { ApiPost } from '@/decorators/apiPost.decorator';
+import { EventService } from './event.service';
 
 @Controller('event')
 export class EventController {
@@ -76,24 +76,6 @@ export class EventController {
     return this.eventService.findEvents(dto);
   }
 
-  @OnlyAdmin()
-  @ApiOkResponse({ type: EventResponseDto, isArray: true })
-  @Get('upcoming')
-  @ApiPagination()
-  @ApiQuery({ name: 'includeInfo', required: false })
-  findUpComingEvents(@Query() dto: GetEventQueryRequestDto) {
-    return this.eventService.findUpComingEvents(dto);
-  }
-
-  @OnlyAdmin()
-  @ApiOkResponse({ type: EventResponseDto, isArray: true })
-  @Get('most-sold')
-  @ApiPagination()
-  @ApiQuery({ name: 'includeInfo', required: false })
-  findMostSoldEvents(@Query() dto: GetEventQueryRequestDto) {
-    return this.eventService.findMostSoldEvents(dto);
-  }
-
   @ApiOkResponse({ type: EventResponseDto })
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -135,5 +117,34 @@ export class EventController {
   @ApiOperation({ summary: 'Get sale data of an event' })
   getEventConfig(@Param('id') id: string) {
     return this.eventConfigService.getSaleData(id);
+  }
+
+  //Dashboard API
+
+  @OnlyAdmin()
+  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @Get('upcoming')
+  @ApiPagination()
+  @ApiQuery({ name: 'includeInfo', required: false })
+  findUpComingEvents(@Query() dto: GetEventQueryRequestDto) {
+    return this.eventService.findUpComingEvents(dto);
+  }
+
+  // for all events
+  @OnlyAdmin()
+  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @Get('most-sold')
+  @ApiPagination()
+  @ApiQuery({ name: 'includeInfo', required: false })
+  findMostSoldEvents(@Query() dto: GetEventQueryRequestDto) {
+    return this.eventService.findMostSoldEvents(dto);
+  }
+
+  // for staffs of each event
+  @OnlyAdmin()
+  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @Get(':id/dashboard-statistics')
+  getDashboardStatistics(@Param('id') id: string) {
+    return this.eventService.getStatistics(id);
   }
 }

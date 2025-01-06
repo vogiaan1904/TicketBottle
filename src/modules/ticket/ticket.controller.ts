@@ -4,7 +4,7 @@ import { TicketResponseDto } from './dto/ticket.response.dto';
 import { CreateTicketRequestDto } from './dto/create-ticket.request.dto';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
-
+// Chưa thêm authen và author
 @Controller('ticket')
 export class TicketController {
   constructor(private readonly ticketService: TicketService) {}
@@ -20,5 +20,11 @@ export class TicketController {
   @ApiOkResponse({ type: TicketResponseDto })
   findOne(@Param('id') id: string) {
     return this.ticketService.findOne({ id });
+  }
+
+  @Get(':serial-number/check-in')
+  @ApiOkResponse()
+  updateCheckInStatus(@Param('serial-number') serialNumber: string) {
+    this.ticketService.updateCheckInStatus(serialNumber);
   }
 }
