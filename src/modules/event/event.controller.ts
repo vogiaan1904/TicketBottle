@@ -21,7 +21,10 @@ import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketCl
 import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
-import { EventResponseDto } from './dto/event.response.dto';
+import {
+  EventResponseDto,
+  EventStatisticsResponseDto,
+} from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventConfigService } from './event-config.service';
@@ -140,9 +143,9 @@ export class EventController {
     return this.eventService.findMostSoldEvents(dto);
   }
 
-  // for staffs of each event
+  // for each event
   @OnlyAdmin()
-  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @ApiOkResponse({ type: EventStatisticsResponseDto })
   @Get(':id/dashboard-statistics')
   getDashboardStatistics(@Param('id') id: string) {
     return this.eventService.getStatistics(id);

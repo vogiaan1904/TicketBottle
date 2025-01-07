@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TicketClass, TicketClassStatus } from '@prisma/client';
-import { Expose } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 export class TicketClassResponseDto implements TicketClass {
   constructor(partial: Partial<TicketClassResponseDto>) {
@@ -31,11 +31,11 @@ export class TicketClassResponseDto implements TicketClass {
   @ApiProperty()
   price: number;
 
-  @Expose()
+  @Exclude()
   @ApiProperty()
   totalQuantity: number;
 
-  @Expose()
+  @Exclude()
   @ApiProperty()
   soldQuantity: number;
 

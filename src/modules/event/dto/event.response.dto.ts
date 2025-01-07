@@ -53,8 +53,54 @@ export class EventResponseDto implements Event {
   updatedAt: Date;
 }
 
-export class EventRevenueResponseDto {
+export class TicketClassStatisticsDto {
   @Expose()
   @ApiProperty()
-  totalRevenue: number;
+  ticketClassName: string;
+
+  @Expose()
+  @ApiProperty()
+  soldTickets: number;
+
+  @Expose()
+  @ApiProperty()
+  remainingTickets: number;
+
+  @Expose()
+  @ApiProperty()
+  netRevenue: number;
+
+  @Expose()
+  @ApiProperty()
+  todayRevenue: number;
+
+  @Expose()
+  @ApiProperty()
+  todaySoldTickets: number;
+}
+
+export class EventStatisticsResponseDto {
+  @Expose()
+  @ApiProperty()
+  soldTickets: number;
+
+  @Expose()
+  @ApiProperty()
+  netRevenue: number;
+
+  @Expose()
+  @ApiProperty()
+  todaySoldTickets: number;
+
+  @Expose()
+  @ApiProperty()
+  todayRevenue: number;
+
+  @Expose()
+  @ApiProperty()
+  attendanceRate: number;
+
+  @Expose()
+  @ApiProperty()
+  statisticsPerClass: TicketClassStatisticsDto[];
 }
