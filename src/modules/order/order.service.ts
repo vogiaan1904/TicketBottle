@@ -23,9 +23,11 @@ import {
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
 
-import * as dayjs from 'dayjs';
 import * as crypto from 'crypto';
+import * as dayjs from 'dayjs';
+import { GetOrdersQueryRequestDto } from './dto/get-orders-quert.request.dto';
 import { EmailQueue, TicketQueue } from './enums/queue';
+
 @Injectable()
 export class OrderService extends BaseService<Order> {
   private readonly logger = new Logger(OrderService.name);
@@ -378,7 +380,6 @@ export class OrderService extends BaseService<Order> {
       return await tx.order.create({
         data: {
           status: OrderStatus.COMPLETED,
-          email: user.email,
           totalCheckOut: Number(orderData.totalCheckout),
           totalQuantity: Number(orderData.totalQuantity),
           user: {
@@ -466,5 +467,54 @@ export class OrderService extends BaseService<Order> {
         orderTime: formattedOrderTime,
       },
     });
+  }
+
+  //Statistics for event dashboard
+  async getOrdersStatisticByEventId(
+    eventId: string,
+    dto: GetOrdersQueryRequestDto,
+  ) {
+    const { page, perPage } = dto;
+    const ordersDataWithPagination = await this.findManyWithPagination({
+      filter: { eventId, status: 'COMPLETED' },
+      page,
+      perPage,
+      options: {
+        select: {
+          id: true,
+          totalCheckOut: true,
+          totalQuantity: true,
+          createdAt: true,
+          user: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          orderDetails: {
+            where: {
+              ticket: {
+                isCheckIn: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const ordersStatistics = ordersDataWithPagination.data.map((order) => ({
+      orderId: order.id,
+      totalCheckOut: order.totalCheckOut,
+      totalQuantity: order.totalQuantity,
+      purchaseTime: dayjs(order.createdAt).format('HH:mm, DD/MM/YYYY'),
+      userName: `${order.user.firstName} ${order.user.lastName}`,
+      userEmail: order.user.email,
+      numberOfCheckIn: order.orderDetails.length,
+    }));
+
+    ordersDataWithPagination.data = ordersStatistics;
+
+    return ordersDataWithPagination;
   }
 }

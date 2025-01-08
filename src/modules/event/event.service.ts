@@ -1,15 +1,15 @@
 import { BaseService } from '@/services/base/base.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Event } from '@prisma/client';
+import * as dayjs from 'dayjs';
 import { DatabaseService } from 'src/modules/database/database.service';
+import { OrganizerService } from '../organizer/organizer.service';
 import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassService } from '../ticket-class/ticket-class.service';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
-import { OrganizerService } from '../organizer/organizer.service';
-import * as dayjs from 'dayjs';
 export interface EventStatisticsInterface {
   soldTickets: number;
   netRevenue: number;
@@ -77,10 +77,6 @@ export class EventService extends BaseService<Event> {
       },
       { include: this.includeTicketClasses },
     );
-  }
-
-  async findAllEvents() {
-    return await super.findMany({ options: { include: this.includeInfo } });
   }
 
   async findEvents(dto: GetEventQueryRequestDto) {

@@ -110,3 +110,33 @@ export class OrderRedisResponseDto {
   @ApiProperty()
   createdAt: Date;
 }
+
+export class OrderStatisticsReponseDto {
+  @Expose()
+  @ApiProperty()
+  orderId: string;
+
+  @Expose()
+  @ApiProperty()
+  totalCheckOut: number;
+
+  @Expose()
+  @ApiProperty()
+  totalQuantity: number;
+
+  @Expose()
+  @ApiProperty()
+  purchaseTime: string;
+
+  @Expose()
+  @ApiProperty()
+  userName: string;
+
+  @Expose()
+  @ApiProperty()
+  userEmail: string;
+
+  @Expose()
+  @ApiProperty()
+  numberOfCheckIn: number;
+}

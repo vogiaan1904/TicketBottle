@@ -32,7 +32,6 @@ model Order {
   id            String        @id @default(uuid())
   orderDetails  OrderDetail[]
   totalCheckOut Float
-  email         String
   status        OrderStatus   @default(PENDING)
   totalQuantity Int
   userId        String
