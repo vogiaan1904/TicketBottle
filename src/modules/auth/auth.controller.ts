@@ -1,4 +1,4 @@
-import { Body, Controller, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import { ApiPost } from 'src/decorators/apiPost.decorator';
 import { RequestWithUser } from 'src/types/request.type';
@@ -32,6 +32,16 @@ export class AuthController {
     responseMessage:
       'User registered successfully. Please check your email to verify your account',
   })
+  async register(@Body() dto: RegisterRequestDTO) {
+    return await this.authService.register(dto);
+  }
+
+  @Get('google/login')
+  async register(@Body() dto: RegisterRequestDTO) {
+    return await this.authService.register(dto);
+  }
+
+  @Get('google/redirect')
   async register(@Body() dto: RegisterRequestDTO) {
     return await this.authService.register(dto);
   }
