@@ -27,6 +27,7 @@ import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import { GetOrdersQueryRequestDto } from './dto/get-orders-quert.request.dto';
 import { EmailQueue, TicketQueue } from './enums/queue';
+import { EventService } from '../event/event.service';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -46,6 +47,7 @@ export class OrderService extends BaseService<Order> {
     private readonly transactionService: TransactionService,
     private readonly emailService: EmailService,
     private readonly userService: UserService,
+    private readonly eventService: EventService,
     @InjectRedis() private readonly redis: Redis,
     @InjectQueue(TicketQueue.name)
     private readonly ticketReleaseQueue: Queue,
@@ -417,6 +419,9 @@ export class OrderService extends BaseService<Order> {
 
     // Delete order on redis
     await this.redis.del(orderKey);
+
+    // Invalidate event statistics cache
+    await this.eventService.invalidateEventStatisticsCache(orderData.eventId);
 
     // Return the created order
     return createdOrder;

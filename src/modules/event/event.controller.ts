@@ -93,8 +93,18 @@ export class EventController {
 
   @OnlyAdmin()
   @ApiOkResponse({ type: EventResponseDto })
-  @Patch(':id')
-  update(
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updateEventDto: UpdateEventRequestDto,
+  ) {
+    return this.eventService.update({ id }, updateEventDto);
+  }
+
+  @OnlyAdmin()
+  @ApiOkResponse({ type: EventResponseDto })
+  @Patch(':id/status')
+  updateInfo(
     @Param('id') id: string,
     @Body() updateEventDto: UpdateEventRequestDto,
   ) {

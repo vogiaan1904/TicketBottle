@@ -1,8 +1,17 @@
 import { BaseService } from '@/services/base/base.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Event } from '@prisma/client';
+import { Cache } from 'cache-manager';
 import * as dayjs from 'dayjs';
 import { DatabaseService } from 'src/modules/database/database.service';
+import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 import { OrganizerService } from '../organizer/organizer.service';
 import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassService } from '../ticket-class/ticket-class.service';
@@ -27,16 +36,22 @@ export interface EventStatisticsInterface {
 }
 @Injectable()
 export class EventService extends BaseService<Event> {
+  private readonly logger = new Logger(EventService.name);
   private includeInfo = { eventInfo: true };
   private includeInfoAndOrganizer = {
     eventInfo: { include: { organizer: true } },
   };
-
   private includeTicketClasses = { ticketClasses: true };
+
+  readonly genRedisKey = {
+    eventStatistics: (eventId: string) => `eventStatistics:${eventId}`,
+  };
+
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly ticketClassService: TicketClassService,
     private readonly organizerService: OrganizerService,
+    @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
   ) {
     super(databaseService, 'event', EventResponseDto);
   }
@@ -67,6 +82,21 @@ export class EventService extends BaseService<Event> {
     );
   }
 
+  async updateEventInfo(eventId: string, data: UpdateEventInfoRequestDto) {
+    const foundEvent = await this.findOne(
+      { eventId },
+      { include: this.includeInfo },
+    );
+    if (!foundEvent.eventInfo) {
+      throw new NotFoundException('Event Info not found');
+    }
+    return await this.update(
+      { id: eventId },
+      { eventInfo: { update: data } },
+      { include: this.includeInfo },
+    );
+  }
+
   async createTicketClass(id: string, data: CreateTicketClassRequestDto) {
     return await super.update(
       { id },
@@ -92,6 +122,25 @@ export class EventService extends BaseService<Event> {
     return await super.findManyWithPagination({ page, perPage });
   }
 
+  async findEventById(id: string) {
+    return await super.findOne({ id }, { include: { ...this.includeInfo } });
+  }
+
+  async getTicketClasses(id: string) {
+    return this.ticketClassService.findTicketClassesByEventId(id);
+  }
+
+  async updateStaffPassword(
+    id: string,
+    newPassword: UpdateStaffPasswordRequestDto,
+  ) {
+    return await super.update(
+      { id },
+      { staffPassword: newPassword.newPassword },
+    );
+  }
+
+  // Dashboard for admin
   async findUpComingEvents(dto: GetEventQueryRequestDto) {
     const { page, perPage } = dto;
 
@@ -136,28 +185,52 @@ export class EventService extends BaseService<Event> {
       },
     });
   }
+  // Dashboard for staffs of an event
 
-  async findEventById(id: string) {
-    return await super.findOne({ id }, { include: { ...this.includeInfo } });
+  async invalidateEventStatisticsCache(eventId: string) {
+    const cacheKey = this.genRedisKey.eventStatistics(eventId);
+    try {
+      await this.cacheService.del(cacheKey);
+      this.logger.log(`Invalidated cache for ${cacheKey}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to invalidate cache for ${cacheKey}: ${error.message}`,
+      );
+    }
   }
-
-  async getTicketClasses(id: string) {
-    return this.ticketClassService.findTicketClassesByEventId(id);
-  }
-
-  async updateStaffPassword(
-    id: string,
-    newPassword: UpdateStaffPasswordRequestDto,
-  ) {
-    return await super.update(
-      { id },
-      { staffPassword: newPassword.newPassword },
-    );
-  }
-
-  //Data for dashboard
 
   async getStatistics(eventId: string): Promise<EventStatisticsInterface> {
+    const cacheKey = this.genRedisKey.eventStatistics(eventId);
+
+    try {
+      const cachedStatistics =
+        await this.cacheService.get<EventStatisticsInterface>(cacheKey);
+      if (cachedStatistics) {
+        this.logger.log(`Cache hit for ${cacheKey}`);
+        return cachedStatistics;
+      }
+      this.logger.log(`Cache miss for ${cacheKey}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to retrieve cache for ${cacheKey}: ${error.message}`,
+      );
+    }
+    const statistics = await this.computeStatistics(eventId);
+    try {
+      await this.cacheService.set(cacheKey, statistics, 600000); // Cache for 10 minutes
+      this.logger.log(`Cached statistics for ${cacheKey}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to set cache for ${cacheKey}: ${error.message}`,
+      );
+      // Return statistics even if caching fails
+    }
+    return statistics;
+  }
+
+  private async computeStatistics(
+    eventId: string,
+  ): Promise<EventStatisticsInterface> {
     const ticketClasses = await this.ticketClassService.findMany({
       filter: { eventId },
       options: {
