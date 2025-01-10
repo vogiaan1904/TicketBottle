@@ -1,5 +1,3 @@
-import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
 import {
   BadRequestException,
   ClassSerializerInterceptor,
@@ -7,8 +5,10 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { configSwagger } from './configs/apiDocs.config';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
+import { AppModule } from './app.module';
+import { configSwagger } from './configs/apiDocs.config';
 import { instance } from './configs/winston.config';
 
 async function bootstrap() {
@@ -19,6 +19,8 @@ async function bootstrap() {
       instance: instance,
     }),
   });
+  app.setGlobalPrefix('api/v1');
+
   configSwagger(app);
   const configService = app.get(ConfigService);
   app.useGlobalPipes(

@@ -10,7 +10,7 @@ model User {
   password    String
   firstName   String
   lastName    String
-  gender      Gender
+  gender      Gender  @default(CUSTOM)
   phoneNumber String?
   orders      Order[]
   isVerified  Boolean @default(false)

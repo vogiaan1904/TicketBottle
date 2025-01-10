@@ -36,3 +36,18 @@ export class RegisterRequestDTO {
   @IsPhoneNumber('VN')
   phoneNumber: string;
 }
+
+export class RegisterWithGoogleRequestDTO {
+  @IsNotEmpty()
+  @IsEmail()
+  @IsString()
+  email: string;
+
+  @IsNotEmpty()
+  @IsString()
+  firstName: string;
+
+  @IsNotEmpty()
+  @IsString()
+  lastName: string;
+}

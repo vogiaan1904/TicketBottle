@@ -7,7 +7,10 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
-import { RegisterRequestDTO } from './dto/request/register.request.dto';
+import {
+  RegisterRequestDTO,
+  RegisterWithGoogleRequestDTO,
+} from './dto/request/register.request.dto';
 
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
@@ -15,6 +18,7 @@ import * as bcrypt from 'bcryptjs';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
 
 import { Cache } from 'cache-manager';
+import * as crypto from 'crypto';
 import {
   accessTokenKeyPair,
   refreshTokenKeyPair,
@@ -102,6 +106,24 @@ export class AuthService {
     }
     await this.verifyPlainContentWithHashedContent(password, user.password);
     return user;
+  }
+
+  async validateGoogleLogin(
+    userDetails: RegisterWithGoogleRequestDTO,
+  ): Promise<UserResponseDto> {
+    const user = await this.userService.findByEmail(userDetails.email);
+    if (user) return user;
+    else {
+      const password = crypto.randomBytes(10).toString('hex');
+      const hashedPassword = await bcrypt.hash(password, this.SALT_ROUND);
+
+      const newUser = await this.userService.create({
+        ...userDetails,
+        password: hashedPassword,
+        isVerified: true,
+      });
+      return newUser;
+    }
   }
 
   async getStaff(

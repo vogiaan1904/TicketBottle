@@ -10,11 +10,12 @@ import { AuthStaffController } from './auth-staff.controller';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAccessTokenStrategy } from './strategies/jwt-access/jwt-user-access-token.strategy';
-import { JwtRefreshTokenStrategy } from './strategies/jwt-refresh/jwt-user-refresh-token.strategy copy';
+import { JwtRefreshTokenStrategy } from './strategies/jwt-refresh/jwt-user-refresh-token.strategy';
 import { JwtStaffAccessStrategy } from './strategies/jwt-access/jwt-staff-access-token.strategy';
 import { JwtStaffRefreshTokenStrategy } from './strategies/jwt-refresh/jwt-staff-refresh-token.strategy';
 import { LocalStaffStrategy } from './strategies/local/local-staff.strategy';
 import { LocalUserStrategy } from './strategies/local/local-user.strategy';
+import { GoogleStrategy } from './strategies/oauth/google.strategy';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { LocalUserStrategy } from './strategies/local/local-user.strategy';
     JwtStaffAccessStrategy,
     JwtRefreshTokenStrategy,
     JwtStaffRefreshTokenStrategy,
+    GoogleStrategy,
   ],
 })
 export class AuthModule {}
