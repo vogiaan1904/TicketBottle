@@ -23,7 +23,6 @@ export class ImageController {
     @UploadedFile()
     file: Express.Multer.File,
   ) {
-    console.log(file);
     return this.imageService.uploadImage(file);
   }
 }
