@@ -1,3 +1,5 @@
+import { ExpressAdapter } from '@bull-board/express';
+import { BullBoardModule } from '@bull-board/nestjs';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -17,18 +19,17 @@ import { DatabaseModule } from './modules/database/database.module';
 import { EmailModule } from './modules/email/email.module';
 import { EventInfoModule } from './modules/event-info/event-info.module';
 import { EventModule } from './modules/event/event.module';
+import { ImageModule } from './modules/image/image.module';
 import { OrderDetailModule } from './modules/order-detail/order-detail.module';
 import { OrderModule } from './modules/order/order.module';
+import { OrganizerModule } from './modules/organizer/organizer.module';
+import { PaymentModule } from './modules/payment/payment.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { TicketClassModule } from './modules/ticket-class/ticket-class.module';
 import { TicketModule } from './modules/ticket/ticket.module';
 import { TokenModule } from './modules/token/token.module';
-import { UserModule } from './modules/user/user.module';
-import { PaymentModule } from './modules/payment/payment.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
-import { BullBoardModule } from '@bull-board/nestjs';
-import { ExpressAdapter } from '@bull-board/express';
-import { OrganizerModule } from './modules/organizer/organizer.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { OrganizerModule } from './modules/organizer/organizer.module';
     PaymentModule,
     TransactionModule,
     OrganizerModule,
+    ImageModule,
   ],
   controllers: [AppController],
   providers: [
