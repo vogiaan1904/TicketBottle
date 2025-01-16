@@ -1,3 +1,4 @@
+import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 import {
   Body,
   Controller,
@@ -6,12 +7,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CreateUserRequestDto } from './dto/create-user.request.dto';
 import { UpdateUserRequestDto } from './dto/update-user.request.dto';
 import { UserService } from './user.service';
-import { OrderService } from '../order/order.service';
-import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
+import { ApiPagination } from '@/decorators/apiPagination.decorator';
+import { GetUsersQueryRequestDto } from './dto/get-users-query.request.dto';
 
 @Controller('user')
 export class UserController {
@@ -23,9 +25,10 @@ export class UserController {
   }
 
   @OnlyAdmin()
+  @ApiPagination()
   @Get()
-  findAll() {
-    return this.userService.findMany({});
+  findAll(@Query() query: GetUsersQueryRequestDto) {
+    return this.userService.getAllUsers(query);
   }
 
   @Get(':id')

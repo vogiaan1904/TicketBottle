@@ -16,6 +16,23 @@ services:
     networks:
       - app-network
 
+  testDB:
+    container_name: postgres_test_container
+    image: postgres
+    restart: always
+    env_file:
+      - .env.dev
+    environment:
+      POSTGRES_USER: ${TEST_DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${TEST_DATABASE_PASSWORD}
+      POSTGRES_DB: ${TEST_DATABASE_NAME}
+    ports:
+      - '5433:5432' # Maps host port 5433 to container port 5432
+    volumes:
+      - ./vol_test:/db/test # Separate volume for test database
+    networks:
+      - app-network
+
   redis_cache:
     container_name: redis_cache_container
     image: redis

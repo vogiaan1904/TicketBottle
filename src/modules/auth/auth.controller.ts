@@ -40,6 +40,34 @@ export class AuthController {
     return await this.authService.register(dto);
   }
 
+  @ApiPost({ path: 'login' })
+  @UseGuards(LocalUserAuthGuard)
+  @ApiBody({
+    type: LoginRequestDTO,
+    examples: {
+      user_1: {
+        value: {
+          email: 'test1@gmail.com',
+          password: '123',
+        } as LoginRequestDTO,
+      },
+      user_2: {
+        value: {
+          email: 'michaelsmith@example.com',
+          password: '1232@asdS',
+        } as LoginRequestDTO,
+      },
+    },
+  })
+  @ApiOkResponse({
+    description: 'Login successful',
+    type: LoginResponseDTO,
+  })
+  async login(@Req() request: RequestWithUser) {
+    const { user } = request;
+    return await this.authService.login(user.id);
+  }
+
   @Get('google/login')
   @UseGuards(GoogleAuthGuard)
   async handleGoogleLogin(): Promise<void> {}
@@ -70,33 +98,6 @@ export class AuthController {
 
     // Redirect to frontend application
     res.redirect('http://ticketbottle.com.vn/example');
-  }
-  @ApiPost({ path: 'login' })
-  @UseGuards(LocalUserAuthGuard)
-  @ApiBody({
-    type: LoginRequestDTO,
-    examples: {
-      user_1: {
-        value: {
-          email: 'test1@gmail.com',
-          password: '123',
-        } as LoginRequestDTO,
-      },
-      user_2: {
-        value: {
-          email: 'michaelsmith@example.com',
-          password: '1232@asdS',
-        } as LoginRequestDTO,
-      },
-    },
-  })
-  @ApiOkResponse({
-    description: 'Login successful',
-    type: LoginResponseDTO,
-  })
-  async login(@Req() request: RequestWithUser) {
-    const { user } = request;
-    return await this.authService.login(user.id);
   }
 
   @UseGuards(JwtAccessTokenGuard)

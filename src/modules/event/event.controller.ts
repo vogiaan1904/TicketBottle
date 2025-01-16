@@ -75,8 +75,8 @@ export class EventController {
   @Get()
   @ApiPagination()
   @ApiQuery({ name: 'includeInfo', required: false })
-  findMany(@Query() dto: GetEventQueryRequestDto) {
-    return this.eventService.findEvents(dto);
+  findMany(@Query() query: GetEventQueryRequestDto) {
+    return this.eventService.findEvents(query);
   }
 
   @ApiOkResponse({ type: EventResponseDto })

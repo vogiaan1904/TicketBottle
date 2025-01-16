@@ -28,6 +28,7 @@ export class RegisterRequestDTO {
   lastName: string;
 
   // @IsEnum(Gender)
+  @IsNotEmpty()
   @IsString()
   @Transform(({ value }) => value.toUpperCase())
   gender: Gender;

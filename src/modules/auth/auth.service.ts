@@ -23,7 +23,6 @@ import {
   accessTokenKeyPair,
   refreshTokenKeyPair,
 } from 'src/constraints/jwt.constraints';
-import { EventService } from '../event/event.service';
 import { StaffResponseDto } from '../staff/dto/staff.response.dto';
 import { StaffService } from '../staff/staff.service';
 import { TokenService } from '../token/token.service';
@@ -49,7 +48,6 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly tokenService: TokenService,
-    private readonly eventService: EventService,
     private readonly staffService: StaffService,
 
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
@@ -257,7 +255,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(decoded.email);
 
     if (user.isVerified) {
-      throw new BadRequestException('Account already verifed');
+      throw new BadRequestException('Account already verified');
     }
 
     const isValidToken = await this.tokenService.verifyJwtWithSecret(

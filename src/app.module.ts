@@ -47,7 +47,12 @@ import { UserModule } from './modules/user/user.module';
         abortEarly: false,
       },
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'development' ? '.env.dev' : '.env',
+      envFilePath:
+        process.env.NODE_ENV === 'development'
+          ? '.env.dev'
+          : process.env.NODE_ENV === 'test'
+            ? '.env.test'
+            : '.env',
       load: [databaseConfig],
       cache: true,
       expandVariables: true,
