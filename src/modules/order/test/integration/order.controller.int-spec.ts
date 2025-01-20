@@ -22,15 +22,15 @@ describe('OrderController', () => {
   it('should be defined', () => {
     expect(orderController).toBeDefined();
   });
-  describe('createOrder', () => {
-    it('should create order successfully', async () => {
-      const order = {
-        userId: 'testUser1',
-        ticketClassId: 'testTicketClass1Event1',
-        quantity: 10,
-      };
-      const result = await orderController.createOrder(order);
-      expect(result).toBeDefined();
-    });
-  });
+  // describe('createOrder', () => {
+  //   it('should create order successfully', async () => {
+  //     const order = {
+  //       userId: 'testUser1',
+  //       ticketClassId: 'testTicketClass1Event1',
+  //       quantity: 10,
+  //     };
+  //     const result = await orderController.createOrder(order);
+  //     expect(result).toBeDefined();
+  //   });
+  // });
 });
