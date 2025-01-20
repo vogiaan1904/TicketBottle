@@ -62,24 +62,30 @@ export class EventService extends BaseService<Event> {
       id: organizerId,
     });
     if (!foundOrganizer) {
-      throw new BadRequestException('Organizer not found');
+      this.logger.error(`Organizer with id ${organizerId} not found`);
+      throw new BadRequestException('Failed to create event info');
     }
-    return await super.update(
-      { id },
-      {
-        eventInfo: {
-          create: {
-            ...eventInfoData,
-            organizer: {
-              connect: {
-                id: organizerId,
+    try {
+      return await super.update(
+        { id },
+        {
+          eventInfo: {
+            create: {
+              ...eventInfoData,
+              organizer: {
+                connect: {
+                  id: organizerId,
+                },
               },
             },
           },
         },
-      },
-      { include: this.includeInfoAndOrganizer },
-    );
+        { include: this.includeInfoAndOrganizer },
+      );
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadRequestException('Failed to create event info');
+    }
   }
 
   async updateEventInfo(eventId: string, data: UpdateEventInfoRequestDto) {
@@ -98,15 +104,20 @@ export class EventService extends BaseService<Event> {
   }
 
   async createTicketClass(id: string, data: CreateTicketClassRequestDto) {
-    return await super.update(
-      { id },
-      {
-        ticketClasses: {
-          create: data,
+    try {
+      return await super.update(
+        { id },
+        {
+          ticketClasses: {
+            create: data,
+          },
         },
-      },
-      { include: this.includeTicketClasses },
-    );
+        { include: this.includeTicketClasses },
+      );
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadRequestException('Failed to create ticket class');
+    }
   }
 
   async findEvents(dto: GetEventQueryRequestDto) {

@@ -8,7 +8,7 @@ model TicketClass {
   price         Float
   tickets       Ticket[]
   eventId       String
-  event         Event             @relation(fields: [eventId], references: [id])
+  event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
@@ -25,7 +25,7 @@ model Ticket {
   eventId       String
   ticketClassId String
   event         Event        @relation(fields: [eventId], references: [id])
-  ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id])
+  ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id], onDelete: Cascade)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 

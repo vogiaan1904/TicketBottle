@@ -24,6 +24,26 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
     }
   }
 
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+  async cleanDatabase() {
+    if (process.env.NODE_ENV !== 'test') return;
+    const models = Reflect.ownKeys(this).filter(
+      (key) =>
+        key[0] !== '_' &&
+        typeof key === 'string' &&
+        /^[a-z]/.test(key) &&
+        typeof this[key].deleteMany === 'function',
+    );
+
+    return Promise.all(
+      models.map((model) => {
+        return this[model].deleteMany({});
+      }),
+    );
+  }
+
   async createAdminAccount() {
     const existedAdmin = await this.staff.findFirst({
       where: {

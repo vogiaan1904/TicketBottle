@@ -114,7 +114,7 @@ export class EventController {
   @OnlyAdmin()
   @ApiOkResponse({ type: EventResponseDto })
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  delete(@Param('id') id: string) {
     return this.eventService.remove({ id });
   }
 

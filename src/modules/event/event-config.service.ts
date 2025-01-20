@@ -32,9 +32,8 @@ export class EventConfigService {
       id: eventID,
     });
     if (!event) {
-      throw new BadRequestException('Event has not configured yet');
+      throw new BadRequestException('Event has not been configured yet');
     }
-
     return event;
   }
 
@@ -42,11 +41,15 @@ export class EventConfigService {
     const event: EventResponseDto = await this.isEventExist(eventId);
     const ticketClassList =
       await this.ticketClassService.findTicketClassesByEventId(eventId);
+
     const eventInfo = await this.eventInfoService.findOne({ eventId });
+
     if (!eventInfo || !eventInfo.organizerId || ticketClassList.length === 0) {
-      throw new BadRequestException('Event has not configured yet');
+      throw new BadRequestException('Event has not been configured yet');
     }
+
     const eventDataKey = this.genRedisKey.event(eventId);
+
     await this.redis.hset(eventDataKey, {
       id: event.id,
       maxTicketsPerCustomer: event.maxTicketsPerCustomer,
