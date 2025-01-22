@@ -1,13 +1,11 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
-import { RegisterRequestDTO } from './dto/request/register.request.dto';
+import {
+  RegisterRequestDTO,
+  RegisterWithGoogleRequestDTO,
+} from './dto/request/register.request.dto';
 
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
@@ -15,11 +13,11 @@ import * as bcrypt from 'bcryptjs';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
 
 import { Cache } from 'cache-manager';
+import * as crypto from 'crypto';
 import {
   accessTokenKeyPair,
   refreshTokenKeyPair,
 } from 'src/constraints/jwt.constraints';
-import { EventService } from '../event/event.service';
 import { StaffResponseDto } from '../staff/dto/staff.response.dto';
 import { StaffService } from '../staff/staff.service';
 import { TokenService } from '../token/token.service';
@@ -32,20 +30,20 @@ import {
   TokenPayload,
   VerifyAccountTokenPayload,
 } from './interfaces/token.interface';
+import { logger } from '@/configs/winston.config';
 
 @Injectable()
 export class AuthService {
   private SALT_ROUND = 10;
   private readonly FORGOT_PASSWORD_EXPIRATION_TIME = '15mins';
   private readonly VERIFY_ACCOUNT_EXPIRATION_TIME = '15mins';
-  private readonly logger = new Logger(AuthService.name);
+  private readonly logger = logger.child({ context: AuthService.name });
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly tokenService: TokenService,
-    private readonly eventService: EventService,
     private readonly staffService: StaffService,
 
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
@@ -104,6 +102,24 @@ export class AuthService {
     return user;
   }
 
+  async validateGoogleLogin(
+    userDetails: RegisterWithGoogleRequestDTO,
+  ): Promise<UserResponseDto> {
+    const user = await this.userService.findByEmail(userDetails.email);
+    if (user) return user;
+    else {
+      const password = crypto.randomBytes(10).toString('hex');
+      const hashedPassword = await bcrypt.hash(password, this.SALT_ROUND);
+
+      const newUser = await this.userService.create({
+        ...userDetails,
+        password: hashedPassword,
+        isVerified: true,
+      });
+      return newUser;
+    }
+  }
+
   async getStaff(
     username: string,
     password: string,
@@ -120,7 +136,7 @@ export class AuthService {
     userID: string,
     refreshToken: string,
   ): Promise<UserResponseDto> {
-    this.logger.log(userID);
+    this.logger.info(userID);
     const user = await this.userService.findById(userID);
     if (!user) {
       throw new BadRequestException('User not found');
@@ -141,7 +157,7 @@ export class AuthService {
     staffId: string,
     refreshToken: string,
   ): Promise<StaffResponseDto> {
-    this.logger.log(staffId);
+    this.logger.info(staffId);
     const staff = await this.staffService.findOne({ id: staffId });
     if (!staff) {
       throw new BadRequestException('Staff not found');
@@ -235,7 +251,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(decoded.email);
 
     if (user.isVerified) {
-      throw new BadRequestException('Account already verifed');
+      throw new BadRequestException('Account already verified');
     }
 
     const isValidToken = await this.tokenService.verifyJwtWithSecret(

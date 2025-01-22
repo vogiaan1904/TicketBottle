@@ -29,7 +29,6 @@ export class PaymentService {
     await this.transactionQueue.add(this.PROCESS_JOB_NAME, {
       transactionID,
     });
-    console.log('transaction added to queue');
   }
 
   async createPaymentLink(gatewayType: string, dto: CreatePaymentLinkOptions) {
@@ -39,7 +38,6 @@ export class PaymentService {
   }
 
   async handleCallback(gatewayType: string, callbackData: CallbackData) {
-    console.log('callback called');
     const gateway = this.paymentGatewayFactory.getGateway(gatewayType);
 
     const data = await gateway.handleCallback(callbackData.data);

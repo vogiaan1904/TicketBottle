@@ -1,6 +1,6 @@
-import { PartialType } from '@nestjs/swagger';
+import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateEventInfoRequestDto } from '../../event/dto/create-eventInfo.request.dto';
 
 export class UpdateEventInfoRequestDto extends PartialType(
-  CreateEventInfoRequestDto,
+  OmitType(CreateEventInfoRequestDto, ['organizerId'] as const),
 ) {}

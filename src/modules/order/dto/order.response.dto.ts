@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { $Enums, Order } from '@prisma/client';
-import { JsonValue } from '@prisma/client/runtime/library';
 import { Expose } from 'class-transformer';
 
 export class OrderResponseDto implements Order {
@@ -48,6 +47,24 @@ export class OrderResponseDto implements Order {
   createdAt: Date;
 }
 
+export class OrderDetailRedis {
+  @Expose()
+  @ApiProperty()
+  ticketClassId: string;
+
+  @Expose()
+  @ApiProperty()
+  quantity: number;
+
+  @Expose()
+  @ApiProperty()
+  name: string;
+
+  @Expose()
+  @ApiProperty()
+  price: number;
+}
+
 export class OrderRedisResponseDto {
   @Expose()
   @ApiProperty()
@@ -63,7 +80,7 @@ export class OrderRedisResponseDto {
 
   @Expose()
   @ApiProperty()
-  orderDetails: JsonValue;
+  orderDetails: OrderDetailRedis[];
 
   @Expose()
   @ApiProperty()
@@ -75,6 +92,10 @@ export class OrderRedisResponseDto {
 
   @Expose()
   @ApiProperty()
+  totalQuantity: number;
+
+  @Expose()
+  @ApiProperty()
   transactionAction: $Enums.TransactionAction;
 
   @Expose()
@@ -83,5 +104,39 @@ export class OrderRedisResponseDto {
 
   @Expose()
   @ApiProperty()
+  paymentGateway: string;
+
+  @Expose()
+  @ApiProperty()
   createdAt: Date;
+}
+
+export class OrderStatisticsReponseDto {
+  @Expose()
+  @ApiProperty()
+  orderId: string;
+
+  @Expose()
+  @ApiProperty()
+  totalCheckOut: number;
+
+  @Expose()
+  @ApiProperty()
+  totalQuantity: number;
+
+  @Expose()
+  @ApiProperty()
+  purchaseTime: string;
+
+  @Expose()
+  @ApiProperty()
+  userName: string;
+
+  @Expose()
+  @ApiProperty()
+  userEmail: string;
+
+  @Expose()
+  @ApiProperty()
+  numberOfCheckIn: number;
 }

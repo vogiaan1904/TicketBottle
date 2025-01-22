@@ -1,48 +1,64 @@
-import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
 import {
   BadRequestException,
   ClassSerializerInterceptor,
-  Logger,
   ValidationPipe,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { configSwagger } from './configs/apiDocs.config';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
-import { instance } from './configs/winston.config';
+import { AppModule } from './app.module';
+import { configSwagger } from './configs/apiDocs.config';
+import { logger as winstonLogger } from './configs/winston.config';
+import { GlobalExceptionFilter } from './filters/globalException.filter';
 
 async function bootstrap() {
-  const logger = new Logger(bootstrap.name);
+  try {
+    const app = await NestFactory.create(AppModule, {
+      logger: WinstonModule.createLogger({
+        instance: winstonLogger,
+      }),
+    });
+    app.setGlobalPrefix('api/v1');
 
-  const app = await NestFactory.create(AppModule, {
-    logger: WinstonModule.createLogger({
-      instance: instance,
-    }),
-  });
-  configSwagger(app);
-  const configService = app.get(ConfigService);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transformOptions: { enableImplicitConversion: true },
-      exceptionFactory: (errors) => {
-        const result =
-          errors[0].constraints[Object.keys(errors[0].constraints)[0]];
-        return new BadRequestException(result);
-      },
-    }),
-  );
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+    configSwagger(app);
+    const configService = app.get(ConfigService);
 
-  await app.listen(configService.get('PORT'), () => {
-    logger.log(
-      `Server running on http://localhost:${configService.get('PORT')}`,
+    app.useGlobalFilters(new GlobalExceptionFilter(configService));
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transformOptions: { enableImplicitConversion: true },
+        exceptionFactory: (errors) => {
+          winstonLogger.error('Validation failed', {
+            errors,
+          });
+          const result =
+            errors[0].constraints[Object.keys(errors[0].constraints)[0]];
+
+          return new BadRequestException(result);
+        },
+      }),
     );
-    logger.log(
-      `API Docs http://localhost:${configService.get('PORT')}/api-docs`,
+    app.useGlobalInterceptors(
+      new ClassSerializerInterceptor(app.get(Reflector)),
     );
-  });
+
+    await app.listen(configService.get<number>('PORT'), () => {
+      winstonLogger.info(
+        `Server running on http://localhost:${configService.get('PORT')}`,
+      );
+      winstonLogger.info(
+        `API Docs http://localhost:${configService.get('PORT')}/api-docs`,
+      );
+    });
+  } catch (error) {
+    winstonLogger.error('Application bootstrap failed', {
+      message: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  }
 }
 bootstrap();

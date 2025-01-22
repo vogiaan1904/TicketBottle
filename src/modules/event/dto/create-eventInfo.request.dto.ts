@@ -3,7 +3,7 @@ import { IsDate, IsNotEmpty, IsString } from 'class-validator';
 export class CreateEventInfoRequestDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()
@@ -13,6 +13,10 @@ export class CreateEventInfoRequestDto {
   @IsNotEmpty()
   startDate: Date;
 
+  @IsDate()
+  @IsNotEmpty()
+  endDate: Date;
+
   @IsString()
   @IsNotEmpty()
   location: string;
@@ -20,4 +24,8 @@ export class CreateEventInfoRequestDto {
   @IsString()
   @IsNotEmpty()
   thumbnail: string;
+
+  @IsNotEmpty()
+  @IsString()
+  organizerId: string;
 }

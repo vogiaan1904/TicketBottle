@@ -6,6 +6,7 @@ import {
   Injectable,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -13,8 +14,14 @@ import { ConfigService } from '@nestjs/config';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
 import { CreateOrderRedisDto } from './dto/create-order.request.dto';
-import { OrderResponseDto } from './dto/order.response.dto';
+import {
+  OrderResponseDto,
+  OrderStatisticsReponseDto,
+} from './dto/order.response.dto';
 import { OrderService } from './order.service';
+import { ApiPost } from '@/decorators/apiPost.decorator';
+import { GetOrdersQueryRequestDto } from './dto/get-orders-quert.request.dto';
+import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 
 @Injectable()
 @Controller('order')
@@ -25,7 +32,7 @@ export class OrderController {
     private readonly configService: ConfigService,
   ) {}
 
-  @Post()
+  @ApiPost({ path: '' })
   @UseGuards(JwtAccessTokenGuard)
   @ApiCreatedResponse({ type: OrderResponseDto })
   async create(
@@ -37,11 +44,10 @@ export class OrderController {
         ? `${request.protocol}://${request.get('host')}`
         : this.configService.get<string>(`NGROK_TEST_URL`);
 
-    return await this.orderService.createOrderOnRedis(
-      request.user.id,
-      createOrderDto,
-      { ip: request.ip, host },
-    );
+    return await this.orderService.checkout(request.user.id, createOrderDto, {
+      ip: request.ip,
+      host,
+    });
   }
 
   @Post(':id/cancel')
@@ -56,5 +62,15 @@ export class OrderController {
   @ApiOkResponse({ type: OrderResponseDto })
   findOne(@Param('id') id: string) {
     return this.orderService.findOne({ id });
+  }
+
+  @OnlyAdmin()
+  @Get(':eventId/statistics')
+  @ApiOkResponse({ type: OrderStatisticsReponseDto, isArray: true })
+  getStatisticsByEventId(
+    @Param('eventId') eventId: string,
+    @Query() dto: GetOrdersQueryRequestDto,
+  ) {
+    return this.orderService.getOrdersStatisticByEventId(eventId, dto);
   }
 }

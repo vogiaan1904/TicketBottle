@@ -28,6 +28,7 @@ export class RegisterRequestDTO {
   lastName: string;
 
   // @IsEnum(Gender)
+  @IsNotEmpty()
   @IsString()
   @Transform(({ value }) => value.toUpperCase())
   gender: Gender;
@@ -35,4 +36,19 @@ export class RegisterRequestDTO {
   @IsNotEmpty()
   @IsPhoneNumber('VN')
   phoneNumber: string;
+}
+
+export class RegisterWithGoogleRequestDTO {
+  @IsNotEmpty()
+  @IsEmail()
+  @IsString()
+  email: string;
+
+  @IsNotEmpty()
+  @IsString()
+  firstName: string;
+
+  @IsNotEmpty()
+  @IsString()
+  lastName: string;
 }

@@ -1,15 +1,12 @@
-import { BaseService } from '@/services/base/base.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { DatabaseService } from 'src/modules/database/database.service';
 import { UserResponseDto } from './dto/user.response.dto';
-import { OrderService } from '../order/order.service';
+import { GetUsersQueryRequestDto } from './dto/get-users-query.request.dto';
+import { BaseService } from '@/services/base/base.service';
 @Injectable()
 export class UserService extends BaseService<User> {
-  constructor(
-    private readonly databaseService: DatabaseService,
-    private readonly orderService: OrderService,
-  ) {
+  constructor(private readonly databaseService: DatabaseService) {
     super(databaseService, 'user', UserResponseDto);
   }
 
@@ -24,5 +21,10 @@ export class UserService extends BaseService<User> {
     return await super.findOne({
       id,
     });
+  }
+
+  async getAllUsers(dto: GetUsersQueryRequestDto) {
+    const { page, perPage } = dto;
+    return await super.findManyWithPagination({ page, perPage });
   }
 }

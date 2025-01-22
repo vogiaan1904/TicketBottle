@@ -1,0 +1,58 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    meta(name='x-apple-disable-message-reformatting')
+    meta(http-equiv='x-ua-compatible', content='ie=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='format-detection', content='telephone=no, date=no, address=no, email=no')
+    //if mso
+      xml
+        o:officedocumentsettings
+          o:pixelsperinch 96
+    title Payment Successful - #{eventName}
+    link(href='https://fonts.googleapis.com/css?family=Montserrat:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700', rel='stylesheet', media='screen')
+    style.
+      .hover-underline:hover {
+        text-decoration: underline !important;
+      }
+      @media (max-width: 600px) {
+        .sm-w-full {
+          width: 100% !important;
+        }
+        .sm-px-24 {
+          padding-left: 24px !important;
+          padding-right: 24px !important;
+        }
+        .sm-py-32 {
+          padding-top: 32px !important;
+          padding-bottom: 32px !important;
+        }
+      }
+  body(style="font-family: 'Montserrat', sans-serif; mso-line-height-rule: exactly;")
+    div(style="font-family: 'Montserrat', sans-serif; mso-line-height-rule: exactly; display: none;") Thank you for your purchase! Your tickets for #{eventName} are confirmed.
+    div(role='article', aria-roledescription='email', aria-label='Payment Success Email', lang='en', style="font-family: 'Montserrat', sans-serif; mso-line-height-rule: exactly;")
+      table(style="width: 100%; font-family: Montserrat, -apple-system, 'Segoe UI', sans-serif;", cellpadding='0', cellspacing='0', role='presentation')
+        tr
+          td(align='center', style="mso-line-height-rule: exactly; background-color: #eceff1; font-family: Montserrat, -apple-system, 'Segoe UI', sans-serif;")
+            table(style="width: 100%; max-width: 600px;", cellpadding='0', cellspacing='0', role='presentation')
+              tr
+                td(style="padding: 20px; text-align: center;")
+                  h1(style="font-size: 24px; margin-bottom: 20px;") Payment Successful
+                  p(style="font-size: 16px; line-height: 1.5;") Thank you for your purchase! Here are the details of your order:
+                  h2(style="font-size: 20px; margin-top: 30px;") Event: #{eventName}
+                  table(style="width: 100%; border-collapse: collapse;", cellpadding='0', cellspacing='0')
+                    thead
+                      tr
+                        th(style="text-align: left; padding: 10px; border-bottom: 1px solid #ddd;") Ticket Class
+                        th(style="text-align: right; padding: 10px; border-bottom: 1px solid #ddd;") Quantity
+                    tbody
+                      each ticket in tickets
+                        tr
+                          td(style="padding: 10px; border-bottom: 1px solid #ddd;") #{ticket.ticketClassName}
+                          td(style="text-align: right; padding: 10px; border-bottom: 1px solid #ddd;") #{ticket.quantity}
+                  p(style="font-size: 16px; line-height: 1.5; margin-top: 20px;") Total Payment: #{totalPayment} VND
+                  p(style="font-size: 16px; line-height: 1.5;") Order Time: #{orderTime}
+                  p(style="font-size: 16px; line-height: 1.5; margin-top: 30px;") We look forward to seeing you at the event!
+                  p(style="font-size: 16px; line-height: 1.5; margin-top: 10px;") Best regards,
+                  p(style="font-size: 16px; line-height: 1.5;") The TicketBottle Team

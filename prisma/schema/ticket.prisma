@@ -1,14 +1,16 @@
 model TicketClass {
-  id            String   @id @default(uuid())
+  id            String            @id @default(uuid())
   name          String
+  status        TicketClassStatus @default(AVAILABLE)
   totalQuantity Int
+  soldQuantity  Int               @default(0)
   description   String
   price         Float
   tickets       Ticket[]
   eventId       String
-  event         Event    @relation(fields: [eventId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@unique([name, eventId])
   @@map("ticket_classes")
@@ -16,20 +18,21 @@ model TicketClass {
 
 model Ticket {
   id            String       @id @default(uuid())
-  status        TicketStatus @default(AVAILABLE)
   serialNumber  String       @unique @default(cuid())
   orderDetail   OrderDetail?
+  isCheckIn     Boolean      @default(false)
+  checkInAt     DateTime?
   eventId       String
   ticketClassId String
   event         Event        @relation(fields: [eventId], references: [id])
-  ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id])
+  ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id], onDelete: Cascade)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   @@map("tickets")
 }
 
-enum TicketStatus {
+enum TicketClassStatus {
   AVAILABLE
-  SOLD
+  SOLD_OUT
 }

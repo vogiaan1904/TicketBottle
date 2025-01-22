@@ -1,7 +1,12 @@
 import { BaseService } from '@/services/base/base.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { InjectQueue } from '@nestjs/bullmq';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import {
   Order,
   OrderStatus,
@@ -11,16 +16,23 @@ import {
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
+import { EmailService } from '../email/email.service';
 import { TicketClassRedisResponseDto } from '../event/dto/ticket-class-redis.response.dto';
 import { EventConfigService } from '../event/event-config.service';
 import { PaymentService } from '../payment/payment.service';
 import { TransactionService } from '../transaction/transaction.service';
+import { UserService } from '../user/user.service';
 import {
   CreateOrderDetailRedis,
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
 import { OrderResponseDto } from './dto/order.response.dto';
-import { TicketQueue } from './enums/queue';
+
+import * as crypto from 'crypto';
+import * as dayjs from 'dayjs';
+import { GetOrdersQueryRequestDto } from './dto/get-orders-quert.request.dto';
+import { EmailQueue, TicketQueue } from './enums/queue';
+import { EventService } from '../event/event.service';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -38,24 +50,30 @@ export class OrderService extends BaseService<Order> {
     private readonly eventConfigService: EventConfigService,
     private readonly paymentService: PaymentService,
     private readonly transactionService: TransactionService,
+    private readonly emailService: EmailService,
+    private readonly userService: UserService,
+    private readonly eventService: EventService,
     @InjectRedis() private readonly redis: Redis,
     @InjectQueue(TicketQueue.name)
     private readonly ticketReleaseQueue: Queue,
+    @InjectQueue(EmailQueue.name)
+    private readonly emailQueue: Queue,
   ) {
     super(databaseService, 'order', OrderResponseDto);
   }
 
-  private generateTemporaryId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  private genOrderID(): string {
+    const now = dayjs().format('YYMMDD').toString();
+    return now + crypto.randomBytes(5).toString('hex');
+  }
+  private genTransactionID(): string {
+    const now = dayjs().format('YYMMDD').toString();
+    return now + '-' + crypto.randomBytes(5).toString('hex');
   }
 
-  async createOrderOnRedis(
-    userId: string,
-    dto: CreateOrderRedisDto,
-    paymentData: { ip: string; host: string },
-  ) {
-    const orderCode = this.generateTemporaryId();
-    const transactionCode = this.generateTemporaryId();
+  async createOrderOnRedis(userId: string, dto: CreateOrderRedisDto) {
+    const orderCode = this.genOrderID();
+    const transactionCode = this.genTransactionID();
     const orderKey = this.genRedisKey.order(orderCode);
 
     const eventSaleData = await this.eventConfigService.getSaleData(
@@ -89,20 +107,20 @@ export class OrderService extends BaseService<Order> {
       { totalCheckout: 0, totalQuantity: 0 },
     );
 
-    await this.checkIfExceedMaxNumOfTickets(
-      userId,
-      dto.eventId,
-      Number(eventSaleData.maxTicketsPerCustomer),
-      totalQuantity,
-    );
+    // await this.checkIfExceedMaxNumOfTickets(
+    //   userId,
+    //   dto.eventId,
+    //   Number(eventSaleData.maxTicketsPerCustomer),
+    //   totalQuantity,
+    // );
 
     const orderDetails = dto.orderDetails.map((detail) => {
-      //add price to each orderDetail
       const ticketClass = ticketClassesInfo.find(
         (tc) => tc.id === detail.ticketClassId,
       );
-      return { ...detail, price: ticketClass.price };
+      return { ...detail, price: ticketClass.price, name: ticketClass.name };
     });
+
     await this.redis
       .multi()
       .hset(orderKey, {
@@ -125,24 +143,35 @@ export class OrderService extends BaseService<Order> {
     const job = await this.ticketReleaseQueue.add(
       TicketQueue.jobName,
       { orderCode },
-      { delay: this.orderTimeout }, // 10 minutes
+      { delay: this.orderTimeout },
     );
 
     await this.redis.hset(orderKey, 'releaseJobId', job.id);
 
     const orderData = await this.redis.hgetall(orderKey);
 
+    return orderData;
+  }
+
+  async checkout(
+    userId: string,
+    dto: CreateOrderRedisDto,
+    paymentData: { ip: string; host: string },
+  ) {
+    const orderData = await this.createOrderOnRedis(userId, dto);
+
+    const { code, totalCheckout } = orderData;
     const paymentUrl = await this.paymentService.createPaymentLink(
       dto.paymentGateway,
       {
         ip: paymentData.ip,
         host: paymentData.host,
         returnUrl: dto.returnUrl,
-        orderCode,
-        amount: totalCheckout,
+        orderCode: code,
+        amount: Number(totalCheckout),
       },
     );
-    console.log('paymentUrl', paymentUrl);
+
     return { orderData, paymentUrl };
   }
 
@@ -155,7 +184,6 @@ export class OrderService extends BaseService<Order> {
     const placedOrders = await this.findMany({
       filter: { userId, eventId, status: 'COMPLETED' },
     });
-    console.log('placedOrders', placedOrders);
     const placedQuantity = placedOrders.reduce(
       (acc, order) => acc + order.totalQuantity,
       0,
@@ -209,9 +237,6 @@ export class OrderService extends BaseService<Order> {
   async cancelOrder(orderCode: string): Promise<OrderResponseDto> {
     const orderKey = this.genRedisKey.order(orderCode);
     const orderData = await this.redis.hgetall(orderKey);
-    if (!orderData || orderData.status !== OrderStatus.PENDING) {
-      throw new BadRequestException('Order not found or already completed');
-    }
 
     await this.releaseTickets(orderCode);
 
@@ -234,7 +259,6 @@ export class OrderService extends BaseService<Order> {
       email: 'notbuyticket@gmail.com',
       totalCheckOut: Number(orderData.totalCheckout),
       totalQuantity: Number(orderData.totalQuantity),
-      code: orderCode,
       transaction: {
         create: {
           status: TransactionStatus.CANCELLED,
@@ -242,7 +266,7 @@ export class OrderService extends BaseService<Order> {
           refCode: orderCode,
           gateway: orderData.paymentGateway,
           details: {},
-          code: parseInt(this.generateTemporaryId()),
+          id: this.genOrderID(),
           amount: Number(orderData.totalCheckout),
         },
       },
@@ -287,18 +311,21 @@ export class OrderService extends BaseService<Order> {
       this.genRedisKey.order(transactionID),
     );
     if (!transactionData) {
-      throw new Error(`Transaction with ID ${transactionID} not found`);
+      throw new InternalServerErrorException(
+        `Transaction with ID ${transactionID} not found`,
+      );
     }
 
     if (transactionData.status !== 'PENDING') {
-      throw new Error(`Transaction with ID ${transactionID} is not PENDING`);
+      throw new BadRequestException(
+        `Transaction with ID ${transactionID} is not PENDING`,
+      );
     }
 
     // Ticket purchase
     if (transactionData.transactionAction === 'BUY_TICKET') {
       const amount = parseFloat(transactionData.totalCheckout);
-      const transactionId = this.generateTemporaryId();
-      console.log('amount', amount);
+      const transactionId = this.genOrderID();
       const refCode = transactionData.code;
       const gateway = transactionData.paymentGateway;
 
@@ -309,7 +336,6 @@ export class OrderService extends BaseService<Order> {
         refCode,
         gateway,
         details: {},
-        code: parseInt(this.generateTemporaryId()),
         amount,
       });
 
@@ -331,10 +357,26 @@ export class OrderService extends BaseService<Order> {
 
     await this.redis.hset(orderKey, 'status', OrderStatus.COMPLETED);
 
-    const orderDetails = JSON.parse(orderData.orderDetails);
+    const user = await this.userService.findById(orderData.userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
 
+    const orderDetails = JSON.parse(orderData.orderDetails);
     const createdOrder = await this.databaseService.$transaction(async (tx) => {
       const ticketPromises = orderDetails.map(async (detail) => {
+        await tx.ticketClass.update({
+          //update number of sold tickets for each ticket class
+          where: {
+            id: detail.ticketClassId,
+          },
+          data: {
+            soldQuantity: {
+              increment: detail.quantity,
+            },
+          },
+        });
+
         const ticketData = Array.from({ length: detail.quantity }, () => ({
           ticketClassId: detail.ticketClassId,
           eventId: orderData.eventId,
@@ -344,14 +386,13 @@ export class OrderService extends BaseService<Order> {
       });
 
       const a = await Promise.all(ticketPromises);
-      console.log(a);
+
+      // Create order
       return await tx.order.create({
         data: {
           status: OrderStatus.COMPLETED,
-          email: 'notbuyticket@gmail.com', // Replace with actual email if available
           totalCheckOut: Number(orderData.totalCheckout),
           totalQuantity: Number(orderData.totalQuantity),
-          code: orderCode,
           user: {
             connect: {
               id: orderData.userId,
@@ -378,10 +419,116 @@ export class OrderService extends BaseService<Order> {
       });
     });
 
-    // Remove the order from Redis
+    // Send email
+    await this.sendOrderSuccessEmail(
+      user.email,
+      orderData.orderDetails,
+      createdOrder.id,
+    );
+
+    // Delete order on redis
     await this.redis.del(orderKey);
+
+    // Invalidate event statistics cache
+    await this.eventService.invalidateEventStatisticsCache(orderData.eventId);
 
     // Return the created order
     return createdOrder;
+  }
+
+  async sendOrderSuccessEmail(
+    userEmail: string,
+    orderDetails: string,
+    orderId: string,
+  ) {
+    const orderDetailsJSON = JSON.parse(orderDetails);
+    const orderDetailEmailData = orderDetailsJSON.map((detail) => ({
+      ticketClassName: detail.name,
+      quantity: detail.quantity,
+      price: detail.price,
+    }));
+
+    const createdOrder = await this.findOne(
+      { id: orderId },
+      {
+        include: {
+          transaction: true,
+          event: {
+            select: {
+              eventInfo: true,
+            },
+          },
+        },
+      },
+    );
+    const formattedOrderTime = dayjs(createdOrder.createdAt).format(
+      'HH:mm, DD/MM/YYYY',
+    );
+    const formattedStartDate = dayjs(
+      createdOrder.event.eventInfo.startDate,
+    ).format('HH:mm, DD/MM/YYYY');
+
+    await this.emailQueue.add(EmailQueue.jobName, {
+      email: userEmail,
+      orderData: {
+        orderId: createdOrder.id,
+        eventName: createdOrder.event.eventInfo.name,
+        eventDate: formattedStartDate,
+        eventLocation: createdOrder.event.eventInfo.location,
+        tickets: orderDetailEmailData,
+        paymentGateway: createdOrder.transaction.gateway,
+        totalAmount: createdOrder.totalCheckOut,
+        orderTime: formattedOrderTime,
+      },
+    });
+  }
+
+  //Statistics for event dashboard
+  async getOrdersStatisticByEventId(
+    eventId: string,
+    dto: GetOrdersQueryRequestDto,
+  ) {
+    const { page, perPage } = dto;
+    const ordersDataWithPagination = await this.findManyWithPagination({
+      filter: { eventId, status: 'COMPLETED' },
+      page,
+      perPage,
+      options: {
+        select: {
+          id: true,
+          totalCheckOut: true,
+          totalQuantity: true,
+          createdAt: true,
+          user: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          orderDetails: {
+            where: {
+              ticket: {
+                isCheckIn: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const ordersStatistics = ordersDataWithPagination.data.map((order) => ({
+      orderId: order.id,
+      totalCheckOut: order.totalCheckOut,
+      totalQuantity: order.totalQuantity,
+      purchaseTime: dayjs(order.createdAt).format('HH:mm, DD/MM/YYYY'),
+      userName: `${order.user.firstName} ${order.user.lastName}`,
+      userEmail: order.user.email,
+      numberOfCheckIn: order.orderDetails.length,
+    }));
+
+    ordersDataWithPagination.data = ordersStatistics;
+
+    return ordersDataWithPagination;
   }
 }

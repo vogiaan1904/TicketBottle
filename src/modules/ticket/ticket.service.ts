@@ -1,12 +1,11 @@
 import { BaseService } from '@/services/base/base.service';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Ticket } from '@prisma/client';
-import { DatabaseService } from 'src/modules/database/database.service';
-import { TicketResponseDto } from './dto/ticket.response.dto';
-import { CreateTicketRequestDto } from './dto/create-ticket.request.dto';
-import { UpdateTicketRequestDto } from './dto/update-ticket.request.dto';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { DatabaseService } from 'src/modules/database/database.service';
+import { CreateTicketRequestDto } from './dto/create-ticket.request.dto';
+import { TicketResponseDto } from './dto/ticket.response.dto';
 
 @Injectable()
 export class TicketService extends BaseService<Ticket> {
@@ -33,7 +32,10 @@ export class TicketService extends BaseService<Ticket> {
     });
   }
 
-  async update(id: string, dto: UpdateTicketRequestDto) {
-    return await super.update({ id }, dto);
+  async updateCheckInStatus(serialNumber: string) {
+    return await super.update(
+      { serialNumber },
+      { isCheckIn: true, checkInAt: new Date() },
+    );
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import { ApiPost } from 'src/decorators/apiPost.decorator';
 import { RequestWithUser } from 'src/types/request.type';
@@ -17,6 +17,9 @@ import { JwtAccessTokenGuard } from './guards/jwt-access/jwt-user-access-token.g
 import { LocalUserAuthGuard } from './guards/local/local-user.guard';
 import { JwtRefreshTokenGuard } from './guards/jwt-refresh/jwt-user-refresh-token.guard';
 import { UserResponseDto } from '../user/dto/user.response.dto';
+import { GoogleAuthGuard } from './guards/oauth/oauth-google.guard';
+import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 // @UseInterceptors(new PrismaInterceptor(User))
@@ -25,6 +28,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly staffService: StaffService,
+    private readonly configService: ConfigService,
   ) {}
 
   @ApiPost({
@@ -43,8 +47,8 @@ export class AuthController {
     examples: {
       user_1: {
         value: {
-          email: 'pnviethung@gmail.com',
-          password: '0922981365aA@',
+          email: 'test1@gmail.com',
+          password: '123',
         } as LoginRequestDTO,
       },
       user_2: {
@@ -62,6 +66,38 @@ export class AuthController {
   async login(@Req() request: RequestWithUser) {
     const { user } = request;
     return await this.authService.login(user.id);
+  }
+
+  @Get('google/login')
+  @UseGuards(GoogleAuthGuard)
+  async handleGoogleLogin(): Promise<void> {}
+
+  @Get('google/redirect')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuhtRedirect(@Req() req: RequestWithUser, @Res() res: Response) {
+    const { user } = req;
+    const tokens = await this.authService.login(user.id);
+
+    res.cookie('accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Set to true in production
+      maxAge: this.configService.get<number>(
+        'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
+      ),
+      sameSite: 'lax',
+    });
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: this.configService.get<number>(
+        'JWT_REFRESH_TOKEN_EXPIRATION_TIME',
+      ),
+      sameSite: 'lax',
+    });
+
+    // Redirect to frontend application
+    res.redirect('http://ticketbottle.com.vn/example');
   }
 
   @UseGuards(JwtAccessTokenGuard)

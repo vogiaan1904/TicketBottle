@@ -4,7 +4,9 @@ import { Job } from 'bullmq';
 import { OrderService } from '../order.service';
 import { TransactionQueue } from '@/modules/payment/enums/queue';
 
-@Processor(TransactionQueue.name)
+@Processor(TransactionQueue.name, {
+  concurrency: 5,
+})
 export class ProcessTransactionWorker extends WorkerHost {
   private readonly logger = new Logger(ProcessTransactionWorker.name);
   constructor(private readonly orderService: OrderService) {
@@ -13,14 +15,17 @@ export class ProcessTransactionWorker extends WorkerHost {
 
   async process(job: Job<{ transactionID: string }>): Promise<void> {
     const { transactionID } = job.data;
-    this.logger.log(`Processing transaction ID: ${transactionID}`);
+
+    this.logger.log(`Processing transaction Id: ${transactionID}`);
     try {
       // process transaction
       await this.orderService.processTransaction(transactionID);
-      this.logger.log(`Do something with trans: ${transactionID}`);
+      this.logger.log(
+        `Successfully processed transaction Id: ${transactionID}`,
+      );
     } catch (error) {
       this.logger.error(
-        `Failed to process transaction ID: ${transactionID}`,
+        `Failed to process transaction Id: ${transactionID}`,
         error,
       );
       console.error(error);

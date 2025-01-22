@@ -6,6 +6,7 @@ import { TicketClassResponseDto } from './../ticket-class/dto/ticket-class.respo
 import { EventResponseDto } from './dto/event.response.dto';
 import { EventService } from './event.service';
 import { EventStatus } from '@prisma/client';
+import { EventInfoService } from '../event-info/event-info.service';
 
 enum EventConfigStatus {
   Ok = '1',
@@ -23,6 +24,7 @@ export class EventConfigService {
     @InjectRedis() private readonly redis: Redis,
     private readonly eventService: EventService,
     private readonly ticketClassService: TicketClassService,
+    private readonly eventInfoService: EventInfoService,
   ) {}
 
   private async isEventExist(eventID: string): Promise<EventResponseDto> {
@@ -30,18 +32,24 @@ export class EventConfigService {
       id: eventID,
     });
     if (!event) {
-      throw new BadRequestException('Event has not configured yet');
+      throw new BadRequestException('Event has not been configured yet');
     }
-
     return event;
   }
 
-  async requestConfigure(eventID: string): Promise<void> {
-    const event: EventResponseDto = await this.isEventExist(eventID);
+  async requestConfigure(eventId: string): Promise<void> {
+    const event: EventResponseDto = await this.isEventExist(eventId);
     const ticketClassList =
-      await this.ticketClassService.findTicketClassesByEventId(eventID);
+      await this.ticketClassService.findTicketClassesByEventId(eventId);
 
-    const eventDataKey = this.genRedisKey.event(eventID);
+    const eventInfo = await this.eventInfoService.findOne({ eventId });
+
+    if (!eventInfo || !eventInfo.organizerId || ticketClassList.length === 0) {
+      throw new BadRequestException('Event has not been configured yet');
+    }
+
+    const eventDataKey = this.genRedisKey.event(eventId);
+
     await this.redis.hset(eventDataKey, {
       id: event.id,
       maxTicketsPerCustomer: event.maxTicketsPerCustomer,
@@ -66,12 +74,12 @@ export class EventConfigService {
     await Promise.all(ticketClassDataPromise);
 
     await this.redis.set(
-      this.genRedisKey.eventConfigStatus(eventID),
+      this.genRedisKey.eventConfigStatus(eventId),
       EventConfigStatus.Ok,
     );
 
     await this.eventService.update(
-      { id: eventID },
+      { id: eventId },
       { status: EventStatus.PUBLISHED },
     );
   }

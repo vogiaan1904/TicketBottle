@@ -23,14 +23,30 @@ model Event {
 }
 
 model EventInfo {
-  id          String   @id @default(uuid())
-  title       String
+  id          String     @id @default(uuid())
+  name        String
   description String
   startDate   DateTime
+  endDate     DateTime
   location    String
   thumbnail   String
-  eventId     String   @unique
-  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId     String     @unique
+  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  organizer   Organizer? @relation(fields: [organizerId], references: [id])
+  organizerId String?
 
   @@map("event_infos")
+}
+
+model Organizer {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String
+  email       String?     @unique
+  phone       String?
+  address     String?
+  thumbnail   String?
+  events      EventInfo[]
+
+  @@map("organizers")
 }

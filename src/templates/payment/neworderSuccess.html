@@ -1,0 +1,355 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+  <head>
+    <!-- <meta charset='UTF-8'> -->
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <title>Buy Ticket Successfully TicketBottle</title>
+    <style>
+      /* Removed @font-face declarations for better email client compatibility */
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: lightgray;
+        font-family: 'Roboto', Arial, sans-serif; /* Fallback fonts included */
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        font-weight: 400;
+        background-color: white;
+        font-family: 'Roboto', Arial, sans-serif; /* Inline font-family */
+      }
+      .header {
+        background: url('https://tkbvn-tokyo.s3-ap-northeast-1.amazonaws.com/static/email-template-2020/tbox-header.png');
+        height: 64px;
+      }
+      .header img {
+        margin-left: 24px;
+        width: 68px;
+        height: 32px;
+        padding-top: 16px;
+      }
+      .ticket-info {
+        margin: auto;
+        border-bottom: 1px dashed rgb(175, 184, 201);
+        width: 312px;
+        font-family: 'Roboto', Arial, sans-serif; /* Inline font-family */
+        font-size: 14px; /* Consistent font size */
+        line-height: 20px; /* Increased line height for better readability */
+      }
+      .ticket-info h3 {
+        color: black;
+        font-size: 16px;
+        font-family: 'Roboto', Arial, sans-serif; /* Inline font-family */
+        margin-bottom: 10px; /* Added space below the heading */
+      }
+      .ticket-info p {
+        margin: 0 0 10px 0; /* Added space below each paragraph */
+        font-size: 14px; /* Consistent font size */
+        line-height: 20px; /* Increased line height */
+        color: rgb(42, 45, 52);
+        font-family: 'Roboto', Arial, sans-serif; /* Inline font-family */
+      }
+      .ticket-info span {
+        font-size: 12px;
+        color: rgb(96, 103, 120);
+        font-family: 'Roboto', Arial, sans-serif; /* Inline font-family */
+      }
+      /* Additional styles... */
+    </style>
+  </head>
+  <body>
+    <div class="container" style="font-family: 'Roboto', Arial, sans-serif">
+      <div class="header">
+        <a
+          href="http://tracking.ticketbox.vn/track/click/30009005/ticketbox.vn?p=eyJzIjoiWnJsNkJqUXlwR2lGczJVZjQtZHlMOFJuUmNBIiwidiI6MSwicCI6IntcInVcIjozMDAwOTAwNSxcInZcIjoxLFwidXJsXCI6XCJodHRwczpcXFwvXFxcL3RpY2tldGJveC52blxcLy_b3BtPWV2ZW50LmVtYWlsLmNvbmZpcm1hdGlvbi5oZWFkZXIubG9nby5nb1wiLFwiaWRcIjpcIjMzZjk0YzEwMjgyZjRiMDI4ZGUzNDQ4YWIzMjM5MTZmXCIsXCJ1cmxfaWRzXCI6W1wiYjEzZjc4YzVlMzA5MzExODE4YjU5OGJiNDgwYjFkM2UwMDYwNGU0ZVwiXX0ifQ"
+        >
+          <img src="https://imgur.com/FAF21uF.png" alt="TicketBottle Logo" />
+        </a>
+      </div>
+
+      <div
+        class="ticket-info"
+        style="
+          font-family: 'Roboto', Arial, sans-serif;
+          font-size: 14px;
+          line-height: 20px;
+        "
+      >
+        <h3
+          style="font-family: 'Roboto', Arial, sans-serif; margin-bottom: 10px"
+        >
+          Ticket information
+        </h3>
+        <p
+          style="
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 20px;
+            color: rgb(42, 45, 52);
+            font-family: 'Roboto', Arial, sans-serif;
+          "
+        >
+          <span
+            >Your e-ticket is attached to this email. Please have your e-ticket
+            ready at the ticket booth.</span
+          >
+        </p>
+        <p
+          style="
+            margin: 0 0 3px 0;
+            font-size: 14px;
+            line-height: 20px;
+            color: rgb(42, 45, 52);
+            font-family: 'Roboto', Arial, sans-serif;
+          "
+        >
+          Order code: {{orderId}}
+        </p>
+        <p
+          style="
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 20px;
+            color: rgb(42, 45, 52);
+            font-family: 'Roboto', Arial, sans-serif;
+          "
+        >
+          <span>(Used when contacting Customer Support)</span>
+        </p>
+        <p
+          style="
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 20px;
+            color: rgb(42, 45, 52);
+            font-family: 'Roboto', Arial, sans-serif;
+          "
+        >
+          Event: {{eventName}}
+        </p>
+        <p
+          style="
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 20px;
+            color: rgb(42, 45, 52);
+            font-family: 'Roboto', Arial, sans-serif;
+          "
+        >
+          Time: {{eventDate}}
+        </p>
+        <p
+          style="
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 20px;
+            color: rgb(42, 45, 52);
+            font-family: 'Roboto', Arial, sans-serif;
+          "
+        >
+          Location: {{eventLocation}}
+        </p>
+      </div>
+
+      <!-- Additional sections... -->
+
+      <div
+        style="
+          margin: auto;
+          padding-bottom: 16px;
+          width: 312px;
+          font-family: 'Roboto', Arial, sans-serif;
+          font-size: 14px; /* Consistent font size */
+          line-height: 20px; /* Increased line height */
+        "
+      >
+        <div style="width: 312px">
+          <h3
+            style="
+              font-family: 'Roboto', Arial, sans-serif;
+              margin-bottom: 10px;
+            "
+          >
+            Order details
+          </h3>
+          <p
+            style="
+              color: rgb(42, 45, 52);
+              margin: 0 0 10px 0;
+              font-size: 14px;
+              line-height: 20px;
+              font-family: 'Roboto', Arial, sans-serif;
+            "
+          >
+            Payment method: {{paymentGateway}}
+          </p>
+          <p
+            style="
+              color: rgb(42, 45, 52);
+              margin: 0 0 10px 0;
+              font-size: 14px;
+              line-height: 20px;
+              font-family: 'Roboto', Arial, sans-serif;
+            "
+          >
+            Booking time: {{orderTime}}
+          </p>
+          <div
+            style="
+              width: 280px;
+              padding: 16px;
+              background: rgb(245, 247, 252);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: 16px;
+                font-weight: bold;
+                font-family: 'Roboto', Arial, sans-serif;
+              "
+              >Ticket class</span
+            >
+            <table
+              style="
+                width: 100%;
+                font-size: 14px;
+                font-family: 'Roboto', Arial, sans-serif;
+              "
+            >
+              {{#each tickets}}
+              <tr>
+                <td>{{ticketClassName}} x ({{quantity}})</td>
+                <td style="text-align: right">{{formatCurrency price}} VND</td>
+              </tr>
+              {{/each}}
+            </table>
+            <div
+              style="
+                border-top: 1px dashed rgb(175, 184, 201);
+                margin-top: 10px;
+                padding-top: 10px;
+                font-weight: bold;
+                font-family: 'Roboto', Arial, sans-serif;
+              "
+            >
+              <table
+                style="
+                  width: 100%;
+                  font-size: 16px;
+                  font-weight: bold;
+                  font-family: 'Roboto', Arial, sans-serif;
+                "
+              >
+                <tr>
+                  <td>Total</td>
+                  <td style="text-align: right">
+                    {{formatCurrency totalAmount}} VND
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="
+          margin: auto;
+          text-align: center;
+          font-family: 'Roboto', Arial, sans-serif;
+        "
+      >
+        <a
+          href="http://tracking.ticketbox.vn/track/click/30009005/ticketbox.vn?p=eyJzIjoiVklaYXJQSGVmRTJoNHZYNjBJblZ5SFR2Q3dZIiwidiI6MSwicCI6IntcInVcIjozMDAwOTAwNSxcInZcIjoxLFwidXJsXCI6XCJodHRwczpcXFwvXFxcL3RpY2tldGJveC52blxcLy9ib3BtPWV2ZW50LmVtYWlsLmNvbmZpcm1hdGlvbi5kaXNjb3Zlci5nb1wiLFwiaWRcIjpcIjMzZjk0YzEwMjgyZjRiMDI4ZGUzNDQ4YWIzMjM5MTZmXCIsXCJ1cmxfaWRzXCI6W1wiYjEzZjc4YzVlMzA5MzExODE4YjU5OGJiNDgwYjFkM2UwMDYwNGU0ZVwiXX0ifQ"
+        >
+          <img
+            src="https://tkbvn-tokyo.s3-ap-northeast-1.amazonaws.com/static/email-template-2020/tbox-related-banner.jpg"
+            alt="Related Banner"
+            style="
+              max-width: 312px;
+              max-height: 212px;
+              font-family: 'Roboto', Arial, sans-serif;
+            "
+          />
+        </a>
+      </div>
+
+      <div
+        style="
+          max-width: 600px;
+          height: 242px;
+          background: rgb(45, 194, 117);
+          margin-top: 24px;
+          font-family: 'Roboto', Arial, sans-serif;
+        "
+      >
+        <div style="text-align: center; padding-top: 24px">
+          <a href="#"
+            ><img
+              src="https://tkbvn-tokyo.s3-ap-northeast-1.amazonaws.com/static/email-template-2020/tbox-facebook-icon.png"
+              alt="facebook-icon"
+              style="
+                width: 24px;
+                height: 24px;
+                font-family: 'Roboto', Arial, sans-serif;
+              "
+          /></a>
+          <a href="#" style="padding: 0px 20px"
+            ><img
+              src="https://tkbvn-tokyo.s3-ap-northeast-1.amazonaws.com/static/email-template-2020/tbox-instagram-icon.png"
+              alt="instagram-icon"
+              style="
+                width: 24px;
+                height: 24px;
+                font-family: 'Roboto', Arial, sans-serif;
+              "
+          /></a>
+          <a href="#"
+            ><img
+              src="https://tkbvn-tokyo.s3-ap-northeast-1.amazonaws.com/static/email-template-2020/tbox-youtube-icon.png"
+              alt="youtube-icon"
+              style="
+                width: 24px;
+                height: 24px;
+                font-family: 'Roboto', Arial, sans-serif;
+              "
+          /></a>
+        </div>
+        <div
+          style="
+            width: 320px;
+            height: 100px;
+            margin: auto;
+            font-size: 14px;
+            line-height: 20px;
+            text-align: center;
+            font-family: 'Roboto', Arial, sans-serif;
+          "
+        >
+          <p>Copyright © 2024 TicketBottle Vietnam, All rights reserved.</p>
+          <p style="margin: 0px; padding: 0px">
+            You are receiving this email because you have signed up for an
+            account on our website www.ticketbottle.vn
+          </p>
+        </div>
+      </div>
+      <!-- Rest of the email template... -->
+    </div>
+    <img
+      src="http://tracking.ticketbox.vn/track/open.php?u=30009005&id=33f94c10282f4b028de3448ab323916f"
+      height="1"
+      width="1"
+      alt=""
+    />
+  </body>
+</html>
