@@ -1,15 +1,19 @@
+import { logger } from '@/configs/winston.config';
 import { BaseService } from '@/services/base/base.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   Inject,
   Injectable,
-  Logger,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Event } from '@prisma/client';
+import { Event, EventInfo } from '@prisma/client';
 import { Cache } from 'cache-manager';
 import * as dayjs from 'dayjs';
+import { console } from 'inspector';
+import { MeiliSearch } from 'meilisearch';
+import { InjectMeiliSearch } from 'nestjs-meilisearch';
 import { DatabaseService } from 'src/modules/database/database.service';
 import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 import { OrganizerService } from '../organizer/organizer.service';
@@ -18,7 +22,7 @@ import { TicketClassService } from '../ticket-class/ticket-class.service';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
-import { UpdateStaffPasswordRequestDto } from './dto/update-staffPassword.request.dto';
+import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 export interface EventStatisticsInterface {
   soldTickets: number;
   netRevenue: number;
@@ -36,12 +40,28 @@ export interface EventStatisticsInterface {
 }
 @Injectable()
 export class EventService extends BaseService<Event> {
-  private readonly logger = new Logger(EventService.name);
+  private readonly logger = logger.child({ context: EventService.name });
   private includeInfo = { eventInfo: true };
   private includeInfoAndOrganizer = {
     eventInfo: { include: { organizer: true } },
   };
   private includeTicketClasses = { ticketClasses: true };
+
+  private async initializeMeiliSearch() {
+    await this.meiliSearch.createIndex('events', {
+      primaryKey: 'id',
+    });
+    const index = await this.meiliSearch.index('events');
+    // Define searchable and filterable attributes
+    await index.updateSearchableAttributes([
+      'name',
+      'description',
+      'location',
+      'organizer.name',
+    ]);
+
+    await index.updateFilterableAttributes(['startDate', 'endDate']);
+  }
 
   readonly genRedisKey = {
     eventStatistics: (eventId: string) => `eventStatistics:${eventId}`,
@@ -52,10 +72,39 @@ export class EventService extends BaseService<Event> {
     private readonly ticketClassService: TicketClassService,
     private readonly organizerService: OrganizerService,
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
+    @InjectMeiliSearch() private readonly meiliSearch: MeiliSearch,
   ) {
     super(databaseService, 'event', EventResponseDto);
+    this.initializeMeiliSearch();
   }
 
+  // add or update event in MeiliSearch index
+  async indexEvent(event: EventInfo): Promise<void> {
+    try {
+      const index = await this.meiliSearch.index('events');
+      await index.addDocuments([event]).then((res) => console.log(res));
+      this.logger.info(`Event indexed in MeiliSearch: ${event.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to index event ${event.id}: ${error.message}`);
+    }
+  }
+
+  // remove event from MeiliSearch index
+  async removeEventFromIndex(eventId: string): Promise<void> {
+    try {
+      const index = this.meiliSearch.index('events');
+      await index.deleteDocument(eventId);
+      this.logger.info(`Event removed from MeiliSearch index: ${eventId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove event ${eventId} from index: ${error.message}`,
+      );
+    }
+  }
+  async createEvent(data: any, options?: any): Promise<any> {
+    const event = await super.create(data, options);
+    return event;
+  }
   async createInfo(id: string, data: CreateEventInfoRequestDto) {
     const { organizerId, ...eventInfoData } = data;
     const foundOrganizer = await this.organizerService.findOne({
@@ -66,7 +115,7 @@ export class EventService extends BaseService<Event> {
       throw new BadRequestException('Failed to create event info');
     }
     try {
-      return await super.update(
+      const upatedEvent = await super.update(
         { id },
         {
           eventInfo: {
@@ -82,25 +131,35 @@ export class EventService extends BaseService<Event> {
         },
         { include: this.includeInfoAndOrganizer },
       );
+
+      await this.indexEvent(upatedEvent.eventInfo);
+      return upatedEvent.eventInfo;
     } catch (error) {
       this.logger.error(error);
+      console.log(error);
       throw new BadRequestException('Failed to create event info');
     }
   }
+  async updateEvent(id: string, data: UpdateEventRequestDto) {
+    const event = await super.update({ id }, data);
+    return event;
+  }
 
-  async updateEventInfo(eventId: string, data: UpdateEventInfoRequestDto) {
+  async updateEventInfo(id: string, data: UpdateEventInfoRequestDto) {
     const foundEvent = await this.findOne(
-      { eventId },
+      { id },
       { include: this.includeInfo },
     );
     if (!foundEvent.eventInfo) {
       throw new NotFoundException('Event Info not found');
     }
-    return await this.update(
-      { id: eventId },
+    const updatedEventInfo = await this.update(
+      { id },
       { eventInfo: { update: data } },
-      { include: this.includeInfo },
+      { include: this.includeInfoAndOrganizer },
     );
+    await this.indexEvent(updatedEventInfo.eventInfo);
+    return updatedEventInfo.eventInfo;
   }
 
   async createTicketClass(id: string, data: CreateTicketClassRequestDto) {
@@ -116,6 +175,7 @@ export class EventService extends BaseService<Event> {
       );
     } catch (error) {
       this.logger.error(error);
+      console.log(error);
       throw new BadRequestException('Failed to create ticket class');
     }
   }
@@ -133,6 +193,28 @@ export class EventService extends BaseService<Event> {
     return await super.findManyWithPagination({ page, perPage });
   }
 
+  async searchEvents(query: string, filters?: string[]) {
+    try {
+      const index = this.meiliSearch.index('events');
+      console.log(index);
+      const searchParams: any = {
+        limit: 10,
+        offset: 0,
+      };
+
+      if (filters && filters.length > 0) {
+        searchParams.filter = filters.join(' AND ');
+      }
+
+      const searchResult = await index.search(query, searchParams);
+      console.log(searchResult);
+      return searchResult.hits;
+    } catch (error) {
+      this.logger.error(`Search failed: ${error.message}`);
+      throw new InternalServerErrorException('Search operation failed');
+    }
+  }
+
   async findEventById(id: string) {
     return await super.findOne({ id }, { include: { ...this.includeInfo } });
   }
@@ -141,14 +223,13 @@ export class EventService extends BaseService<Event> {
     return this.ticketClassService.findTicketClassesByEventId(id);
   }
 
-  async updateStaffPassword(
-    id: string,
-    newPassword: UpdateStaffPasswordRequestDto,
-  ) {
-    return await super.update(
-      { id },
-      { staffPassword: newPassword.newPassword },
-    );
+  async deleteEvent(id: string) {
+    const event = await this.findOne({ id });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    await this.removeEventFromIndex(id);
+    return await super.remove({ id });
   }
 
   // Dashboard for admin
@@ -198,11 +279,11 @@ export class EventService extends BaseService<Event> {
   }
   // Dashboard for staffs of an event
 
-  async invalidateEventStatisticsCache(eventId: string) {
-    const cacheKey = this.genRedisKey.eventStatistics(eventId);
+  async invalidateEventStatisticsCache(id: string) {
+    const cacheKey = this.genRedisKey.eventStatistics(id);
     try {
       await this.cacheService.del(cacheKey);
-      this.logger.log(`Invalidated cache for ${cacheKey}`);
+      this.logger.info(`Invalidated cache for ${cacheKey}`);
     } catch (error) {
       this.logger.error(
         `Failed to invalidate cache for ${cacheKey}: ${error.message}`,
@@ -210,26 +291,26 @@ export class EventService extends BaseService<Event> {
     }
   }
 
-  async getStatistics(eventId: string): Promise<EventStatisticsInterface> {
-    const cacheKey = this.genRedisKey.eventStatistics(eventId);
+  async getStatistics(id: string): Promise<EventStatisticsInterface> {
+    const cacheKey = this.genRedisKey.eventStatistics(id);
 
     try {
       const cachedStatistics =
         await this.cacheService.get<EventStatisticsInterface>(cacheKey);
       if (cachedStatistics) {
-        this.logger.log(`Cache hit for ${cacheKey}`);
+        this.logger.info(`Cache hit for ${cacheKey}`);
         return cachedStatistics;
       }
-      this.logger.log(`Cache miss for ${cacheKey}`);
+      this.logger.info(`Cache miss for ${cacheKey}`);
     } catch (error) {
       this.logger.error(
         `Failed to retrieve cache for ${cacheKey}: ${error.message}`,
       );
     }
-    const statistics = await this.computeStatistics(eventId);
+    const statistics = await this.computeStatistics(id);
     try {
       await this.cacheService.set(cacheKey, statistics, 600000); // Cache for 10 minutes
-      this.logger.log(`Cached statistics for ${cacheKey}`);
+      this.logger.info(`Cached statistics for ${cacheKey}`);
     } catch (error) {
       this.logger.error(
         `Failed to set cache for ${cacheKey}: ${error.message}`,

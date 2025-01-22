@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
@@ -35,13 +30,14 @@ import {
   TokenPayload,
   VerifyAccountTokenPayload,
 } from './interfaces/token.interface';
+import { logger } from '@/configs/winston.config';
 
 @Injectable()
 export class AuthService {
   private SALT_ROUND = 10;
   private readonly FORGOT_PASSWORD_EXPIRATION_TIME = '15mins';
   private readonly VERIFY_ACCOUNT_EXPIRATION_TIME = '15mins';
-  private readonly logger = new Logger(AuthService.name);
+  private readonly logger = logger.child({ context: AuthService.name });
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
@@ -140,7 +136,7 @@ export class AuthService {
     userID: string,
     refreshToken: string,
   ): Promise<UserResponseDto> {
-    this.logger.log(userID);
+    this.logger.info(userID);
     const user = await this.userService.findById(userID);
     if (!user) {
       throw new BadRequestException('User not found');
@@ -161,7 +157,7 @@ export class AuthService {
     staffId: string,
     refreshToken: string,
   ): Promise<StaffResponseDto> {
-    this.logger.log(staffId);
+    this.logger.info(staffId);
     const staff = await this.staffService.findOne({ id: staffId });
     if (!staff) {
       throw new BadRequestException('Staff not found');

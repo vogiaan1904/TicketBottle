@@ -6,6 +6,7 @@ import {
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
   Param,
   Patch,
   Post,
@@ -29,6 +30,7 @@ import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventConfigService } from './event-config.service';
 import { EventService } from './event.service';
+import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 
 @Controller('event')
 export class EventController {
@@ -79,6 +81,17 @@ export class EventController {
     return this.eventService.findEvents(query);
   }
 
+  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @Get('search')
+  @ApiQuery({ name: 'filters', required: false })
+  async searchEvents(
+    @Query('q') query: string,
+    @Query('filters') filters?: string,
+  ) {
+    const filterArray = filters ? filters.split(',') : [];
+    return await this.eventService.searchEvents(query, filterArray);
+  }
+
   @ApiOkResponse({ type: EventResponseDto })
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -93,8 +106,8 @@ export class EventController {
 
   @OnlyAdmin()
   @ApiOkResponse({ type: EventResponseDto })
-  @Patch(':id/status')
-  updateStatus(
+  @Patch(':id')
+  update(
     @Param('id') id: string,
     @Body() updateEventDto: UpdateEventRequestDto,
   ) {
@@ -103,12 +116,12 @@ export class EventController {
 
   @OnlyAdmin()
   @ApiOkResponse({ type: EventResponseDto })
-  @Patch(':id/status')
+  @Patch(':id/info')
   updateInfo(
     @Param('id') id: string,
-    @Body() updateEventDto: UpdateEventRequestDto,
+    @Body() updateEventDto: UpdateEventInfoRequestDto,
   ) {
-    return this.eventService.update({ id }, updateEventDto);
+    return this.eventService.updateEventInfo(id, updateEventDto);
   }
 
   @OnlyAdmin()

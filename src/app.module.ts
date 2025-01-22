@@ -3,14 +3,17 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
-import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import * as redisStore from 'cache-manager-redis-yet';
 import * as Joi from 'joi';
+import { WinstonModule } from 'nest-winston';
+import { MeiliSearchModule } from 'nestjs-meilisearch';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { databaseConfig } from './configs/db.config';
+import { logger } from './configs/winston.config';
 import { GlobalExceptionFilter } from './filters/globalException.filter';
 import { TransformInterceptor } from './interceptors/apiResponse.interceptor';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
@@ -57,6 +60,9 @@ import { UserModule } from './modules/user/user.module';
       cache: true,
       expandVariables: true,
     }),
+    WinstonModule.forRoot({
+      instance: logger,
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
@@ -76,7 +82,6 @@ import { UserModule } from './modules/user/user.module';
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const coreRedisUrl = configService.get<string>('REDIS_CORE_URL');
         const parsedUrl = new URL(coreRedisUrl);
@@ -88,10 +93,25 @@ import { UserModule } from './modules/user/user.module';
           },
         };
       },
+      inject: [ConfigService],
     }),
     BullBoardModule.forRoot({
       route: '/queues',
       adapter: ExpressAdapter,
+    }),
+    MeiliSearchModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const meiliSearchHost = configService.get<string>('MEILISEARCH_HOST');
+        const meiliSearchApiKey = configService.get<string>(
+          'MEILISEARCH_ADMIN_API_KEY',
+        );
+        return {
+          host: meiliSearchHost,
+          apiKey: meiliSearchApiKey,
+        };
+      },
+      inject: [ConfigService],
     }),
     DatabaseModule,
     AuthModule,
@@ -121,7 +141,6 @@ import { UserModule } from './modules/user/user.module';
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
     },
-    Logger,
   ],
 })
 export class AppModule implements NestModule {

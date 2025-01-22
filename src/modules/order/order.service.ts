@@ -1,7 +1,12 @@
 import { BaseService } from '@/services/base/base.service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { InjectQueue } from '@nestjs/bullmq';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import {
   Order,
   OrderStatus,
@@ -306,11 +311,15 @@ export class OrderService extends BaseService<Order> {
       this.genRedisKey.order(transactionID),
     );
     if (!transactionData) {
-      throw new Error(`Transaction with ID ${transactionID} not found`);
+      throw new InternalServerErrorException(
+        `Transaction with ID ${transactionID} not found`,
+      );
     }
 
     if (transactionData.status !== 'PENDING') {
-      throw new Error(`Transaction with ID ${transactionID} is not PENDING`);
+      throw new BadRequestException(
+        `Transaction with ID ${transactionID} is not PENDING`,
+      );
     }
 
     // Ticket purchase

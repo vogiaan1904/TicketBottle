@@ -1,25 +1,25 @@
 import {
   Injectable,
   InternalServerErrorException,
-  Logger,
   OnModuleInit,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import { logger } from '@/configs/winston.config';
 
 @Injectable()
 export class DatabaseService extends PrismaClient implements OnModuleInit {
-  constructor(private readonly logger: Logger) {
+  private readonly logger = logger.child({ context: DatabaseService.name });
+  constructor() {
     super();
   }
-  private appLogger = new Logger(DatabaseService.name);
   async onModuleInit() {
     try {
       await this.$connect();
-      this.appLogger.log('Connected to database successfully');
+      this.logger.info('Connected to database successfully');
       await this.createAdminAccount();
     } catch (error) {
-      this.appLogger.error('Failed to connect to database', error);
+      this.logger.error('Failed to initialzie the database', error);
       throw new InternalServerErrorException(error);
     }
   }
@@ -51,12 +51,10 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
       },
     });
     if (existedAdmin) {
-      this.appLogger.log('Admin account is found');
+      this.logger.info('Admin account is found');
       return;
     }
-    this.appLogger.error(
-      'Admin account is not found. Creating admin account...',
-    );
+    this.logger.error('Admin account is not found. Creating admin account...');
     const hashedPassword = await bcrypt.hash('admin123', 10);
     await this.staff.create({
       data: {
@@ -65,6 +63,6 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
         role: 'ADMIN',
       },
     });
-    this.appLogger.log('Create admin account successfully');
+    this.logger.info('Create admin account successfully');
   }
 }

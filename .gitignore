@@ -5,6 +5,8 @@
 /secure
 /keys
 /vol
+/vol_test
+/meilisearch_data
 
 # Logs
 logs

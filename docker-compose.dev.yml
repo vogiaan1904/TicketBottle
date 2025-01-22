@@ -50,6 +50,22 @@ services:
       - '6380:6379'
     networks:
       - app-network
+
+  meilisearch:
+    container_name: meilisearch_container
+    restart: always
+    image: getmeili/meilisearch:v1.10.0
+    env_file:
+      - .env.dev
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY}
+    ports:
+      - '7700:7700'
+    volumes:
+      - ./meilisearch_data.ms:/data.ms
+    networks:
+      - app-network
+
   # ticketBottle_api_dev:
   #   container_name: ticketbottle_api_dev
   #   image: ticketbottle_api_dev:latest

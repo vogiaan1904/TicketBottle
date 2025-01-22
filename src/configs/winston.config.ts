@@ -11,13 +11,14 @@ if (!fs.existsSync(logDir)) {
 const logFormat = format.combine(
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   format.colorize({ all: true }),
+  format.errors({ stack: true }),
   format.printf(({ timestamp, level, message, context }) => {
     const contextMessage = context ? ` [${context}]` : '';
     return `${timestamp} ${level}:${contextMessage} ${message}`;
   }),
 );
 
-const logger = createLogger({
+export const logger = createLogger({
   level: 'info',
   format: logFormat,
   transports: [
@@ -35,6 +36,7 @@ const logger = createLogger({
       maxSize: '20m',
     }),
   ],
+  exitOnError: false,
 });
 
 export { logger as instance };
