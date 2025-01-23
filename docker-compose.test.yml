@@ -1,18 +1,18 @@
 services:
-  mainDB:
-    container_name: postgres_container
+  testDB:
+    container_name: postgres_test_container
     image: postgres
     restart: always
     env_file:
       - .env.dev
     environment:
-      POSTGRES_USER: ${DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${TEST_DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${TEST_DATABASE_PASSWORD}
+      POSTGRES_DB: ${TEST_DATABASE_NAME}
     ports:
-      - '5432:5432'
+      - '5433:5432' # Maps host port 5433 to container port 5432
     volumes:
-      - ./vol:/db/main
+      - ./vol_test:/db/test # Separate volume for test database
     networks:
       - app-network
     healthcheck:
@@ -23,7 +23,7 @@ services:
           '-U',
           '${DATABASE_USERNAME}',
           '-d',
-          '${DATABASE_NAME}',
+          '${TEST_DATABASE_NAME}',
         ]
       interval: 10s
       timeout: 5s
@@ -87,7 +87,7 @@ services:
     ports:
       - ${PORT}:${PORT}
     depends_on:
-      mainDB:
+      testDB:
         condition: service_healthy
       redis_cache:
         condition: service_healthy

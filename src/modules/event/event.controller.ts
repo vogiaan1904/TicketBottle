@@ -6,7 +6,6 @@ import {
   Controller,
   Delete,
   Get,
-  InternalServerErrorException,
   Param,
   Patch,
   Post,
@@ -18,6 +17,7 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
+import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
@@ -30,7 +30,6 @@ import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventConfigService } from './event-config.service';
 import { EventService } from './event.service';
-import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 
 @Controller('event')
 export class EventController {

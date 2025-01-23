@@ -1,8 +1,11 @@
-FROM node:20-alpine as development
+FROM node:20-alpine AS development
 
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=development
+
+# Install build dependencies
+RUN apk add --no-cache make gcc g++ python3
 
 COPY package*.json ./
 
@@ -10,19 +13,18 @@ RUN npm install glob rimraf
 
 RUN npm install
 
+COPY prisma ./prisma
+RUN npx prisma generate
+
 COPY . .
 
-
-COPY prisma ./prisma
-
-RUN npx prisma generate
 
 RUN npm run build
 
 
 CMD [ "npm","run","start:dev" ]
 
-FROM node:20-alpine as production
+FROM node:20-alpine AS production
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
@@ -39,7 +41,6 @@ RUN npm install glob rimraf
 RUN npm install
 
 COPY prisma ./prisma
-
 RUN npx prisma generate
 
 COPY --from=development /usr/src/app/dist ./dist
