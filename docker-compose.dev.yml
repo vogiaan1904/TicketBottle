@@ -31,7 +31,7 @@ services:
 
   redis_cache:
     container_name: redis_cache_container
-    image: redis
+    image: redis:alpine
     restart: always
     ports:
       - '6379:6379'
@@ -45,14 +45,15 @@ services:
 
   redis_core:
     container_name: redis_core_container
-    image: redis
+    image: redis:alpine
     restart: always
     ports:
       - '6380:6379'
+    command: --port 6380
     networks:
       - app-network
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD', 'redis-cli', '-p', '6380', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -72,7 +73,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:7700/health']
+      test: ['CMD', 'curl', '-f', 'http://meilisearch:7700/health']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -84,8 +85,16 @@ services:
       context: .
       target: development
     command: npm run start:dev
+    env_file:
+      - .env.dev
     ports:
       - ${PORT}:${PORT}
+    environment:
+      - REDIS_CACHE_URL=redis://redis_cache:6379
+      - REDIS_CORE_URL=redis://redis_core:6380
+      - REDIS_HOST=redis_cache
+      - MEILISEARCH_HOST=http://meilisearch:7700
+      - DATABASE_URL=postgresql://root:root@mainDB:5432/TicketBottle
     depends_on:
       mainDB:
         condition: service_healthy

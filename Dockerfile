@@ -3,9 +3,10 @@ FROM node:20-alpine AS development
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=development
+ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 
 # Install build dependencies
-RUN apk add --no-cache make gcc g++ python3
+RUN apk add --no-cache openssl openssl-dev make gcc g++ python3
 
 COPY package*.json ./
 

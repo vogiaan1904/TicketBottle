@@ -104,7 +104,7 @@ import { UserModule } from './modules/user/user.module';
       useFactory: async (configService: ConfigService) => {
         const meiliSearchHost = configService.get<string>('MEILISEARCH_HOST');
         const meiliSearchApiKey = configService.get<string>(
-          'MEILISEARCH_ADMIN_API_KEY',
+          'MEILISEARCH_MASTER_KEY',
         );
         return {
           host: meiliSearchHost,

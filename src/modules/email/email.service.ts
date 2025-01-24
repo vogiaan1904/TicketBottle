@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as pug from 'pug';
-import { OrderSuccessDataDto } from '../order/interfaces/order-email-data.interface';
 import { EmailDataInterface } from './interfaces/emailData.interface';
+import * as Handlebars from 'handlebars';
+import { OrderSuccessDataDto } from '../order/interfaces/order-email-data.interface';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as Handlebars from 'handlebars';
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
@@ -48,7 +48,7 @@ export class EmailService {
     return templateCompiled(context);
   }
 
-  private converPugtToHTML(template: string, context: object): string {
+  private convertToHTML(template: string, context: object): string {
     const html = pug.renderFile(`src/templates/${template}.pug`, context);
     return html;
   }
@@ -60,22 +60,11 @@ export class EmailService {
     });
   }
 
-  async sendSuccessOrderEmail(
-    email: string,
-    context: OrderSuccessDataDto,
-  ): Promise<void> {
-    await this.sendEmail({
-      to: email,
-      subject: 'Payment Success',
-      html: this.renderHTML('payment/neworderSuccess', context),
-    });
-  }
-
   async sendUserVerifyEmail(email: string, token: string): Promise<void> {
     await this.sendEmail({
       to: email,
       subject: 'Reset your password',
-      html: this.converPugtToHTML('auth/verifyEmail', { token }),
+      html: this.convertToHTML('auth/verifyEmail', { token }),
     });
   }
 
@@ -86,7 +75,18 @@ export class EmailService {
     await this.sendEmail({
       to: email,
       subject: 'Verify your account',
-      html: this.converPugtToHTML('auth/forgotPassword', { token }),
+      html: this.convertToHTML('auth/forgotPassword', { token }),
+    });
+  }
+
+  async sendSuccessOrderEmail(
+    email: string,
+    context: OrderSuccessDataDto,
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: 'Payment Success',
+      html: this.renderHTML('payment/neworderSuccess', context),
     });
   }
 }
