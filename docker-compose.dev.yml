@@ -1,33 +1,33 @@
 services:
-  mainDB:
-    container_name: postgres_container
-    image: postgres
-    restart: always
-    env_file:
-      - .env.dev
-    environment:
-      POSTGRES_USER: ${DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
-    ports:
-      - '5432:5432'
-    volumes:
-      - ./vol:/db/main
-    networks:
-      - app-network
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'pg_isready',
-          '-U',
-          '${DATABASE_USERNAME}',
-          '-d',
-          '${DATABASE_NAME}',
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # mainDB:
+  #   container_name: postgres_container
+  #   image: postgres
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   environment:
+  #     POSTGRES_USER: ${DATABASE_USERNAME}
+  #     POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+  #     POSTGRES_DB: ${DATABASE_NAME}
+  #   ports:
+  #     - '5432:5432'
+  #   volumes:
+  #     - ./vol:/db/main
+  #   networks:
+  #     - app-network
+  #   healthcheck:
+  #     test:
+  #       [
+  #         'CMD',
+  #         'pg_isready',
+  #         '-U',
+  #         '${DATABASE_USERNAME}',
+  #         '-d',
+  #         '${DATABASE_NAME}',
+  #       ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
   redis_cache:
     container_name: redis_cache_container
@@ -48,7 +48,7 @@ services:
     image: redis:alpine
     restart: always
     ports:
-      - '6380:6379'
+      - '6380:6380'
     command: --port 6380
     networks:
       - app-network
@@ -91,13 +91,12 @@ services:
       - ${PORT}:${PORT}
     environment:
       - REDIS_CACHE_URL=redis://redis_cache:6379
-      - REDIS_CORE_URL=redis://redis_core:6380
+      - REDIS_CORE_URL=redis://redis_core:6389
       - REDIS_HOST=redis_cache
       - MEILISEARCH_HOST=http://meilisearch:7700
-      - DATABASE_URL=postgresql://root:root@mainDB:5432/TicketBottle
+      - DATABASE_URL=postgresql://postgres.otktjyrlaoysacoeuaot:jy2vIVb4mXnvHtxX@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&connect_timeout=30
+      - DATABASE_DIRECT_URL=postgresql://postgres.otktjyrlaoysacoeuaot:jy2vIVb4mXnvHtxX@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?pgbouncer=true&connection_limit=1&connect_timeout=30
     depends_on:
-      mainDB:
-        condition: service_healthy
       redis_cache:
         condition: service_healthy
       redis_core:

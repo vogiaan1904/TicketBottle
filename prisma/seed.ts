@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.dev' });
 import { EventStatus, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -325,25 +327,55 @@ const genTicketClassList = () => {
 
 async function main() {
   console.log('Seeding data...');
-  await prisma.organizer.createManyAndReturn({
-    data: genOrganizerList(),
-  });
-  await prisma.event.createManyAndReturn({
-    data: genEventList(),
-  });
-  await prisma.eventInfo.createManyAndReturn({
-    data: genEventInfoList(),
-  });
-  await prisma.ticketClass.createManyAndReturn({
-    data: genTicketClassList(),
-  });
+
+  // Create Organizers
+  const organizers = genOrganizerList();
+  for (const organizer of organizers) {
+    await prisma.organizer.upsert({
+      where: { id: organizer.id },
+      update: {},
+      create: organizer,
+    });
+  }
+
+  // Create Events
+  const events = genEventList();
+  for (const event of events) {
+    await prisma.event.upsert({
+      where: { id: event.id },
+      update: {},
+      create: event,
+    });
+  }
+
+  // Create Event Infos
+  const eventInfos = genEventInfoList();
+  for (const eventInfo of eventInfos) {
+    await prisma.eventInfo.upsert({
+      where: { eventId: eventInfo.eventId },
+      update: {},
+      create: eventInfo,
+    });
+  }
+
+  // Create Ticket Classes
+  const ticketClasses = genTicketClassList();
+  for (const ticketClass of ticketClasses) {
+    await prisma.ticketClass.upsert({
+      where: { id: ticketClass.id },
+      update: {},
+      create: ticketClass,
+    });
+  }
+
+  console.log('Seeding completed');
 }
 main()
   .then(async () => {
     await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(e);
+    console.error('Seeding failed:', e);
     await prisma.$disconnect();
     process.exit(1);
   });

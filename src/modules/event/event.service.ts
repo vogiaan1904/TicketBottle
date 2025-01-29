@@ -5,15 +5,12 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Event, EventInfo } from '@prisma/client';
+import { Event } from '@prisma/client';
 import { Cache } from 'cache-manager';
 import * as dayjs from 'dayjs';
 import { console } from 'inspector';
-import { MeiliSearch } from 'meilisearch';
-import { InjectMeiliSearch } from 'nestjs-meilisearch';
 import { DatabaseService } from 'src/modules/database/database.service';
 import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 import { OrganizerService } from '../organizer/organizer.service';
@@ -22,6 +19,7 @@ import { TicketClassService } from '../ticket-class/ticket-class.service';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
+import { SearchEventQueryRequestDto } from './dto/search-event-query.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 export interface EventStatisticsInterface {
   soldTickets: number;
@@ -47,22 +45,6 @@ export class EventService extends BaseService<Event> {
   };
   private includeTicketClasses = { ticketClasses: true };
 
-  private async initializeMeiliSearch() {
-    await this.meiliSearch.createIndex('events', {
-      primaryKey: 'id',
-    });
-    const index = await this.meiliSearch.index('events');
-    // Define searchable and filterable attributes
-    await index.updateSearchableAttributes([
-      'name',
-      'description',
-      'location',
-      'organizer.name',
-    ]);
-
-    await index.updateFilterableAttributes(['startDate', 'endDate']);
-  }
-
   readonly genRedisKey = {
     eventStatistics: (eventId: string) => `eventStatistics:${eventId}`,
   };
@@ -72,35 +54,10 @@ export class EventService extends BaseService<Event> {
     private readonly ticketClassService: TicketClassService,
     private readonly organizerService: OrganizerService,
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
-    @InjectMeiliSearch() private readonly meiliSearch: MeiliSearch,
   ) {
     super(databaseService, 'event', EventResponseDto);
-    this.initializeMeiliSearch();
   }
 
-  // add or update event in MeiliSearch index
-  async indexEvent(event: EventInfo): Promise<void> {
-    try {
-      const index = await this.meiliSearch.index('events');
-      await index.addDocuments([event]).then((res) => console.log(res));
-      this.logger.info(`Event indexed in MeiliSearch: ${event.id}`);
-    } catch (error) {
-      this.logger.error(`Failed to index event ${event.id}: ${error.message}`);
-    }
-  }
-
-  // remove event from MeiliSearch index
-  async removeEventFromIndex(eventId: string): Promise<void> {
-    try {
-      const index = this.meiliSearch.index('events');
-      await index.deleteDocument(eventId);
-      this.logger.info(`Event removed from MeiliSearch index: ${eventId}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to remove event ${eventId} from index: ${error.message}`,
-      );
-    }
-  }
   async createEvent(data: any, options?: any): Promise<any> {
     const event = await super.create(data, options);
     return event;
@@ -132,7 +89,6 @@ export class EventService extends BaseService<Event> {
         { include: this.includeInfoAndOrganizer },
       );
 
-      await this.indexEvent(upatedEvent.eventInfo);
       return upatedEvent.eventInfo;
     } catch (error) {
       this.logger.error(error);
@@ -158,7 +114,6 @@ export class EventService extends BaseService<Event> {
       { eventInfo: { update: data } },
       { include: this.includeInfoAndOrganizer },
     );
-    await this.indexEvent(updatedEventInfo.eventInfo);
     return updatedEventInfo.eventInfo;
   }
 
@@ -193,26 +148,42 @@ export class EventService extends BaseService<Event> {
     return await super.findManyWithPagination({ page, perPage });
   }
 
-  async searchEvents(query: string, filters?: string[]) {
-    try {
-      const index = this.meiliSearch.index('events');
-      console.log(index);
-      const searchParams: any = {
-        limit: 10,
-        offset: 0,
-      };
+  async searchEvents(query: SearchEventQueryRequestDto) {
+    const { startDate, isFree, q, page, perPage } = query;
+    const filter: any = {
+      eventInfo: {
+        OR: [
+          {
+            name: {
+              contains: q,
+              mode: 'insensitive',
+            },
+          },
+          {
+            description: {
+              contains: q,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+    };
 
-      if (filters && filters.length > 0) {
-        searchParams.filter = filters.join(' AND ');
-      }
-
-      const searchResult = await index.search(query, searchParams);
-      console.log(searchResult);
-      return searchResult.hits;
-    } catch (error) {
-      this.logger.error(`Search failed: ${error.message}`);
-      throw new InternalServerErrorException('Search operation failed');
+    if (startDate) {
+      filter.eventInfo.startDate = new Date(startDate);
     }
+    if (isFree) {
+      filter.isFree = Boolean(isFree);
+    }
+
+    const events = await super.findManyWithPagination({
+      filter,
+      page,
+      perPage,
+      options: { include: this.includeInfo },
+    });
+
+    return events;
   }
 
   async findEventById(id: string) {
@@ -228,7 +199,6 @@ export class EventService extends BaseService<Event> {
     if (!event) {
       throw new NotFoundException('Event not found');
     }
-    await this.removeEventFromIndex(id);
     return await super.remove({ id });
   }
 

@@ -1,7 +1,7 @@
 // src/middleware/logger.middleware.ts
+import { logger } from '@/configs/winston.config';
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import { instance as logger } from '../configs/winston.config';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {

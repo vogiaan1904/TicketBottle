@@ -1,0 +1,77 @@
+services:
+  # redis_cache:
+  #   image: redis:alpine
+  #   restart: always
+  #   ports:
+  #     - '6379:6379'
+  #   command: redis-server --bind 0.0.0.0
+  #   networks:
+  #     - app-network
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # redis_core:
+  #   image: redis:alpine
+  #   restart: always
+  #   ports:
+  #     - '6380:6380'
+  #   command: redis-server --port 6380 --bind 0.0.0.0
+  #   networks:
+  #     - app-network
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'redis-cli -p 6380 ping | grep PONG']
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # meilisearch:
+  #   restart: always
+  #   image: getmeili/meilisearch:v1.10.0
+  #   env_file:
+  #     - .env.prod
+  #   environment:
+  #     MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY}
+  #   ports:
+  #     - '7700:7700'
+  #   volumes:
+  #     - ./meilisearch_data.ms:/data.ms
+  #   networks:
+  #     - app-network
+  #   healthcheck:
+  #     test: ['CMD', 'curl', '-f', 'http://meilisearch:7700/health']
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  ticketBottle_api_prod:
+    container_name: ticketbottle_api_prod
+    image: vogiaan19042004/ticketbottle_api_prod:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    command:
+    env_file:
+      - .env.prod
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      redis_cache:
+        condition: service_healthy
+      redis_core:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+    attachable: true

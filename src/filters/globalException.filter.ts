@@ -23,7 +23,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       exception instanceof HttpException
         ? exception.message
         : 'Internal server error';
-    console.error(exception);
 
     logger.error('Unhandled Exception', {
       timestamp: new Date().toISOString(),
