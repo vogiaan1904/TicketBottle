@@ -59,23 +59,32 @@ export class EmailService {
       ...data,
     });
   }
-
-  async sendUserVerifyEmail(email: string, token: string): Promise<void> {
-    await this.sendEmail({
-      to: email,
-      subject: 'Reset your password',
-      html: this.convertToHTML('auth/verifyEmail', { token }),
-    });
-  }
-
   async sendUserResetPasswordEmail(
     email: string,
     token: string,
   ): Promise<void> {
     await this.sendEmail({
       to: email,
-      subject: 'Verify your account',
+      subject: 'Reset your password',
       html: this.convertToHTML('auth/forgotPassword', { token }),
+    });
+  }
+
+  async sendUserVerifyEmail(
+    email: string,
+    fullName: string,
+    token: string,
+  ): Promise<void> {
+    const verificationLink = `${this.configService.get<string>('HOST')}/auth/verify-account?token=${token}`;
+    const currentYear = new Date().getFullYear();
+    await this.sendEmail({
+      to: email,
+      subject: 'Verify your account',
+      html: this.convertToHTML('auth/verifyAccount', {
+        verificationLink,
+        fullName,
+        currentYear,
+      }),
     });
   }
 

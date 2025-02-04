@@ -33,8 +33,9 @@ async function bootstrap() {
       logger: WinstonModule.createLogger({
         instance: winstonLogger,
       }),
+      cors: true,
     });
-    app.setGlobalPrefix('api/v1');
+    // app.setGlobalPrefix('api/v1');
 
     configSwagger(app);
     const configService = app.get(ConfigService);
@@ -62,16 +63,8 @@ async function bootstrap() {
     );
 
     // app.enableCors({
-    //   origin: [
-    //     'http://localhost:3000',
-    //     'http://example.com',
-    //     'http://www.example.com',
-    //     'http://app.example.com',
-    //     'https://example.com',
-    //     'https://www.example.com',
-    //     'https://app.example.com',
-    //   ],
-    //   methods: ['GET', 'POST'],
+    //   origin: '*',
+    //   methods: ['GET', 'POST', 'PUT', 'DELETE'],
     //   credentials: true,
     // });
 

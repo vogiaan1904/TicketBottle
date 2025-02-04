@@ -41,8 +41,10 @@ export class OrderController {
   ) {
     const host =
       this.configService.get<string>(`NODE_ENV`) === 'production'
-        ? `${request.protocol}://${request.get('host')}`
+        ? `https://${request.get('host')}`
         : this.configService.get<string>(`NGROK_TEST_URL`);
+
+    console.log('host', host);
 
     return await this.orderService.checkout(request.user.id, createOrderDto, {
       ip: request.ip,

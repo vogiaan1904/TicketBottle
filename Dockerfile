@@ -39,6 +39,7 @@ COPY tsconfig.json ./
 
 COPY --from=development /usr/src/app/dist ./dist
 COPY --from=development /usr/src/app/prisma ./prisma
+COPY src/templates ./src/templates
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh

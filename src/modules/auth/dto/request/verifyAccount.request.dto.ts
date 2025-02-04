@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class VerifyAccountRequestDTO {
+export class VerifyAccountRequestQuery {
   @IsNotEmpty()
   @IsString()
   token: string;
