@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsPhoneNumber,
   IsString,
   IsStrongPassword,
@@ -33,7 +34,7 @@ export class RegisterRequestDTO {
   @Transform(({ value }) => value.toUpperCase())
   gender: Gender;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsPhoneNumber('VN')
   phoneNumber: string;
 }

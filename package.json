@@ -6,7 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "prisma": {
-    "schema": "./prisma/schema"
+    "schema": "./prisma/schema",
+    "seed": "ts-node --transpile-only --project tsconfig.json prisma/seed.ts"
   },
   "scripts": {
     "build": "nest build",
@@ -14,10 +15,12 @@
     "start": "nest start",
     "start:dev": "cross-env NODE_ENV=development nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "cross-env NODE_ENV=production dotenv -e .env.prod node dist/main",
     "docker:dev": "docker compose --env-file ./.env.dev -f docker-compose.dev.yml up",
+    "docker:prod": "docker compose --env-file ./.env.prod -f docker-compose.prod.yml up",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix  ",
     "db:restart": "docker-compose -f docker-compose.dev.yml down && docker-compose -f docker-compose.dev.yml up -d && sleep 1",
+    "seed": "prisma db seed",
     "test": "jest",
     "test:watch": "cross-env NODE_ENV=test jest --detectOpenHandles --watch",
     "test:cov": "cross-env NODE_ENV=test jest --detectOpenHandles --coverage",
@@ -25,7 +28,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "pretest:int": "cross-env NODE_ENV=test npm run db:restart && cross-env NODE_ENV=test prisma migrate reset --force  && cross-env NODE_ENV=test ts-node prisma/seed.test.ts",
     "test:int": "cross-env NODE_ENV=test jest -i --no-cache --watch --config jest-int.json",
-    "posttest:int": "cross-env NODE_ENV=test prisma migrate reset --force"
+    "posttest:int": "cross-env NODE_ENV=test prisma migrate reset --force",
+    "migrate:prod": "dotenv -e .env.prod -- npx prisma migrate deploy",
+    "migrate:dev": "dotenv -e .env.dev -- npx prisma migrate dev"
   },
   "dependencies": {
     "@bull-board/api": "^6.5.3",
@@ -79,9 +84,12 @@
     "swagger-themes": "^1.4.3",
     "vnpay": "^1.6.0",
     "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.5"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@compodoc/compodoc": "^1.1.26",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
@@ -99,9 +107,11 @@
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "glob": "^10.2.7",
     "jest": "^29.5.0",
     "prettier": "^3.0.0",
     "prisma": "^6.0.1",
+    "rimraf": "^4.0.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.1.0",

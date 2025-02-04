@@ -6,7 +6,6 @@ import {
   Controller,
   Delete,
   Get,
-  InternalServerErrorException,
   Param,
   Patch,
   Post,
@@ -18,6 +17,7 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
+import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassResponseDto } from '../ticket-class/dto/ticket-class.response.dto';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
@@ -27,10 +27,10 @@ import {
   EventStatisticsResponseDto,
 } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
+import { SearchEventQueryRequestDto } from './dto/search-event-query.request.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventConfigService } from './event-config.service';
 import { EventService } from './event.service';
-import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.request.dto';
 
 @Controller('event')
 export class EventController {
@@ -83,13 +83,24 @@ export class EventController {
 
   @ApiOkResponse({ type: EventResponseDto, isArray: true })
   @Get('search')
-  @ApiQuery({ name: 'filters', required: false })
-  async searchEvents(
-    @Query('q') query: string,
-    @Query('filters') filters?: string,
-  ) {
-    const filterArray = filters ? filters.split(',') : [];
-    return await this.eventService.searchEvents(query, filterArray);
+  @ApiQuery({
+    name: 'q',
+    required: true,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    format: 'date-time',
+  })
+  @ApiQuery({
+    name: 'isFree',
+    required: false,
+    type: String,
+  })
+  searchEvents(@Query() query: SearchEventQueryRequestDto) {
+    return this.eventService.searchEvents(query);
   }
 
   @ApiOkResponse({ type: EventResponseDto })

@@ -44,9 +44,11 @@ export class ZalopayGateWay implements PaymentGatewayInterface {
       return_message: message,
     };
   }
+
   private initZaloPayRequestConfig(data: ZaloPayRequestConfigInterface) {
     const now = dayjs();
     const transID = now.format('YYMMDD');
+
     const config = {
       app_id: this.appID * 1,
       app_user: 'user123',
@@ -88,6 +90,7 @@ export class ZalopayGateWay implements PaymentGatewayInterface {
 
   async createPaymentLink(dto: any): Promise<string> {
     const data = this.initZaloPayRequestConfig(dto);
+    console.log(data);
     const res: AxiosResponse = await this.httpService.axiosRef.post(
       this.CREATE_ZALOPAY_PAYMENT_LINK_URL,
       data,
@@ -97,6 +100,7 @@ export class ZalopayGateWay implements PaymentGatewayInterface {
         },
       },
     );
+    console.log(res.data);
 
     if (res.data.return_code !== 1) {
       throw new InternalServerErrorException('There was an error with Zalopay');

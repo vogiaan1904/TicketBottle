@@ -1,7 +1,46 @@
-*/node_modules
-*/keys
+# Node modules
+node_modules
+**/node_modules
+
+# Logs
+logs
 *.log
-.git
+
+# Environment variables
 .env
 .env.*
-*/vol
+
+# Build outputs
+dist
+build
+
+# Coverage
+coverage
+.nyc_output
+
+# OS files
+.DS_Store
+
+# IDEs and editors
+.vscode
+.idea
+*.sublime-workspace
+*.sublime-project
+
+# # Prisma migrations
+# prisma/migrations
+
+# Docker volumes
+vol/
+vol_test/
+meilisearch_data.ms/
+
+# Testing
+test/
+
+# Docker
+Dockerfile
+docker-compose.*
+
+# Git
+.git

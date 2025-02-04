@@ -256,7 +256,6 @@ export class OrderService extends BaseService<Order> {
         },
       },
       status: OrderStatus.CANCELLED,
-      email: 'notbuyticket@gmail.com',
       totalCheckOut: Number(orderData.totalCheckout),
       totalQuantity: Number(orderData.totalQuantity),
       transaction: {
@@ -390,6 +389,7 @@ export class OrderService extends BaseService<Order> {
       // Create order
       return await tx.order.create({
         data: {
+          id: orderData.code,
           status: OrderStatus.COMPLETED,
           totalCheckOut: Number(orderData.totalCheckout),
           totalQuantity: Number(orderData.totalQuantity),

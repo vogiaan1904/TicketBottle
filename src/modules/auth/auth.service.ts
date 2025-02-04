@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
 
+import { logger } from '@/configs/winston.config';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import {
@@ -23,14 +24,12 @@ import { StaffService } from '../staff/staff.service';
 import { TokenService } from '../token/token.service';
 import { UserResponseDto } from '../user/dto/user.response.dto';
 import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
-import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
 import { RegisterResponseDTO } from './dto/response/register.response.dto';
 import {
   ResetPasswordTokenPayload,
   TokenPayload,
   VerifyAccountTokenPayload,
 } from './interfaces/token.interface';
-import { logger } from '@/configs/winston.config';
 
 @Injectable()
 export class AuthService {
@@ -246,8 +245,8 @@ export class AuthService {
     );
   }
 
-  async verifyAccount(dto: VerifyAccountRequestDTO): Promise<void> {
-    const decoded = await this.jwtService.decode(dto.token);
+  async verifyAccount(token: string): Promise<void> {
+    const decoded = await this.jwtService.decode(token);
     const user = await this.userService.findByEmail(decoded.email);
 
     if (user.isVerified) {
@@ -255,7 +254,7 @@ export class AuthService {
     }
 
     const isValidToken = await this.tokenService.verifyJwtWithSecret(
-      dto.token,
+      token,
       user.password + user.isVerified,
     );
 
@@ -268,6 +267,8 @@ export class AuthService {
 
   async sendVerificationEmail(email: string): Promise<void> {
     const user = await this.userService.findByEmail(email);
+
+    const fullName = `${user.firstName} ${user.lastName}`;
 
     if (user.isVerified) {
       throw new BadRequestException('Account already verifed');
@@ -283,6 +284,6 @@ export class AuthService {
       exp: this.VERIFY_ACCOUNT_EXPIRATION_TIME,
     });
 
-    await this.emailService.sendUserVerifyEmail(email, verifyToken);
+    await this.emailService.sendUserVerifyEmail(email, fullName, verifyToken);
   }
 }

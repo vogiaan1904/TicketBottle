@@ -38,5 +38,3 @@ export const logger = createLogger({
   ],
   exitOnError: false,
 });
-
-export { logger as instance };

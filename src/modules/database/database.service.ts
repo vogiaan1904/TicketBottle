@@ -19,7 +19,7 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
       this.logger.info('Connected to database successfully');
       await this.createAdminAccount();
     } catch (error) {
-      this.logger.error('Failed to initialzie the database', error);
+      this.logger.error('Failed to initialzie the database: ', error);
       throw new InternalServerErrorException(error);
     }
   }

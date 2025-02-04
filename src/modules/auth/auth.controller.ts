@@ -1,5 +1,13 @@
-import { Body, Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBody, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 import { ApiPost } from 'src/decorators/apiPost.decorator';
 import { RequestWithUser } from 'src/types/request.type';
 import { StaffService } from '../staff/staff.service';
@@ -11,7 +19,7 @@ import { RefreshTokenRequestDTO } from './dto/request/refreshToken.request.dto';
 import { RegisterRequestDTO } from './dto/request/register.request.dto';
 import { ResetPasswordRequestDTO } from './dto/request/resetPassword.request.dto';
 import { SendEmailVerfiyRequestDTO } from './dto/request/sendEmailVerify.request.dto';
-import { VerifyAccountRequestDTO } from './dto/request/verifyAccount.request.dto';
+import { VerifyAccountRequestQuery } from './dto/request/verifyAccount.request.dto';
 import { LoginResponseDTO } from './dto/response/login.response.dto';
 import { JwtAccessTokenGuard } from './guards/jwt-access/jwt-user-access-token.guard';
 import { LocalUserAuthGuard } from './guards/local/local-user.guard';
@@ -129,8 +137,13 @@ export class AuthController {
   }
 
   @ApiPost({ path: 'verify-account' })
-  async verifyAccount(@Body() dto: VerifyAccountRequestDTO) {
-    return await this.authService.verifyAccount(dto);
+  @ApiQuery({
+    name: 'token',
+    required: true,
+    type: String,
+  })
+  async verifyAccount(@Query() query: VerifyAccountRequestQuery) {
+    return await this.authService.verifyAccount(query.token);
   }
 
   @ApiPost({ path: '/email/forgot-password' })

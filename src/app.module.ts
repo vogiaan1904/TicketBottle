@@ -55,7 +55,7 @@ import { UserModule } from './modules/user/user.module';
           ? '.env.dev'
           : process.env.NODE_ENV === 'test'
             ? '.env.test'
-            : '.env',
+            : '.env.dev',
       load: [databaseConfig],
       cache: true,
       expandVariables: true,
@@ -66,30 +66,44 @@ import { UserModule } from './modules/user/user.module';
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        store: redisStore.redisStore,
-        url: configService.get<string>('REDIS_CACHE_URL'),
-        ttl: 3600,
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const cacheUrl = configService.get<string>('REDIS_CACHE_URL');
+        console.log('CacheModule REDIS_CACHE_URL:', cacheUrl);
+        return {
+          store: redisStore.redisStore,
+          url: cacheUrl,
+          ttl: 3600,
+          connectTimeout: 10000,
+          // password: configService.get<string>('REDIS_PASSWORD') || undefined,
+        };
+      },
       inject: [ConfigService],
     }),
     RedisModule.forRootAsync({
-      useFactory: async (configService: ConfigService) => ({
-        type: 'single',
-        url: configService.get<string>('REDIS_CORE_URL'),
-      }),
+      useFactory: async (configService: ConfigService) => {
+        return {
+          type: 'single',
+          url: configService.get<string>('REDIS_CORE_URL') + '?family=0',
+          // password: configService.get<string>('REDIS_PASSWORD') || undefined,
+          options: {
+            connectTimeout: 5000,
+            maxRetriesPerRequest: 3,
+          },
+        };
+      },
       inject: [ConfigService],
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
-        const coreRedisUrl = configService.get<string>('REDIS_CORE_URL');
-        const parsedUrl = new URL(coreRedisUrl);
-
+        const host = configService.get<string>('REDIS_HOST');
+        console.log('BullModule REDIS_HOST:', host);
         return {
           connection: {
-            host: parsedUrl.hostname,
-            port: parseInt(parsedUrl.port, 10),
+            family: 0,
+            host: host,
+            port: configService.get<number>('REDIS_CORE_PORT'),
+            password: configService.get<string>('REDIS_PASSWORD') || undefined,
           },
         };
       },
@@ -104,7 +118,7 @@ import { UserModule } from './modules/user/user.module';
       useFactory: async (configService: ConfigService) => {
         const meiliSearchHost = configService.get<string>('MEILISEARCH_HOST');
         const meiliSearchApiKey = configService.get<string>(
-          'MEILISEARCH_ADMIN_API_KEY',
+          'MEILISEARCH_MASTER_KEY',
         );
         return {
           host: meiliSearchHost,

@@ -1,55 +1,62 @@
 services:
-  mainDB:
-    container_name: postgres_container
-    image: postgres
-    restart: always
-    env_file:
-      - .env.dev
-    environment:
-      POSTGRES_USER: ${DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
-    ports:
-      - '5432:5432'
-    volumes:
-      - ./vol:/db/main
-    networks:
-      - app-network
-
-  testDB:
-    container_name: postgres_test_container
-    image: postgres
-    restart: always
-    env_file:
-      - .env.dev
-    environment:
-      POSTGRES_USER: ${TEST_DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${TEST_DATABASE_PASSWORD}
-      POSTGRES_DB: ${TEST_DATABASE_NAME}
-    ports:
-      - '5433:5432' # Maps host port 5433 to container port 5432
-    volumes:
-      - ./vol_test:/db/test # Separate volume for test database
-    networks:
-      - app-network
+  # mainDB:
+  #   container_name: postgres_container
+  #   image: postgres
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   environment:
+  #     POSTGRES_USER: ${DATABASE_USERNAME}
+  #     POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+  #     POSTGRES_DB: ${DATABASE_NAME}
+  #   ports:
+  #     - '5432:5432'
+  #   volumes:
+  #     - ./vol:/db/main
+  #   networks:
+  #     - app-network
+  #   healthcheck:
+  #     test:
+  #       [
+  #         'CMD',
+  #         'pg_isready',
+  #         '-U',
+  #         '${DATABASE_USERNAME}',
+  #         '-d',
+  #         '${DATABASE_NAME}',
+  #       ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
   redis_cache:
     container_name: redis_cache_container
-    image: redis
+    image: redis:alpine
     restart: always
     ports:
       - '6379:6379'
     networks:
       - app-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis_core:
     container_name: redis_core_container
-    image: redis
+    image: redis:alpine
     restart: always
     ports:
-      - '6380:6379'
+      - '6380:6380'
+    command: --port 6380
     networks:
       - app-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-p', '6380', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   meilisearch:
     container_name: meilisearch_container
@@ -65,23 +72,42 @@ services:
       - ./meilisearch_data.ms:/data.ms
     networks:
       - app-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://meilisearch:7700/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # ticketBottle_api_dev:
-  #   container_name: ticketbottle_api_dev
-  #   image: ticketbottle_api_dev:latest
-  #   build:
-  #     context: .
-  #     target: development
-  #   command: npm run start:dev
-  #   ports:
-  #     - ${PORT}:${PORT}
-  #   depends_on:
-  #     - mainDB
-  #     - redis_cache
-  #     - redis_core
-  #   volumes:
-  #     - ./:/usr/src/app
-  #   restart: unless-stopped
+  ticketBottle_api_dev:
+    container_name: ticketbottle_api_dev
+    image: ticketbottle_api_dev:latest
+    build:
+      context: .
+      target: development
+    command: npm run start:dev
+    env_file:
+      - .env.dev
+    ports:
+      - ${PORT}:${PORT}
+    environment:
+      - REDIS_CACHE_URL=redis://redis_cache:6379
+      - REDIS_CORE_URL=redis://redis_core:6389
+      - REDIS_HOST=redis_cache
+      - MEILISEARCH_HOST=http://meilisearch:7700
+      - DATABASE_URL=postgresql://postgres.otktjyrlaoysacoeuaot:jy2vIVb4mXnvHtxX@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&connect_timeout=30
+      - DATABASE_DIRECT_URL=postgresql://postgres.otktjyrlaoysacoeuaot:jy2vIVb4mXnvHtxX@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?pgbouncer=true&connection_limit=1&connect_timeout=30
+    depends_on:
+      redis_cache:
+        condition: service_healthy
+      redis_core:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    volumes:
+      - ./:/usr/src/app
+    restart: unless-stopped
+    networks:
+      - app-network
 
 networks:
   app-network:

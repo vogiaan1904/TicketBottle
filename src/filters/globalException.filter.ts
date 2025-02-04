@@ -23,9 +23,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       exception instanceof HttpException
         ? exception.message
         : 'Internal server error';
-    console.error(exception);
 
-    logger.error('Unhandled Exception', {
+    // Log the exception details
+    logger.error({
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
@@ -33,18 +33,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message:
         exception instanceof Error
           ? exception.message
-          : JSON.stringify(message),
+          : typeof message === 'string'
+            ? message
+            : JSON.stringify(message),
       stack: exception instanceof Error ? exception.stack : null,
     });
 
+    console.error(exception);
+
     response.status(status).json({
       statusCode: status,
-      message:
-        this.configService.get<string>('NODE_ENV') === 'production'
-          ? 'Internal server error'
-          : typeof message === 'string'
-            ? message
-            : (message as any).message || message,
+      message,
       error:
         this.configService.get('NODE_ENV') !== 'production'
           ? {
@@ -53,5 +52,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             }
           : null,
     });
+
+    // Determine the response message based on environment and exception type
   }
 }

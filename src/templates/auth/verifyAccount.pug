@@ -1,0 +1,63 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Verify Your Account
+    style.
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+      .container {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .content {
+        line-height: 1.6;
+        color: #333333;
+      }
+      .button {
+        display: inline-block;
+        padding: 10px 20px;
+        margin-top: 20px;
+        background-color: #28a745;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 4px;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 12px;
+        color: #777777;
+      }
+  body
+    .container
+      .header
+        h2 TicketBottle
+        p Event Ticket Selling and Management Platform
+      
+      .content
+        p Hi #{fullName},
+        
+        p Thank you for registering an account with TicketBottle! Please verify your email address by clicking the button below:
+        
+        a.button(href=verificationLink) Verify Account
+        
+        p If you did not create an account, please ignore this email.
+        
+        p Regards,
+        p The TicketBottle Team
+      
+      .footer
+        p © #{currentYear} TicketBottle. All rights reserved.
