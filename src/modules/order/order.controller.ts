@@ -20,7 +20,7 @@ import {
 } from './dto/order.response.dto';
 import { OrderService } from './order.service';
 import { ApiPost } from '@/decorators/apiPost.decorator';
-import { GetOrdersQueryRequestDto } from './dto/get-orders-quert.request.dto';
+import { GetOrdersQueryRequestDto } from './dto/get-orders-query.request.dto';
 import { OnlyAdmin } from '@/decorators/require-staff-role.decorator';
 
 @Injectable()
@@ -44,8 +44,6 @@ export class OrderController {
         ? `https://${request.get('host')}`
         : this.configService.get<string>(`NGROK_TEST_URL`);
 
-    console.log('host', host);
-
     return await this.orderService.checkout(request.user.id, createOrderDto, {
       ip: request.ip,
       host,
@@ -57,6 +55,16 @@ export class OrderController {
   @ApiCreatedResponse({ type: OrderResponseDto })
   cancel(@Req() request: RequestWithUser, @Param('id') id: string) {
     return this.orderService.cancelOrder(id);
+  }
+
+  @Get('/my-orders')
+  @UseGuards(JwtAccessTokenGuard)
+  @ApiOkResponse({ type: OrderResponseDto, isArray: true })
+  getMyOrders(
+    @Req() request: RequestWithUser,
+    @Query() query: GetOrdersQueryRequestDto,
+  ) {
+    return this.orderService.getOrdersByUserId(request.user.id, query);
   }
 
   @Get(':id')

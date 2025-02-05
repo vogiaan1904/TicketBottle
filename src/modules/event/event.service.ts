@@ -16,6 +16,7 @@ import { UpdateEventInfoRequestDto } from '../event-info/dto/update-event-info.r
 import { OrganizerService } from '../organizer/organizer.service';
 import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketClass.request.dto';
 import { TicketClassService } from '../ticket-class/ticket-class.service';
+import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import { EventResponseDto } from './dto/event.response.dto';
 import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
@@ -58,7 +59,23 @@ export class EventService extends BaseService<Event> {
     super(databaseService, 'event', EventResponseDto);
   }
 
-  async createEvent(data: any, options?: any): Promise<any> {
+  async create(dto: CreateEventRequestDto, options?: any): Promise<Event> {
+    const { categories, ...rest } = dto;
+    const data = {
+      ...rest,
+      categories: {
+        create: categories.map((categoryType) => ({
+          category: {
+            connectOrCreate: {
+              where: { type: categoryType },
+              create: {
+                type: categoryType,
+              },
+            },
+          },
+        })),
+      },
+    };
     const event = await super.create(data, options);
     return event;
   }
@@ -136,16 +153,21 @@ export class EventService extends BaseService<Event> {
   }
 
   async findEvents(dto: GetEventQueryRequestDto) {
-    const { page, perPage, includeInfo } = dto;
-
-    if (includeInfo === 'true') {
-      return await super.findManyWithPagination({
-        page,
-        perPage,
-        options: { include: this.includeInfo },
-      });
+    const { page, perPage, category } = dto;
+    const filter: any = {};
+    if (category) {
+      filter.categories = {
+        some: {
+          categoryType: category,
+        },
+      };
     }
-    return await super.findManyWithPagination({ page, perPage });
+    return await super.findManyWithPagination({
+      filter,
+      page,
+      perPage,
+      options: { include: this.includeInfo },
+    });
   }
 
   async searchEvents(query: SearchEventQueryRequestDto) {

@@ -12,6 +12,7 @@ import { logger as winstonLogger } from './configs/winston.config';
 import { GlobalExceptionFilter } from './filters/globalException.filter';
 
 async function bootstrap() {
+  console.log('NODE_ENV:', process.env.NODE_ENV);
   process.on('uncaughtException', (error) => {
     winstonLogger.error('Uncaught Exception:', {
       message: error.message,
@@ -36,7 +37,6 @@ async function bootstrap() {
       cors: true,
     });
     // app.setGlobalPrefix('api/v1');
-
     configSwagger(app);
     const configService = app.get(ConfigService);
 

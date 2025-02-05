@@ -45,6 +45,7 @@ import { UserModule } from './modules/user/user.module';
         REDIS_CACHE_URL: Joi.string().uri().required(),
         REDIS_CORE_URL: Joi.string().uri().required(),
         NGROK_TEST_URL: Joi.string().uri().required(),
+        //...
       }),
       validationOptions: {
         abortEarly: false,
@@ -68,7 +69,6 @@ import { UserModule } from './modules/user/user.module';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const cacheUrl = configService.get<string>('REDIS_CACHE_URL');
-        console.log('CacheModule REDIS_CACHE_URL:', cacheUrl);
         return {
           store: redisStore.redisStore,
           url: cacheUrl,

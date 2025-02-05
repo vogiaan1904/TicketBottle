@@ -1,8 +1,8 @@
-import { CategoryType } from '@prisma/client';
+import { OrderStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class GetEventQueryRequestDto {
+export class GetOrdersQueryRequestDto {
   @IsOptional()
   @IsNumber()
   page: number = 1;
@@ -14,6 +14,8 @@ export class GetEventQueryRequestDto {
   @IsOptional()
   @IsString()
   @Transform(({ value }) => value.toUpperCase())
-  @IsIn(['MUSIC', 'SPORT', 'THEATERS_AND_ART, OTHER'], {})
-  category: CategoryType;
+  @IsIn(['PENDING', 'COMPLETED', 'CANCELLED'], {
+    message: 'Status must be one of: PENDING, COMPLETED, CANCELLED',
+  })
+  status?: OrderStatus;
 }

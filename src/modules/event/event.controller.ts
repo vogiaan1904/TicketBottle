@@ -42,8 +42,8 @@ export class EventController {
   @OnlyAdmin()
   @Post()
   @ApiCreatedResponse({ type: EventResponseDto })
-  create(@Body() createEventDto: CreateEventRequestDto) {
-    return this.eventService.create(createEventDto);
+  async create(@Body() createEventDto: CreateEventRequestDto) {
+    return await this.eventService.create(createEventDto);
   }
 
   @OnlyAdmin()
@@ -76,7 +76,7 @@ export class EventController {
   @ApiOkResponse({ type: EventResponseDto, isArray: true })
   @Get()
   @ApiPagination()
-  @ApiQuery({ name: 'includeInfo', required: false })
+  @ApiQuery({ name: 'category', required: false })
   findMany(@Query() query: GetEventQueryRequestDto) {
     return this.eventService.findEvents(query);
   }

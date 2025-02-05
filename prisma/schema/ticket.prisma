@@ -24,7 +24,7 @@ model Ticket {
   checkInAt     DateTime?
   eventId       String
   ticketClassId String
-  event         Event        @relation(fields: [eventId], references: [id])
+  event         Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   ticketClass   TicketClass  @relation(fields: [ticketClassId], references: [id], onDelete: Cascade)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt

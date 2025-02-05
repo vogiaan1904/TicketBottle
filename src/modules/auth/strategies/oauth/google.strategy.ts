@@ -30,7 +30,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Google authentication failed');
     }
-    console.log(user);
     return user;
   }
 }

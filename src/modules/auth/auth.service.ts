@@ -15,10 +15,6 @@ import { LoginResponseDTO } from './dto/response/login.response.dto';
 import { logger } from '@/configs/winston.config';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
-import {
-  accessTokenKeyPair,
-  refreshTokenKeyPair,
-} from 'src/constraints/jwt.constraints';
 import { StaffResponseDto } from '../staff/dto/staff.response.dto';
 import { StaffService } from '../staff/staff.service';
 import { TokenService } from '../token/token.service';
@@ -177,8 +173,8 @@ export class AuthService {
 
   generateAccessToken(payload: TokenPayload): string {
     return this.jwtService.sign(payload, {
-      algorithm: 'RS256',
-      privateKey: accessTokenKeyPair.privateKey,
+      algorithm: 'HS256',
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET_KEY'),
       expiresIn: `${this.configService.get<string>(
         'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
       )}s`,
@@ -187,8 +183,8 @@ export class AuthService {
 
   generateRefreshToken(payload: TokenPayload): string {
     return this.jwtService.sign(payload, {
-      algorithm: 'RS256',
-      privateKey: refreshTokenKeyPair.privateKey,
+      algorithm: 'HS256',
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET_KEY'),
       expiresIn: `${this.configService.get<string>(
         'JWT_REFRESH_TOKEN_EXPIRATION_TIME',
       )}s`,

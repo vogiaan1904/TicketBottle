@@ -4,20 +4,28 @@ enum EventStatus {
   CANCELLED
 }
 
+enum CategoryType {
+  MUSIC
+  SPORT
+  THEATERS_AND_ART
+  OTHER
+}
+
 model Event {
-  id                    String        @id @default(uuid())
+  id                    String             @id @default(uuid())
   startSellDate         DateTime
   endSellDate           DateTime
   isFree                Boolean
   maxTicketsPerCustomer Int
-  status                EventStatus   @default(DRAFT)
+  status                EventStatus        @default(DRAFT)
   eventInfo             EventInfo?
   ticketClasses         TicketClass[]
   tickets               Ticket[]
   orders                Order[]
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   staffs                StaffEvent[]
+  categories            EventsCategories[]
 
   @@map("events")
 }
@@ -36,6 +44,25 @@ model EventInfo {
   organizerId String?
 
   @@map("event_infos")
+}
+
+model EventsCategories {
+  categoryType CategoryType
+  eventId      String
+  category     Category     @relation(fields: [categoryType], references: [type], onDelete: Cascade)
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([categoryType, eventId])
+  @@map("events_categories")
+}
+
+model Category {
+  id          String             @id @default(uuid())
+  type        CategoryType       @unique
+  description String?
+  events      EventsCategories[]
+
+  @@map("categories")
 }
 
 model Organizer {
