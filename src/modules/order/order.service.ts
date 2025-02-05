@@ -30,7 +30,7 @@ import { OrderResponseDto } from './dto/order.response.dto';
 
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
-import { GetOrdersQueryRequestDto } from './dto/get-orders-quert.request.dto';
+import { GetOrdersQueryRequestDto } from './dto/get-orders-query.request.dto';
 import { EmailQueue, TicketQueue } from './enums/queue';
 import { EventService } from '../event/event.service';
 
@@ -479,6 +479,33 @@ export class OrderService extends BaseService<Order> {
         paymentGateway: createdOrder.transaction.gateway,
         totalAmount: createdOrder.totalCheckOut,
         orderTime: formattedOrderTime,
+      },
+    });
+  }
+
+  async getOrdersByUserId(userId: string, query: GetOrdersQueryRequestDto) {
+    const filters = { userId };
+    const { page, perPage, status } = query;
+    if (query.status) {
+      filters['status'] = status;
+    }
+
+    return await this.findManyWithPagination({
+      filter: filters,
+      page,
+      perPage,
+      options: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          transaction: true,
+          event: {
+            select: {
+              eventInfo: true,
+            },
+          },
+        },
       },
     });
   }

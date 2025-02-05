@@ -1,13 +1,12 @@
 import { EventInfoResponseDto } from '@/modules/event-info/dto/event-info.response.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Event, EventStatus, TicketClass } from '@prisma/client';
+import { $Enums, Event, EventStatus, TicketClass } from '@prisma/client';
 import { Expose } from 'class-transformer';
 
 export class EventResponseDto implements Event {
   constructor(partial: Partial<EventResponseDto>) {
     Object.assign(this, partial);
   }
-
   @Expose()
   @ApiProperty()
   id: string;
@@ -46,11 +45,37 @@ export class EventResponseDto implements Event {
 
   @Expose()
   @ApiProperty()
+  categories: $Enums.Category[];
+
+  @Expose()
+  @ApiProperty()
   createdAt: Date;
 
   @Expose()
   @ApiProperty()
   updatedAt: Date;
+}
+
+export class EventsByCategoriesResponseDto {
+  @Expose()
+  @ApiProperty()
+  trendingEvents: EventResponseDto[];
+
+  @Expose()
+  @ApiProperty()
+  musicEvents: EventResponseDto[];
+
+  @Expose()
+  @ApiProperty()
+  sportEvents: EventResponseDto[];
+
+  @Expose()
+  @ApiProperty()
+  theatersAndArtEvents: EventResponseDto[];
+
+  @Expose()
+  @ApiProperty()
+  otherEvents: EventResponseDto[];
 }
 
 export class TicketClassStatisticsDto {
