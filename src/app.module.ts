@@ -33,6 +33,7 @@ import { TicketModule } from './modules/ticket/ticket.module';
 import { TokenModule } from './modules/token/token.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { UserModule } from './modules/user/user.module';
+import { CategoryModule } from './modules/category/category.module';
 
 @Module({
   imports: [
@@ -143,6 +144,7 @@ import { UserModule } from './modules/user/user.module';
     TransactionModule,
     OrganizerModule,
     ImageModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [

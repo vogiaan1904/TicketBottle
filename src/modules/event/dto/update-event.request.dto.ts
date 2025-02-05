@@ -1,6 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateEventRequestDto } from './create-event.request.dto';
-import { CategoryType, EventStatus } from '@prisma/client';
+import { Category, EventStatus } from '@prisma/client';
 import {
   IsArray,
   IsBoolean,
@@ -45,10 +45,10 @@ export class UpdateEventRequestDto extends PartialType(CreateEventRequestDto) {
       ? value.map((v: string) => v.toUpperCase())
       : value.toUpperCase(),
   )
-  @IsIn(['MUSIC', 'SPORT', 'THEATERS_AND_ART, OTHER'], {
+  @IsIn(['MUSIC', 'SPORT', 'THEATERS_AND_ART', 'OTHER'], {
     each: true,
     message:
       'categories must be some of: MUSIC, SPORT, THEATERS_AND_ART, OTHER',
   })
-  categories: CategoryType[];
+  categories: Category[];
 }

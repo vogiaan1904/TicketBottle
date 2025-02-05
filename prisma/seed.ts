@@ -4,89 +4,36 @@ import { EventStatus, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const genEventList = () => {
-  const rs = [
-    {
-      id: 'mockEvent11',
-      startSellDate: new Date('2024-11-23T06:00:00Z'), // 7 days before 2024-11-30T06:00:00Z
-      endSellDate: new Date('2024-11-29T06:00:00Z'), // 1 day before
+const genEventList = (numEvents: number) => {
+  const rs = [];
+
+  for (let i = 1; i <= numEvents; i++) {
+    // Random date between now and July 2025
+    const endDate = new Date('2025-07-31');
+    const startDate = new Date();
+    const randomDate = new Date(
+      startDate.getTime() +
+        Math.random() * (endDate.getTime() - startDate.getTime()),
+    );
+
+    // End sell date is 1 day before random date
+    const endSellDate = new Date(randomDate);
+    endSellDate.setDate(endSellDate.getDate() - 1);
+
+    // Start sell date is 7 days before end sell date
+    const startSellDate = new Date(endSellDate);
+    startSellDate.setDate(startSellDate.getDate() - 7);
+
+    rs.push({
+      id: `mockEvent${i}`,
+      startSellDate,
+      endSellDate,
       isFree: false,
       status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent12',
-      startSellDate: new Date('2024-11-23T08:00:00Z'), // 7 days before 2024-11-30T08:00:00Z
-      endSellDate: new Date('2024-11-29T08:00:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent13',
-      startSellDate: new Date('2024-11-23T10:30:00Z'), // 7 days before 2024-11-30T10:30:00Z
-      endSellDate: new Date('2024-11-29T10:30:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent14',
-      startSellDate: new Date('2024-11-23T11:00:00Z'), // 7 days before 2024-11-30T11:00:00Z
-      endSellDate: new Date('2024-11-29T11:00:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent15',
-      startSellDate: new Date('2024-11-23T12:00:00Z'), // 7 days before 2024-11-30T12:00:00Z
-      endSellDate: new Date('2024-11-29T12:00:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent16',
-      startSellDate: new Date('2024-11-23T12:30:00Z'), // 7 days before 2024-11-30T12:30:00Z
-      endSellDate: new Date('2024-11-29T12:30:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent17',
-      startSellDate: new Date('2024-11-27T08:00:00Z'), // 7 days before 2024-12-04T08:00:00Z
-      endSellDate: new Date('2024-12-03T08:00:00Z'), // 1 day before
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent18',
-      startSellDate: new Date('2024-11-29T21:30:00Z'), // 7 days before 2024-12-06T21:30:00Z
-      endSellDate: new Date('2024-12-05T21:30:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent19',
-      startSellDate: new Date('2024-11-30T07:00:00Z'), // 7 days before 2024-12-07T07:00:00Z
-      endSellDate: new Date('2024-12-06T07:00:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-    {
-      id: 'mockEvent20',
-      startSellDate: new Date('2024-11-30T12:00:00Z'), // 7 days before 2024-12-07T12:00:00Z
-      endSellDate: new Date('2024-12-06T12:00:00Z'),
-      isFree: false,
-      status: EventStatus.DRAFT,
-      maxTicketsPerCustomer: 5,
-    },
-  ];
+      maxTicketsPerCustomer: Math.floor(Math.random() * 6) + 5, // Random number between 5-10
+    });
+  }
+
   return rs;
 };
 
@@ -173,9 +120,9 @@ const genEventInfoList = () => {
       name: 'LULULOLA SHOW THÙY CHI & MAI TIẾN DŨNG | YÊU THƯƠNG MONG MANH',
       description:
         'A captivating live show merging dramatic storytelling with unforgettable performances.',
-      startDate: new Date('2024-11-30T10:30:00Z'),
+      startDate: new Date('2025-11-30T10:30:00Z'),
       endDate: new Date(
-        new Date('2024-11-30T10:30:00Z').getTime() + 90 * 60 * 1000,
+        new Date('2025-11-30T10:30:00Z').getTime() + 90 * 60 * 1000,
       ),
       location: 'Ho Chi Minh City, Vietnam',
       thumbnail:
@@ -187,9 +134,9 @@ const genEventInfoList = () => {
       name: 'LATA CONCERT : HOÀNG HÔN SAU CƠN MƯA - TRUNG QUÂN IDOL',
       description:
         'An energetic concert featuring stellar performances by Trung Quân Idol.',
-      startDate: new Date('2024-11-30T11:00:00Z'),
+      startDate: new Date('2025-11-30T11:00:00Z'),
       endDate: new Date(
-        new Date('2024-11-30T11:00:00Z').getTime() + 60 * 60 * 1000,
+        new Date('2025-11-30T11:00:00Z').getTime() + 60 * 60 * 1000,
       ),
       location: 'Ho Chi Minh City, Vietnam',
       thumbnail:
@@ -201,9 +148,9 @@ const genEventInfoList = () => {
       name: 'ConCert " MARS IN HANOI "',
       description:
         'A futuristic musical spectacle lighting up Hanoi with mesmerizing live acts.',
-      startDate: new Date('2024-11-30T12:00:00Z'),
+      startDate: new Date('2025-11-30T12:00:00Z'),
       endDate: new Date(
-        new Date('2024-11-30T12:00:00Z').getTime() + 60 * 60 * 1000,
+        new Date('2025-11-30T12:00:00Z').getTime() + 60 * 60 * 1000,
       ),
       location: 'Hanoi, Vietnam',
       thumbnail:
@@ -215,9 +162,9 @@ const genEventInfoList = () => {
       name: 'Đêm Cổ Tích tại Vạn Phúc Water Show',
       description:
         'A magical outdoor performance set against the enchanting backdrop of Vạn Phúc.',
-      startDate: new Date('2024-11-30T12:30:00Z'),
+      startDate: new Date('2025-11-30T12:30:00Z'),
       endDate: new Date(
-        new Date('2024-11-30T12:30:00Z').getTime() + 60 * 60 * 1000,
+        new Date('2025-11-30T12:30:00Z').getTime() + 60 * 60 * 1000,
       ),
       location: 'Hanoi, Vietnam',
       thumbnail:
@@ -226,12 +173,12 @@ const genEventInfoList = () => {
       organizerId: 'mockOrganizer4',
     },
     {
-      name: '2024 SOOBIN Fan Meeting In HCMC: PROMise',
+      name: '2025 SOOBIN Fan Meeting In HCMC: PROMise',
       description:
         'Connect with Soobin at an exclusive fan meeting event in Ho Chi Minh City.',
-      startDate: new Date('2024-12-04T08:00:00Z'),
+      startDate: new Date('2025-12-04T08:00:00Z'),
       endDate: new Date(
-        new Date('2024-12-04T08:00:00Z').getTime() + 90 * 60 * 1000,
+        new Date('2025-12-04T08:00:00Z').getTime() + 90 * 60 * 1000,
       ),
       location: 'Ho Chi Minh City, Vietnam',
       thumbnail:
@@ -243,9 +190,9 @@ const genEventInfoList = () => {
       name: '[Đà Lạt] 5AM CONCERT',
       description:
         'Wake up to a spectacular live concert in the cool ambiance of Đà Lạt.',
-      startDate: new Date('2024-12-06T21:30:00Z'),
+      startDate: new Date('2025-12-06T21:30:00Z'),
       endDate: new Date(
-        new Date('2024-12-06T21:30:00Z').getTime() + 60 * 60 * 1000,
+        new Date('2025-12-06T21:30:00Z').getTime() + 60 * 60 * 1000,
       ),
       location: 'Đà Lạt, Vietnam',
       thumbnail:
@@ -257,9 +204,9 @@ const genEventInfoList = () => {
       name: 'ANH TRAI "SAY HI" HÀ NỘI - CONCERT 3',
       description:
         'A dynamic live concert event promising standout performances in Hanoi.',
-      startDate: new Date('2024-12-07T07:00:00Z'),
+      startDate: new Date('2025-12-07T07:00:00Z'),
       endDate: new Date(
-        new Date('2024-12-07T07:00:00Z').getTime() + 60 * 60 * 1000,
+        new Date('2025-12-07T07:00:00Z').getTime() + 60 * 60 * 1000,
       ),
       location: 'Hanoi, Vietnam',
       thumbnail:
@@ -271,9 +218,9 @@ const genEventInfoList = () => {
       name: 'ĐÊM TRĂNG TRÊN ĐỈNH VÂN SƠN',
       description:
         'An unforgettable evening performance set atop the scenic Đỉnh Vân Sơn.',
-      startDate: new Date('2024-12-07T12:00:00Z'),
+      startDate: new Date('2025-12-07T12:00:00Z'),
       endDate: new Date(
-        new Date('2024-12-07T12:00:00Z').getTime() + 60 * 60 * 1000,
+        new Date('2025-12-07T12:00:00Z').getTime() + 60 * 60 * 1000,
       ),
       location: 'Hanoi, Vietnam',
       thumbnail:
@@ -281,145 +228,322 @@ const genEventInfoList = () => {
       eventId: 'mockEvent20',
       organizerId: 'mockOrganizer6',
     },
+    {
+      name: 'LULULOLA SHOW VĂN MAI HƯƠNG | CẦU VỒNG LẤP LÁNH',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-16T10:30:00Z'),
+      endDate: new Date(
+        new Date('2025-11-16T10:30:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Unknown',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/52/11/c4/31d9cd01a9c9055f89af4ea38cee7e2e.png',
+      eventId: 'mockEvent21',
+      organizerId: 'mockOrganizer1',
+    },
+    {
+      name: 'CHỐN...TÌM CHẶNG 7 I "SAU NÀY CỦA CHÚNG TA" - LÊ HIẾU, VICKY NHUNG',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-14T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-14T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Unknown',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/a1/19/f5/1e5bf62d8e01f93d7d3b818ef1b2d274.jpg',
+      eventId: 'mockEvent22',
+      organizerId: 'mockOrganizer2',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Trung Quân - Văn Mai Hương',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-11T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-11T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Unknown',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/f1/65/d8/96ba79bf830728e6cc1bdcb6e3dccb9b.jpg',
+      eventId: 'mockEvent23',
+      organizerId: 'mockOrganizer3',
+    },
+    {
+      name: 'DeloDelo Show : Liveshow "Yêu Là Như Thế" - Hương Tràm & Phạm Anh Duy [Hà Nội]',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-10T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-10T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Hanoi, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/e0/6c/11/476dd7a3771a5b1ef1ae11631a7cb724.jpg',
+      eventId: 'mockEvent24',
+      organizerId: 'mockOrganizer4',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Phương Anh - Phương Ý. KM: Thành Nguyên',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-09T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-09T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Unknown',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/46/ce/d3/02347946c599ff11543646971175fe7c.jpg',
+      eventId: 'mockEvent25',
+      organizerId: 'mockOrganizer5',
+    },
+    {
+      name: 'LULULOLA SHOW ANH TÚ - LYLY | ',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-09T10:30:00Z'),
+      endDate: new Date(
+        new Date('2025-11-09T10:30:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/28/2f/be/1c9c62eaa0798a8b35cc9547ca715c65.png',
+      eventId: 'mockEvent26',
+      organizerId: 'mockOrganizer6',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Birthday show Bạch Công Khanh',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-08T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-08T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/41/3e/a5/2c89ef3e4259cbb89b0c49656520ebb8.jpg',
+      eventId: 'mockEvent27',
+      organizerId: 'mockOrganizer1',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Hà Nhi - Hà An Huy',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-03T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-03T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/d3/51/5d/f7ec2718c359db8b85c5f7c9fcd2b536.jpg',
+      eventId: 'mockEvent28',
+      organizerId: 'mockOrganizer2',
+    },
+    {
+      name: 'Hanoi - The Bootleg Beatles',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-03T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-03T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Hanoi, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/83/b3/0f/835ba6bec6145b26b213cd727f2b53a0.png',
+      eventId: 'mockEvent29',
+      organizerId: 'mockOrganizer3',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Quang Dũng - Ngọc Anh',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-02T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-11-02T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/2d/6e/24/8c3dce65928e2486d6e6e7147313252c.jpg',
+      eventId: 'mockEvent30',
+      organizerId: 'mockOrganizer4',
+    },
+    {
+      name: '[LULULOLA SHOW] TRUNG QUÂN | BUỒN KHÔNG THỂ BUÔNG',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-02T10:30:00Z'),
+      endDate: new Date(
+        new Date('2025-11-02T10:30:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/69/21/be/88a283f7f47bbfedb6e6543641285e15.png',
+      eventId: 'mockEvent31',
+      organizerId: 'mockOrganizer5',
+    },
+    {
+      name: '2025 Jun Phạm Fan Meeting <JUNIVERSE in HCM>',
+      description: 'No description provided.',
+      startDate: new Date('2025-11-01T11:30:00Z'),
+      endDate: new Date(
+        new Date('2025-11-01T11:30:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/8b/7e/3d/d210532302d1a7fc334f42e56e491868.png',
+      eventId: 'mockEvent32',
+      organizerId: 'mockOrganizer6',
+    },
+    {
+      name: 'Huyền Bí Đêm Halloween cùng Vạn Phúc WaterShow',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-31T12:30:00Z'),
+      endDate: new Date(
+        new Date('2025-10-31T12:30:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Hanoi, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/e0/e4/ca/3d266a915271f39057d4da6d83c60aef.jpg',
+      eventId: 'mockEvent33',
+      organizerId: 'mockOrganizer2',
+    },
+    {
+      name: 'Mini Show Quang Dũng - Hải Phòng - 26/10/2025',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-26T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-10-26T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Hải Phòng, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/92/11/0a/6d80281b745c43b1d1c3b7562a11a25c.jpg',
+      eventId: 'mockEvent34',
+      organizerId: 'mockOrganizer3',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Chu Thúy Quỳnh - Nguyễn Kiều Oanh',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-26T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-10-26T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/1f/b9/b8/e102bef22d5b6df8ce8e8fc7a57517be.jpg',
+      eventId: 'mockEvent35',
+      organizerId: 'mockOrganizer4',
+    },
+    {
+      name: '[Hà Nội] Vũ. - "Bảo Tàng của Nuối Tiếc" Live Concert 2025',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-26T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-10-26T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Hanoi, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/fa/e4/94/4638917f282430a51497c965b83b427f.png',
+      eventId: 'mockEvent36',
+      organizerId: 'mockOrganizer5',
+    },
+    {
+      name: 'Huyền Bí Đêm Halloween Cùng Vạn Phúc Watershow',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-26T12:30:00Z'),
+      endDate: new Date(
+        new Date('2025-10-26T12:30:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Hanoi, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/c3/e4/8d/85680dc44d2164d5be734c1dc8fd2cb8.jpg',
+      eventId: 'mockEvent37',
+      organizerId: 'mockOrganizer6',
+    },
+    {
+      name: 'LULULOLA SHOW VŨ CÁT TƯỜNG | TỪNG LÀ',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-26T10:30:00Z'),
+      endDate: new Date(
+        new Date('2025-10-26T10:30:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/d2/9f/04/102e3246bb550d318ec24deb881472fa.png',
+      eventId: 'mockEvent38',
+      organizerId: 'mockOrganizer1',
+    },
+    {
+      name: 'Nhớ Trịnh Công Sơn 3 - Quang Dũng - Cẩm Vân - Khắc Triệu - Cece Trương',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-25T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-10-25T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/1d/15/98/f3e4a9be42a3368c63a5c179d2c38b5f.jpg',
+      eventId: 'mockEvent39',
+      organizerId: 'mockOrganizer2',
+    },
+    {
+      name: 'THE ARTS OF THE CONCERTO - THE 3RD INTERNALTIONAL CLASSICAL MUSIC FESTIVAL',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-21T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-10-21T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/92/5d/eb/ef7e3815e1eb993f802bfc14978907a3.png',
+      eventId: 'mockEvent40',
+      organizerId: 'mockOrganizer3',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Cẩm Vân - Khắc Triệu - Cece Trương - Nguyễn Đình Tuấn Dũng - Nguyễn Kiều Oanh',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-20T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-10-20T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/d7/32/40/bffa841ee7a24ec895aaa8e63f64531c.jpg',
+      eventId: 'mockEvent41',
+      organizerId: 'mockOrganizer4',
+    },
+    {
+      name: '[BẾN THÀNH] Đêm nhạc Hồ Quỳnh Hương - Trung Quân',
+      description: 'No description provided.',
+      startDate: new Date('2025-10-19T13:00:00Z'),
+      endDate: new Date(
+        new Date('2025-10-19T13:00:00Z').getTime() + 60 * 60 * 1000,
+      ),
+      location: 'Ho Chi Minh City, Vietnam',
+      thumbnail:
+        'https://images.tkbcdn.com/2/608/332/ts/ds/b1/16/95/3e1bec90125443f37bd8b11b5175f60b.jpg',
+      eventId: 'mockEvent42',
+      organizerId: 'mockOrganizer5',
+    },
   ];
   return rs;
 };
 
-const genTicketClassList = () => {
-  const rs = [
-    {
-      id: 'testTicketClass1Event2',
+const genTicketClassList = (numEvents: number) => {
+  const rs = [];
+  const possiblePrices = [199000, 249000, 299000, 500000, 699000];
+
+  for (let i = 1; i <= numEvents; i++) {
+    // Standard ticket class
+    rs.push({
+      id: `testTicketClass1Event${i}`,
       name: 'Standard',
-      description: 'Standard entry ticket.',
-      price: 200000,
-      totalQuantity: 1000,
-      eventId: 'mockEvent11',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Standard',
-      description: 'Standard entry ticket.',
-      price: 399000,
-      totalQuantity: 1200,
-      eventId: 'mockEvent12',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Standard',
-      description: 'Standard entry ticket.',
-      price: 499000,
-      totalQuantity: 800,
-      eventId: 'mockEvent13',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Standard',
-      description: 'Standard entry ticket.',
-      price: 259000,
-      totalQuantity: 700,
-      eventId: 'mockEvent14',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Early Access',
-      description: 'Early access to the event venue.',
-      price: 219000,
-      totalQuantity: 500,
-      eventId: 'mockEvent15',
-    },
-    {
-      id: 'testTicketClass2Event15',
-      name: 'Regular Ticket',
-      description: 'Regular entry to the event.',
-      price: 149000,
-      totalQuantity: 700,
-      eventId: 'mockEvent15',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Backstage Pass',
-      description: 'Access to backstage areas and meet the organizers.',
-      price: 599000,
-      totalQuantity: 600,
-      eventId: 'mockEvent16',
-    },
-    {
-      id: 'testTicketClass2Event16',
-      name: 'Standard Entry',
       description: 'Standard entry ticket with access to all general areas.',
-      price: 325000,
-      totalQuantity: 700,
-      eventId: 'mockEvent16',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Express Entry',
-      description: 'Express entry to skip the queues.',
-      price: 199000,
-      totalQuantity: 600,
-      eventId: 'mockEvent17',
-    },
-    {
-      id: 'testTicketClass2Event17',
-      name: 'Standard Ticket',
-      description: 'Regular entry to the event.',
-      price: 99000,
-      totalQuantity: 220,
-      eventId: 'mockEvent17',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Exclusive Access',
-      description: 'Exclusive access to VIP lounges and premium facilities.',
-      price: 400000,
-      totalQuantity: 200,
-      eventId: 'mockEvent18',
-    },
-    {
-      id: 'testTicketClass2Event18',
-      name: 'General Admission',
-      description:
-        'General admission ticket with access to all standard areas.',
-      price: 500000,
-      totalQuantity: 250,
-      eventId: 'mockEvent18',
-    },
-    {
-      id: 'testTicketClass1Event2',
-      name: 'Fan Zone',
-      description:
-        'General admission ticket with access to all standard areas.',
-      price: 2500000,
-      totalQuantity: 250,
-      eventId: 'mockEvent19',
-    },
-    {
-      id: 'testTicketClass2Event19',
-      name: 'Vip',
-      description:
-        'General admission ticket with access to all standard areas.',
-      price: 10000000,
-      totalQuantity: 100,
-      eventId: 'mockEvent19',
-    },
-    {
-      id: 'testTicketClass1Event20',
-      name: 'General Admission',
-      description:
-        'General admission ticket with access to all standard areas.',
-      price: 200000,
-      totalQuantity: 250,
-      eventId: 'mockEvent20',
-    },
-    {
-      id: 'testTicketClass2Event20',
-      name: 'Premium',
-      description: 'Premium admission ticket',
-      price: 500000,
-      totalQuantity: 250,
-      eventId: 'mockEvent20',
-    },
-  ];
+      price: possiblePrices[Math.floor(Math.random() * possiblePrices.length)],
+      totalQuantity: Math.floor(Math.random() * (700 - 100 + 1)) + 100, // Random between 100-700
+      eventId: `mockEvent${i}`,
+    });
+
+    // VIP ticket class
+    rs.push({
+      id: `testTicketClass2Event${i}`,
+      name: 'VIP',
+      description: 'VIP access with premium facilities and exclusive benefits.',
+      price: possiblePrices[Math.floor(Math.random() * possiblePrices.length)],
+      totalQuantity: Math.floor(Math.random() * (700 - 100 + 1)) + 100, // Random between 100-700
+      eventId: `mockEvent${i}`,
+    });
+  }
+
   return rs;
 };
 
@@ -437,7 +561,7 @@ async function main() {
   }
 
   // Create Events
-  const events = genEventList();
+  const events = genEventList(42);
   for (const event of events) {
     await prisma.event.upsert({
       where: { id: event.id },
@@ -457,7 +581,7 @@ async function main() {
   }
 
   // Create Ticket Classes
-  const ticketClasses = genTicketClassList();
+  const ticketClasses = genTicketClassList(42);
   for (const ticketClass of ticketClasses) {
     await prisma.ticketClass.upsert({
       where: { id: ticketClass.id },

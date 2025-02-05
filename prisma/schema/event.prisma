@@ -4,7 +4,7 @@ enum EventStatus {
   CANCELLED
 }
 
-enum CategoryType {
+enum Category {
   MUSIC
   SPORT
   THEATERS_AND_ART
@@ -12,20 +12,20 @@ enum CategoryType {
 }
 
 model Event {
-  id                    String             @id @default(uuid())
+  id                    String        @id @default(uuid())
   startSellDate         DateTime
   endSellDate           DateTime
   isFree                Boolean
   maxTicketsPerCustomer Int
-  status                EventStatus        @default(DRAFT)
+  status                EventStatus   @default(DRAFT)
   eventInfo             EventInfo?
   ticketClasses         TicketClass[]
   tickets               Ticket[]
   orders                Order[]
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
   staffs                StaffEvent[]
-  categories            EventsCategories[]
+  categories            Category[]
 
   @@map("events")
 }
@@ -46,24 +46,38 @@ model EventInfo {
   @@map("event_infos")
 }
 
-model EventsCategories {
-  categoryType CategoryType
-  eventId      String
-  category     Category     @relation(fields: [categoryType], references: [type], onDelete: Cascade)
-  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+// model EventsCategories {
+//   categoryType CategoryType
+//   eventId      String
+//   category     Category     @relation(fields: [categoryType], references: [type], onDelete: Cascade)
+//   event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@id([categoryType, eventId])
-  @@map("events_categories")
-}
+//   @@id([categoryType, eventId])
+//   @@map("events_categories")
+// }
 
-model Category {
-  id          String             @id @default(uuid())
-  type        CategoryType       @unique
-  description String?
-  events      EventsCategories[]
+// model Category {
+//   id          String             @id @default(uuid())
+//   type        CategoryType       @unique
+//   description String?
+//   events      EventsCategories[]
 
-  @@map("categories")
-}
+//   @@map("categories")
+// }
+
+// model UserEventHistory {
+//   id        String       @id @default(uuid())
+//   userId    String
+//   eventId   String
+//   category  CategoryType
+//   createdAt DateTime     @default(now())
+
+//   user  User  @relation(fields: [userId], references: [id])
+//   // Assuming you have an Event model:
+//   event Event @relation(fields: [eventId], references: [id])
+
+//   @@map("user_event_histories")
+// }
 
 model Organizer {
   id          String      @id @default(uuid())

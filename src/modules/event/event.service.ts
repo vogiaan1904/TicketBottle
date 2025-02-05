@@ -18,9 +18,11 @@ import { CreateTicketClassRequestDto } from '../ticket-class/dto/create-ticketCl
 import { TicketClassService } from '../ticket-class/ticket-class.service';
 import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
-import { EventResponseDto } from './dto/event.response.dto';
-import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
-import { SearchEventQueryRequestDto } from './dto/search-event-query.request.dto';
+import {
+  EventResponseDto,
+  EventsByCategoriesResponseDto,
+} from './dto/event.response.dto';
+import { GetEventsQueryDto } from './dto/get-event.query.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 export interface EventStatisticsInterface {
   soldTickets: number;
@@ -60,23 +62,8 @@ export class EventService extends BaseService<Event> {
   }
 
   async create(dto: CreateEventRequestDto, options?: any): Promise<Event> {
-    const { categories, ...rest } = dto;
-    const data = {
-      ...rest,
-      categories: {
-        create: categories.map((categoryType) => ({
-          category: {
-            connectOrCreate: {
-              where: { type: categoryType },
-              create: {
-                type: categoryType,
-              },
-            },
-          },
-        })),
-      },
-    };
-    const event = await super.create(data, options);
+    console.log(dto);
+    const event = await super.create(dto, options);
     return event;
   }
   async createInfo(id: string, data: CreateEventInfoRequestDto) {
@@ -152,16 +139,47 @@ export class EventService extends BaseService<Event> {
     }
   }
 
-  async findEvents(dto: GetEventQueryRequestDto) {
-    const { page, perPage, category } = dto;
+  async findEvents(dto: GetEventsQueryDto) {
+    const { page, perPage, categories, from, to, isFree, q } = dto;
     const filter: any = {};
-    if (category) {
+    const eventInfoFilter: any = {};
+    if (categories) {
       filter.categories = {
-        some: {
-          categoryType: category,
-        },
+        hasEvery: categories,
       };
     }
+    if (from && to) {
+      eventInfoFilter.startDate = {
+        gte: new Date(from),
+        lte: new Date(to),
+      };
+    }
+
+    if (q) {
+      const qFilter = {
+        OR: [
+          {
+            name: { contains: q, mode: 'insensitive' },
+          },
+          {
+            description: { contains: q, mode: 'insensitive' },
+          },
+        ],
+      };
+
+      eventInfoFilter.AND = eventInfoFilter.AND
+        ? [...eventInfoFilter.AND, qFilter]
+        : [qFilter];
+    }
+
+    if (Object.keys(eventInfoFilter).length > 0) {
+      filter.eventInfo = eventInfoFilter;
+    }
+
+    if (isFree) {
+      filter.isFree = Boolean(isFree);
+    }
+
     return await super.findManyWithPagination({
       filter,
       page,
@@ -170,42 +188,123 @@ export class EventService extends BaseService<Event> {
     });
   }
 
-  async searchEvents(query: SearchEventQueryRequestDto) {
-    const { startDate, isFree, q, page, perPage } = query;
-    const filter: any = {
-      eventInfo: {
-        OR: [
-          {
-            name: {
-              contains: q,
-              mode: 'insensitive',
-            },
+  async getEventsByAllCategories(): Promise<EventsByCategoriesResponseDto> {
+    const today = new Date();
+
+    const musicEvents = await this.findMany({
+      filter: {
+        categories: {
+          has: 'MUSIC',
+        },
+        eventInfo: {
+          startDate: {
+            gte: today,
           },
-          {
-            description: {
-              contains: q,
-              mode: 'insensitive',
-            },
-          },
-        ],
+        },
       },
-    };
-
-    if (startDate) {
-      filter.eventInfo.startDate = new Date(startDate);
-    }
-    if (isFree) {
-      filter.isFree = Boolean(isFree);
-    }
-
-    const events = await super.findManyWithPagination({
-      filter,
-      page,
-      perPage,
-      options: { include: this.includeInfo },
+      options: {
+        take: 10,
+        orderBy: {
+          eventInfo: {
+            startDate: 'asc',
+          },
+        },
+        include: this.includeInfo,
+      },
     });
 
-    return events;
+    const theatersAndArtEvents = await this.findMany({
+      filter: {
+        categories: {
+          has: 'THEATERS_AND_ART',
+        },
+        eventInfo: {
+          startDate: {
+            gte: today,
+          },
+        },
+      },
+      options: {
+        take: 10,
+        orderBy: {
+          eventInfo: {
+            startDate: 'asc',
+          },
+        },
+        include: this.includeInfo,
+      },
+    });
+
+    const sportEvents = await this.findMany({
+      filter: {
+        categories: {
+          has: 'SPORT',
+        },
+        eventInfo: {
+          startDate: {
+            gte: today,
+          },
+        },
+      },
+      options: {
+        take: 10,
+        orderBy: {
+          eventInfo: {
+            startDate: 'asc',
+          },
+        },
+        include: this.includeInfo,
+      },
+    });
+
+    const otherEvents = await this.findMany({
+      filter: {
+        categories: {
+          has: 'OTHER',
+        },
+        eventInfo: {
+          startDate: {
+            gte: today,
+          },
+        },
+      },
+      options: {
+        take: 10,
+        orderBy: {
+          eventInfo: {
+            startDate: 'asc',
+          },
+        },
+        include: this.includeInfo,
+      },
+    });
+
+    const trendingEvents = await this.findMany({
+      filter: {
+        status: 'PUBLISHED',
+        eventInfo: {
+          startDate: {
+            gte: today,
+          },
+        },
+      },
+      options: {
+        take: 10,
+        orderBy: {
+          tickets: {
+            _count: 'desc',
+          },
+        },
+        include: this.includeInfo,
+      },
+    });
+    return {
+      musicEvents,
+      theatersAndArtEvents,
+      sportEvents,
+      otherEvents,
+      trendingEvents,
+    };
   }
 
   async findEventById(id: string) {
@@ -225,7 +324,7 @@ export class EventService extends BaseService<Event> {
   }
 
   // Dashboard for admin
-  async findUpComingEvents(dto: GetEventQueryRequestDto) {
+  async findUpComingEvents(dto: GetEventsQueryDto) {
     const { page, perPage } = dto;
 
     return await super.findManyWithPagination({
@@ -245,7 +344,7 @@ export class EventService extends BaseService<Event> {
     });
   }
 
-  async findMostSoldEvents(dto: GetEventQueryRequestDto) {
+  async findMostSoldEvents(dto: GetEventsQueryDto) {
     const { page, perPage } = dto;
     return await super.findManyWithPagination({
       filter: {

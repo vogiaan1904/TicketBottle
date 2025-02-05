@@ -1,4 +1,4 @@
-import { CategoryType } from '@prisma/client';
+import { Category } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsArray,
@@ -37,10 +37,10 @@ export class CreateEventRequestDto {
       ? value.map((v: string) => v.toUpperCase())
       : value.toUpperCase(),
   )
-  @IsIn(['MUSIC', 'SPORT', 'THEATERS_AND_ART, OTHER'], {
+  @IsIn(['MUSIC', 'SPORT', 'THEATERS_AND_ART', 'OTHER'], {
     each: true,
     message:
       'categories must be some of: MUSIC, SPORT, THEATERS_AND_ART, OTHER',
   })
-  categories: CategoryType[];
+  categories: Category[];
 }

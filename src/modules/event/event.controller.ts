@@ -24,10 +24,10 @@ import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import {
   EventResponseDto,
+  EventsByCategoriesResponseDto,
   EventStatisticsResponseDto,
 } from './dto/event.response.dto';
-import { GetEventQueryRequestDto } from './dto/get-eventQuery.request.dto';
-import { SearchEventQueryRequestDto } from './dto/search-event-query.request.dto';
+import { GetEventsQueryDto } from './dto/get-event.query.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventConfigService } from './event-config.service';
 import { EventService } from './event.service';
@@ -76,31 +76,28 @@ export class EventController {
   @ApiOkResponse({ type: EventResponseDto, isArray: true })
   @Get()
   @ApiPagination()
-  @ApiQuery({ name: 'category', required: false })
-  findMany(@Query() query: GetEventQueryRequestDto) {
+  @ApiQuery({
+    name: 'categories',
+    required: false,
+    type: String,
+    isArray: true,
+  })
+  @ApiQuery({ name: 'from', required: false })
+  @ApiQuery({ name: 'to', required: false })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({ name: 'isFree', required: false })
+  findMany(@Query() query: GetEventsQueryDto) {
     return this.eventService.findEvents(query);
   }
 
-  @ApiOkResponse({ type: EventResponseDto, isArray: true })
-  @Get('search')
-  @ApiQuery({
-    name: 'q',
-    required: true,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'startDate',
-    required: false,
-    type: String,
-    format: 'date-time',
-  })
-  @ApiQuery({
-    name: 'isFree',
-    required: false,
-    type: String,
-  })
-  searchEvents(@Query() query: SearchEventQueryRequestDto) {
-    return this.eventService.searchEvents(query);
+  @ApiOkResponse({ type: EventsByCategoriesResponseDto })
+  @Get('categories')
+  getCategories() {
+    return this.eventService.getEventsByAllCategories();
   }
 
   @ApiOkResponse({ type: EventResponseDto })
@@ -163,7 +160,7 @@ export class EventController {
   @Get('upcoming')
   @ApiPagination()
   @ApiQuery({ name: 'includeInfo', required: false })
-  findUpComingEvents(@Query() dto: GetEventQueryRequestDto) {
+  findUpComingEvents(@Query() dto: GetEventsQueryDto) {
     return this.eventService.findUpComingEvents(dto);
   }
 
@@ -173,7 +170,7 @@ export class EventController {
   @Get('most-sold')
   @ApiPagination()
   @ApiQuery({ name: 'includeInfo', required: false })
-  findMostSoldEvents(@Query() dto: GetEventQueryRequestDto) {
+  findMostSoldEvents(@Query() dto: GetEventsQueryDto) {
     return this.eventService.findMostSoldEvents(dto);
   }
 
