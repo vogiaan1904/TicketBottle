@@ -35,7 +35,7 @@ TicketBottle is a comprehensive ticket selling and management system built on [N
 1. **Clone the repository:**
 
 ```sh
-git clone https://github.com/yourusername/TicketBottle.git
+git clone https://github.com/vogiaan1904/TicketBottle.git
 cd TicketBottle
 ```
 
@@ -47,6 +47,7 @@ npm install
 
 3. **Configure environment variables:**
    Create your own `.env` file based on the provided `.env.example`.
+
 4. **Database setup:**
    Run Prisma migrations:
 
@@ -60,18 +61,24 @@ npx prisma migrate dev
 npx ts-node prisma/seed.ts
 ```
 
-## Additional Information
+5. **Start the application:**
 
-**Project Configuration:**
-The project uses `nest-cli.json` for NestJS configuration and `tsconfig.json` for TypeScript settings.
+For development:
 
-**Logs & Coverage:**
-Logs can be found in the `logs` directory, and test coverage reports are generated in the `coverage` directory.
+```sh
+npm run start:dev
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Using Docker (example for development):
+
+```sh
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+## API Documentation
+
+The API documentation can be accessed at `/api-docs#`. You can view the list of available APIs and their specifications by running the server and visiting `http://localhost:3000/api-docs#/` in your browser.
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+TicketBottle is [MIT licensed]. See the [LICENSE](LICENSE) for details
