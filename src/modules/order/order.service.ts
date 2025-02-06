@@ -30,6 +30,8 @@ import { OrderResponseDto } from './dto/order.response.dto';
 
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
+import * as QRCode from 'qrcode';
+import { jsPDF } from 'jspdf';
 import { GetOrdersQueryRequestDto } from './dto/get-orders-query.request.dto';
 import { EmailQueue, TicketQueue } from './enums/queue';
 import { EventService } from '../event/event.service';
@@ -161,7 +163,7 @@ export class OrderService extends BaseService<Order> {
     const orderData = await this.createOrderOnRedis(userId, dto);
 
     const { code, totalCheckout } = orderData;
-    const paymentUrl = await this.paymentService.createPaymentLink(
+    const result = await this.paymentService.createPaymentLink(
       dto.paymentGateway,
       {
         ip: paymentData.ip,
@@ -171,6 +173,7 @@ export class OrderService extends BaseService<Order> {
         amount: Number(totalCheckout),
       },
     );
+    const paymentUrl = result.url;
 
     return { orderData, paymentUrl };
   }
@@ -384,7 +387,7 @@ export class OrderService extends BaseService<Order> {
         return await tx.ticket.createManyAndReturn({ data: ticketData });
       });
 
-      const a = await Promise.all(ticketPromises);
+      const createdTickets = await Promise.all(ticketPromises);
 
       // Create order
       return await tx.order.create({
@@ -405,7 +408,7 @@ export class OrderService extends BaseService<Order> {
           },
           orderDetails: {
             createMany: {
-              data: a.flat().map((ticket) => ({
+              data: createdTickets.flat().map((ticket) => ({
                 ticketId: ticket.id,
               })),
             },
@@ -419,11 +422,17 @@ export class OrderService extends BaseService<Order> {
       });
     });
 
+    // Generate PDF tickets with QR code
+    const attachments = await this.generatePdfTicketsWithQRCode(
+      createdOrder.id,
+    );
+
     // Send email
     await this.sendOrderSuccessEmail(
       user.email,
       orderData.orderDetails,
       createdOrder.id,
+      attachments,
     );
 
     // Delete order on redis
@@ -436,10 +445,86 @@ export class OrderService extends BaseService<Order> {
     return createdOrder;
   }
 
+  async generateQRCode(serialNumber: string): Promise<string> {
+    return await QRCode.toDataURL(serialNumber);
+  }
+
+  async generatePdfTicketsWithQRCode(orderId: string) {
+    const orderData = await this.findOne(
+      { id: orderId },
+      {
+        select: {
+          id: true,
+          createdAt: true,
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+          orderDetails: {
+            select: {
+              ticket: {
+                select: {
+                  serialNumber: true,
+                  ticketClass: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    );
+    const attachments = [];
+    for (const ticket of orderData.orderDetails) {
+      const qrCode = await this.generateQRCode(ticket.ticket.serialNumber);
+      const doc = new jsPDF();
+      let currentHeight = 20;
+      doc.text(`Order ID: ${orderData.id}`, 10, currentHeight);
+      currentHeight += 10;
+      doc.text(
+        `Ordered by ${orderData.user.firstName} ${orderData.user.lastName} at ${dayjs(orderData.createdAt).format('HH:mm, DD/MM/YYYY')}`,
+        10,
+        currentHeight,
+      );
+      currentHeight += 10;
+
+      doc.text(
+        `Ticket Class: ${ticket.ticket.ticketClass.name}`,
+        10,
+        currentHeight,
+      );
+      currentHeight += 10;
+      doc.text(
+        `Ticket Serial Number: ${ticket.ticket.serialNumber}`,
+        10,
+        currentHeight,
+      );
+      currentHeight += 10;
+
+      // Leave extra space then add the QR code image
+      doc.addImage(qrCode, 'PNG', 10, currentHeight, 50, 50);
+      currentHeight += 60;
+      const arrayBuffer = doc.output('arraybuffer');
+      const buffer = Buffer.from(new Uint8Array(arrayBuffer));
+      attachments.push({
+        filename: `ticket_${ticket.ticket.serialNumber}.pdf`,
+        content: buffer.toString('base64'),
+        encoding: 'base64',
+      });
+    }
+    return attachments;
+  }
+
   async sendOrderSuccessEmail(
     userEmail: string,
     orderDetails: string,
     orderId: string,
+    attachments: any[] = [],
   ) {
     const orderDetailsJSON = JSON.parse(orderDetails);
     const orderDetailEmailData = orderDetailsJSON.map((detail) => ({
@@ -480,6 +565,7 @@ export class OrderService extends BaseService<Order> {
         totalAmount: createdOrder.totalCheckOut,
         orderTime: formattedOrderTime,
       },
+      attachments,
     });
   }
 

@@ -1,8 +1,19 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.dev' });
-import { EventStatus, PrismaClient } from '@prisma/client';
+import { Category, EventStatus, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+const getEventCategory = (name: string, description: string): Category[] => {
+  const text = (name + ' ' + description).toLowerCase();
+  const categories = [];
+  if (/(concert|show|nhạc|fan meeting|music|dazzling)/.test(text))
+    categories.push('MUSIC');
+  if (/(theater|art|live)/.test(text)) categories.push('THEATERS_AND_ART');
+  if (/(sport|match|tournament|game)/.test(text)) categories.push('SPORTS');
+  if (categories.length == 0) categories.push('OTHER');
+  return categories;
+};
 
 const genEventList = (numEvents: number) => {
   const rs = [];
@@ -34,7 +45,33 @@ const genEventList = (numEvents: number) => {
     });
   }
 
-  return rs;
+  return rs.map((event) => ({
+    ...event,
+    categories: getEventCategory(event.name, event.description),
+  }));
+};
+
+const updateEventCategories = async () => {
+  const eventsToUpdate = await prisma.event.findMany({
+    include: {
+      eventInfo: true,
+    },
+  });
+  for (const event of eventsToUpdate) {
+    if (event.eventInfo) {
+      const categories = getEventCategory(
+        event.eventInfo.name,
+        event.eventInfo.description,
+      );
+      await prisma.event.update({
+        where: { id: event.id },
+        data: {
+          categories: categories,
+        },
+      });
+      console.log(`Updated event ${event.id} with categories:`, categories);
+    }
+  }
 };
 
 const genOrganizerList = () => {
@@ -103,12 +140,12 @@ const genEventInfoList = () => {
       organizerId: 'mockOrganizer1',
     },
     {
-      name: '[Đà Nẵng] Những Thành Phố Mơ Màng Year End 2024',
+      name: '[Đà Nẵng] Những Thành Phố Mơ Màng Year End 2025',
       description:
         'A dazzling year-end celebration in Da Nang featuring spectacular live performances.',
-      startDate: new Date('2024-11-30T08:00:00Z'),
+      startDate: new Date('2025-11-30T08:00:00Z'),
       endDate: new Date(
-        new Date('2024-11-30T08:00:00Z').getTime() + 60 * 60 * 1000,
+        new Date('2025-11-30T08:00:00Z').getTime() + 60 * 60 * 1000,
       ),
       location: 'Đà Nẵng, Vietnam',
       thumbnail:
@@ -569,6 +606,8 @@ async function main() {
       create: event,
     });
   }
+
+  await updateEventCategories();
 
   // Create Event Infos
   const eventInfos = genEventInfoList();

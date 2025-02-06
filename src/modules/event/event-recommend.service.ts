@@ -1,14 +1,19 @@
 import { ConfigService } from '@nestjs/config';
-import { EventService } from './event.service';
 import dayjs from 'dayjs';
+import { EventService } from './event.service';
+import { GetRecommendedQueryDto } from './dto/get-event.query.dto';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class EventRecommendService {
   constructor(
     private readonly configService: ConfigService,
     private readonly eventService: EventService,
   ) {}
-  async getRecommendedEventsByEventId(eventId: string): Promise<Event[] | any> {
-    const limit = 8;
+  async getRecommendedEventsByEventId(
+    eventId: string,
+    limit: number,
+  ): Promise<Event[] | any> {
     const event = await this.eventService.findEventById(eventId);
     if (event) {
       const sameCategoryEvents = await this.eventService.findMany({
@@ -16,12 +21,15 @@ export class EventRecommendService {
           categories: {
             hasSome: event.categories,
           },
-          status: 'published',
+          status: 'PUBLISHED',
         },
         options: {
           take: 8,
           orderBy: {
-            startDate: 'asc',
+            startSellDate: 'desc',
+          },
+          include: {
+            eventInfo: true,
           },
         },
       });
@@ -35,7 +43,7 @@ export class EventRecommendService {
       // Query additional events that are published and NOT in the same category.
       const otherCategoryEvents = await this.eventService.findMany({
         filter: {
-          status: 'published',
+          status: 'PUBLISHED',
           NOT: {
             categories: {
               hasSome: event.categories,
@@ -45,7 +53,10 @@ export class EventRecommendService {
         options: {
           take: remaining,
           orderBy: {
-            startDate: 'asc',
+            startSellDate: 'desc',
+          },
+          include: {
+            eventInfo: true,
           },
         },
       });
@@ -54,39 +65,67 @@ export class EventRecommendService {
   }
 
   async getRecommendedEvents(
-    at: string,
-    limit: number,
+    query: GetRecommendedQueryDto,
   ): Promise<Event[] | any> {
+    const { eventId, limit, at } = query;
+    if (eventId) {
+      return await this.getRecommendedEventsByEventId(eventId, limit);
+    }
     const today = new Date();
     if (at == 'this_week') {
       return await this.eventService.findMany({
         filter: {
-          startDate: {
-            gte: today,
-            lte: dayjs().endOf('week').toDate(),
+          eventInfo: {
+            startDate: {
+              gte: today,
+              lte: dayjs().endOf('week').toDate(),
+            },
           },
-          status: 'published',
+          status: 'PUBLISHED',
         },
         options: {
           take: limit,
           orderBy: {
-            startDate: 'asc',
+            startSellDate: 'desc',
+          },
+          include: {
+            eventInfo: true,
           },
         },
       });
     } else if (at == 'this_month') {
       return await this.eventService.findMany({
         filter: {
-          startDate: {
-            gte: today,
-            lte: dayjs().endOf('month').toDate(),
+          eventInfo: {
+            startDate: {
+              gte: today,
+              lte: dayjs().endOf('month').toDate(),
+            },
           },
-          status: 'published',
+          status: 'PUBLISHED',
         },
         options: {
           take: limit,
           orderBy: {
-            startDate: 'asc',
+            startSellDate: 'desc',
+          },
+          include: {
+            eventInfo: true,
+          },
+        },
+      });
+    } else {
+      return await this.eventService.findMany({
+        filter: {
+          status: 'PUBLISHED',
+        },
+        options: {
+          take: limit,
+          orderBy: {
+            startSellDate: 'desc',
+          },
+          include: {
+            eventInfo: true,
           },
         },
       });

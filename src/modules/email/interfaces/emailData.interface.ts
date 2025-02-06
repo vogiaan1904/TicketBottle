@@ -4,4 +4,5 @@ export interface EmailDataInterface {
   subject: string;
   text?: string;
   html: string;
+  attachments?: any[];
 }

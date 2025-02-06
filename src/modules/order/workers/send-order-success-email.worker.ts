@@ -15,13 +15,20 @@ export class SendSuccessOrderEmailWorker extends WorkerHost {
   }
 
   async process(
-    job: Job<{ email: string; orderData: OrderSuccessDataDto }>,
+    job: Job<{
+      email: string;
+      orderData: OrderSuccessDataDto;
+      attachments: any[];
+    }>,
   ): Promise<void> {
-    const { email, orderData } = job.data;
+    const { email, orderData, attachments } = job.data;
     this.logger.log(`Sending email for success order Id: ${orderData.orderId}`);
     try {
-      console.log(orderData);
-      await this.emailService.sendSuccessOrderEmail(email, orderData);
+      await this.emailService.sendSuccessOrderEmail(
+        email,
+        orderData,
+        attachments,
+      );
       this.logger.log(
         `Successfully sent email for order Id: ${orderData.orderId}`,
       );

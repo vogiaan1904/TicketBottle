@@ -25,6 +25,10 @@ export class EventResponseDto implements Event {
 
   @Expose()
   @ApiProperty()
+  isNewTrending: boolean;
+
+  @Expose()
+  @ApiProperty()
   maxTicketsPerCustomer: number;
 
   @Expose()
@@ -56,26 +60,19 @@ export class EventResponseDto implements Event {
   updatedAt: Date;
 }
 
-export class EventsByCategoriesResponseDto {
+export class EventByCategoryResponseDto {
   @Expose()
   @ApiProperty()
-  trendingEvents: EventResponseDto[];
+  categoryName: string;
 
   @Expose()
   @ApiProperty()
-  musicEvents: EventResponseDto[];
-
+  events: EventResponseDto[];
+}
+export class EventsByCategoryResponseDto {
   @Expose()
   @ApiProperty()
-  sportEvents: EventResponseDto[];
-
-  @Expose()
-  @ApiProperty()
-  theatersAndArtEvents: EventResponseDto[];
-
-  @Expose()
-  @ApiProperty()
-  otherEvents: EventResponseDto[];
+  events: EventByCategoryResponseDto[];
 }
 
 export class TicketClassStatisticsDto {

@@ -48,6 +48,10 @@ export class EventConfigService {
       throw new BadRequestException('Event has not been configured yet');
     }
 
+    if (event.status !== EventStatus.DRAFT) {
+      throw new BadRequestException('Event has been published');
+    }
+
     const eventDataKey = this.genRedisKey.event(eventId);
 
     await this.redis.hset(eventDataKey, {
