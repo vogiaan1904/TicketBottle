@@ -91,11 +91,13 @@ export class EmailService {
   async sendSuccessOrderEmail(
     email: string,
     context: OrderSuccessDataDto,
+    attachments: any[],
   ): Promise<void> {
     await this.sendEmail({
       to: email,
       subject: 'Payment Success',
       html: this.renderHTML('payment/neworderSuccess', context),
+      attachments,
     });
   }
 }

@@ -30,7 +30,8 @@
     "test:int": "cross-env NODE_ENV=test jest -i --no-cache --watch --config jest-int.json",
     "posttest:int": "cross-env NODE_ENV=test prisma migrate reset --force",
     "migrate:prod": "dotenv -e .env.prod -- npx prisma migrate deploy",
-    "migrate:dev": "dotenv -e .env.dev -- npx prisma migrate dev"
+    "migrate:dev": "dotenv -e .env.dev -- npx prisma migrate dev",
+    "dbstudio": "dotenv -e .env.dev -- npx prisma studio"
   },
   "dependencies": {
     "@bull-board/api": "^6.5.3",
@@ -62,10 +63,12 @@
     "dayjs": "^1.11.13",
     "express-session": "^1.18.1",
     "fs": "^0.0.1-security",
+    "glob": "^10.3.10",
     "handlebars": "^4.7.8",
     "imgur": "^2.4.2",
     "ioredis": "^5.4.1",
     "joi": "^17.13.3",
+    "jspdf": "^2.5.2",
     "madge": "^8.0.0",
     "meilisearch": "^0.48.2",
     "multer": "^1.4.5-lts.1",
@@ -78,15 +81,15 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "path": "^0.12.7",
+    "qrcode": "^1.5.4",
     "redis-om": "^0.4.7",
     "reflect-metadata": "^0.2.0",
+    "rimraf": "^5.0.5",
     "rxjs": "^7.8.1",
     "swagger-themes": "^1.4.3",
     "vnpay": "^1.6.0",
     "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0",
-    "glob": "^10.3.10",
-    "rimraf": "^5.0.5"
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -100,6 +103,7 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^20.17.10",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@types/qrcode": "^1.5.5",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",

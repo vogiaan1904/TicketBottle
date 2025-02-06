@@ -17,6 +17,7 @@ model Event {
   endSellDate           DateTime
   isFree                Boolean
   maxTicketsPerCustomer Int
+  isNewTrending         Boolean       @default(false)
   status                EventStatus   @default(DRAFT)
   eventInfo             EventInfo?
   ticketClasses         TicketClass[]

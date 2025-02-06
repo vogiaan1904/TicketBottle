@@ -24,12 +24,16 @@ import { CreateEventRequestDto } from './dto/create-event.request.dto';
 import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import {
   EventResponseDto,
-  EventsByCategoriesResponseDto,
+  EventsByCategoryResponseDto,
   EventStatisticsResponseDto,
 } from './dto/event.response.dto';
-import { GetEventsQueryDto } from './dto/get-event.query.dto';
+import {
+  GetEventsQueryDto,
+  GetRecommendedQueryDto,
+} from './dto/get-event.query.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
 import { EventConfigService } from './event-config.service';
+import { EventRecommendService } from './event-recommend.service';
 import { EventService } from './event.service';
 
 @Controller('event')
@@ -37,6 +41,7 @@ export class EventController {
   constructor(
     private readonly eventService: EventService,
     private readonly eventConfigService: EventConfigService,
+    private readonly eventRecommendService: EventRecommendService,
   ) {}
 
   @OnlyAdmin()
@@ -94,7 +99,15 @@ export class EventController {
     return this.eventService.findEvents(query);
   }
 
-  @ApiOkResponse({ type: EventsByCategoriesResponseDto })
+  @ApiOkResponse({ type: EventResponseDto, isArray: true })
+  @Get('recommended')
+  @ApiQuery({ name: 'eventId', required: false })
+  @ApiQuery({ name: 'at', required: false })
+  getRecommendedEvents(@Query() query: GetRecommendedQueryDto) {
+    return this.eventRecommendService.getRecommendedEvents(query);
+  }
+
+  @ApiOkResponse({ type: EventsByCategoryResponseDto })
   @Get('categories')
   getCategories() {
     return this.eventService.getEventsByAllCategories();

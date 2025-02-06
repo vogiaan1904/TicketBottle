@@ -1,13 +1,6 @@
 import { Category } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import {
-  IsArray,
-  IsIn,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsArray, IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class GetEventsQueryDto {
   @IsOptional()
@@ -48,14 +41,12 @@ export class GetEventsQueryDto {
   isFree: string;
 }
 
-export class GetRecommendedByEventIdQueryDto {
-  @IsNotEmpty()
-  @IsString()
-  eventId?: string;
-}
-
 export class GetRecommendedQueryDto {
-  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
+  eventId: string;
+
+  @IsOptional()
   @IsString()
   @IsIn(['this_month', 'this_week'], {})
   at: string;
