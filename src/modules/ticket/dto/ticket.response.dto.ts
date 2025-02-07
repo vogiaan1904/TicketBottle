@@ -1,3 +1,4 @@
+import { TicketClassResponseDto } from '@/modules/ticket-class/dto/ticket-class.response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Ticket } from '@prisma/client';
 import { Expose } from 'class-transformer';
@@ -30,6 +31,10 @@ export class TicketResponseDto implements Ticket {
   @Expose()
   @ApiProperty()
   eventId: string;
+
+  @Expose()
+  @ApiProperty()
+  ticketClass: TicketClassResponseDto;
 
   @Expose()
   @ApiProperty()

@@ -71,7 +71,7 @@ export class OrderController {
   @UseGuards(JwtAccessTokenGuard)
   @ApiOkResponse({ type: OrderResponseDto })
   findOne(@Param('id') id: string) {
-    return this.orderService.findOne({ id });
+    return this.orderService.getOrderById(id);
   }
 
   @OnlyAdmin()

@@ -1,3 +1,4 @@
+import { TicketResponseDto } from '@/modules/ticket/dto/ticket.response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderDetail } from '@prisma/client';
 import { Expose } from 'class-transformer';
@@ -25,4 +26,8 @@ export class OrderDetailResponseDto implements OrderDetail {
   @Expose()
   @ApiProperty()
   createdAt: Date;
+
+  @Expose()
+  @ApiProperty()
+  ticket: TicketResponseDto;
 }
