@@ -68,6 +68,7 @@ export class OrderService extends BaseService<Order> {
     const now = dayjs().format('YYMMDD').toString();
     return now + crypto.randomBytes(5).toString('hex');
   }
+
   private genTransactionID(): string {
     const now = dayjs().format('YYMMDD').toString();
     return now + '-' + crypto.randomBytes(5).toString('hex');
@@ -594,6 +595,55 @@ export class OrderService extends BaseService<Order> {
         },
       },
     });
+  }
+
+  async getOrderById(orderId: string) {
+    const order = await this.databaseService.$queryRaw`
+      SELECT 
+        o.*,
+        u."firstName",
+        u."lastName",
+        u.email,
+        (
+          SELECT json_agg(grouped_detail)
+          FROM (
+            SELECT 
+              json_build_object(
+                'id', tc.id,
+                'name', tc.name,
+                'status', tc.status,
+                'description', tc.description,
+                'price', tc.price,
+                'eventId', tc."eventId",
+                'createdAt', tc."createdAt",
+                'updatedAt', tc."updatedAt"
+              ) AS ticketClass,
+              json_agg(
+                json_build_object(
+                  'id', t.id,
+                  'serialNumber', t."serialNumber",
+                  'isCheckIn', t."isCheckIn",
+                  'checkInAt', t."checkInAt",
+                  'eventId', t."eventId",
+                  'ticketClassId', t."ticketClassId",
+                  'createdAt', t."createdAt",
+                  'updatedAt', t."updatedAt"
+                )
+              ) AS tickets,
+              count(t.id) AS quantity
+            FROM "order_details" od
+            JOIN tickets t ON od."ticketId" = t.id
+            JOIN "ticket_classes" tc ON t."ticketClassId" = tc.id
+            WHERE od."orderId" = o.id
+            GROUP BY t."ticketClassId", 
+                    tc.id, tc.name, tc.status, tc.description, tc.price, tc."eventId", tc."createdAt", tc."updatedAt"
+          ) grouped_detail
+        ) AS "orderDetails"
+      FROM orders o
+      JOIN users u ON o."userId" = u.id
+      WHERE o.id = ${orderId};
+    `;
+    return order;
   }
 
   //Statistics for event dashboard

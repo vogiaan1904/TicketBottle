@@ -1,6 +1,7 @@
+import { OrderDetailResponseDto } from '@/modules/order-detail/dto/order-detail.response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { $Enums, Order } from '@prisma/client';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 export class OrderResponseDto implements Order {
   constructor(partial: Partial<OrderResponseDto>) {
@@ -13,6 +14,10 @@ export class OrderResponseDto implements Order {
   @Expose()
   @ApiProperty()
   code: string;
+
+  @Expose()
+  @ApiProperty()
+  eventId: string;
 
   @Expose()
   @ApiProperty()
@@ -40,7 +45,8 @@ export class OrderResponseDto implements Order {
 
   @Expose()
   @ApiProperty()
-  eventId: string;
+  @Type(() => OrderDetailResponseDto)
+  orderDetails: OrderDetailResponseDto[];
 
   @Expose()
   @ApiProperty()

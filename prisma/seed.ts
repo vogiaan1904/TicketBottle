@@ -607,7 +607,7 @@ async function main() {
     });
   }
 
-  await updateEventCategories();
+  // await updateEventCategories();
 
   // Create Event Infos
   const eventInfos = genEventInfoList();
