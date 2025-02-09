@@ -13,12 +13,18 @@ import {
   IsString,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { Status } from './event.response.dto';
 
 export class UpdateEventRequestDto extends PartialType(CreateEventRequestDto) {
   @IsOptional()
   @IsEnum(EventStatus)
   @ApiProperty({ enum: EventStatus, enumName: 'EventStatus' })
-  status: EventStatus;
+  configStatus: EventStatus;
+
+  @IsOptional()
+  @IsEnum(EventStatus)
+  @ApiProperty({ enum: Status, enumName: 'Status' })
+  status: Status;
 
   @IsOptional()
   @IsDate()

@@ -3,6 +3,7 @@ import { BaseService } from '@/services/base/base.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
+  forwardRef,
   Inject,
   Injectable,
   NotFoundException,
@@ -21,9 +22,11 @@ import { CreateEventInfoRequestDto } from './dto/create-eventInfo.request.dto';
 import {
   EventByCategoryResponseDto,
   EventResponseDto,
+  Status,
 } from './dto/event.response.dto';
 import { GetEventsQueryDto } from './dto/get-event.query.dto';
 import { UpdateEventRequestDto } from './dto/update-event.request.dto';
+import { EventConfigService } from './event-config.service';
 export interface EventStatisticsInterface {
   soldTickets: number;
   netRevenue: number;
@@ -56,6 +59,8 @@ export class EventService extends BaseService<Event> {
     private readonly databaseService: DatabaseService,
     private readonly ticketClassService: TicketClassService,
     private readonly organizerService: OrganizerService,
+    @Inject(forwardRef(() => EventConfigService))
+    private readonly eventConfigService: EventConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheService: Cache,
   ) {
     super(databaseService, 'event', EventResponseDto);
@@ -65,6 +70,7 @@ export class EventService extends BaseService<Event> {
     const event = await super.create(dto, options);
     return event;
   }
+
   async createInfo(id: string, data: CreateEventInfoRequestDto) {
     const { organizerId, ...eventInfoData } = data;
     const foundOrganizer = await this.organizerService.findOne({
@@ -98,6 +104,7 @@ export class EventService extends BaseService<Event> {
       throw new BadRequestException('Failed to create event info');
     }
   }
+
   async updateEvent(id: string, data: UpdateEventRequestDto) {
     const event = await super.update({ id }, data);
     return event;
@@ -300,7 +307,7 @@ export class EventService extends BaseService<Event> {
       categoryName: 'Trending',
       events: await this.findMany({
         filter: {
-          status: 'PUBLISHED',
+          configStatus: 'PUBLISHED',
           eventInfo: {
             startDate: {
               gte: today,
@@ -331,8 +338,51 @@ export class EventService extends BaseService<Event> {
   //   return await super.findMany(args);
   // }
 
-  async findEventById(id: string) {
-    return await super.findOne({ id }, { include: { ...this.includeInfo } });
+  async findEventById(id: string): Promise<EventResponseDto> {
+    const event = await super.findOne(
+      { id },
+      {
+        include: {
+          ...this.includeInfoAndOrganizer,
+          ...this.includeTicketClasses,
+        },
+      },
+    );
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    console.log(event);
+
+    let minTicketPrice;
+    if (event.ticketClasses.length > 0) {
+      minTicketPrice = event.ticketClasses.reduce((acc, curr) => {
+        return acc.price < curr.price ? acc : curr;
+      }).price;
+    }
+
+    let status: Status;
+    if (event.startSellDate > new Date()) {
+      status = Status.UPCOMING;
+    } else if (event.eventInfo.endDate < new Date()) {
+      status = Status.ENDED;
+    } else {
+      const eventSellData = await this.eventConfigService.getSaleData(id);
+      const allSoldOut = eventSellData.ticketClassesInfo.every(
+        (ticketClass) => ticketClass.availableTickets === 0,
+      );
+      if (allSoldOut) {
+        status = Status.SOLD_OUT;
+      } else {
+        status = Status.BOOK_NOW;
+      }
+    }
+
+    return new EventResponseDto({
+      ...event,
+      status,
+      minTicketPrice,
+    });
   }
 
   async getTicketClasses(id: string) {
@@ -372,7 +422,7 @@ export class EventService extends BaseService<Event> {
     const { page, perPage } = dto;
     return await super.findManyWithPagination({
       filter: {
-        status: 'PUBLISHED',
+        configStatus: 'PUBLISHED',
       },
       orderBy: {
         tickets: {

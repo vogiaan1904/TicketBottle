@@ -40,7 +40,7 @@ const genEventList = (numEvents: number) => {
       startSellDate,
       endSellDate,
       isFree: false,
-      status: EventStatus.DRAFT,
+      configStatus: EventStatus.DRAFT,
       maxTicketsPerCustomer: Math.floor(Math.random() * 6) + 5, // Random number between 5-10
     });
   }

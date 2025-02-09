@@ -6,11 +6,12 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { logger } from '@/configs/winston.config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DatabaseService extends PrismaClient implements OnModuleInit {
   private readonly logger = logger.child({ context: DatabaseService.name });
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     super();
   }
   async onModuleInit() {
@@ -55,7 +56,8 @@ export class DatabaseService extends PrismaClient implements OnModuleInit {
       return;
     }
     this.logger.error('Admin account is not found. Creating admin account...');
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const plainPassword = this.configService.get<string>('ADMIN_PASSWORD');
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
     await this.staff.create({
       data: {
         username: 'admin',
