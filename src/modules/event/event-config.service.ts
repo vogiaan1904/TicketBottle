@@ -48,7 +48,7 @@ export class EventConfigService {
       throw new BadRequestException('Event has not been configured yet');
     }
 
-    if (event.status !== EventStatus.DRAFT) {
+    if (event.configStatus !== EventStatus.DRAFT) {
       throw new BadRequestException('Event has been published');
     }
 
@@ -84,18 +84,18 @@ export class EventConfigService {
 
     await this.eventService.update(
       { id: eventId },
-      { status: EventStatus.PUBLISHED },
+      { configStatus: EventStatus.PUBLISHED },
     );
   }
 
   async checkIsReadyForSale(eventID: string): Promise<boolean> {
     await this.isEventExist(eventID);
 
-    const status = await this.redis.get(
+    const configStatus = await this.redis.get(
       this.genRedisKey.eventConfigStatus(eventID),
     );
 
-    return status === EventConfigStatus.Ok;
+    return configStatus === EventConfigStatus.Ok;
   }
 
   async getSaleData(eventID: string) {

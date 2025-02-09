@@ -3,6 +3,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { $Enums, Event, EventStatus, TicketClass } from '@prisma/client';
 import { Expose } from 'class-transformer';
 
+export enum Status {
+  UPCOMING = 'UPCOMING',
+  BOOK_NOW = 'BOOK_NOW',
+  SOLD_OUT = 'SOLD_OUT',
+  ENDED = 'ENDED',
+}
+
 export class EventResponseDto implements Event {
   constructor(partial: Partial<EventResponseDto>) {
     Object.assign(this, partial);
@@ -33,7 +40,19 @@ export class EventResponseDto implements Event {
 
   @Expose()
   @ApiProperty({ enum: EventStatus, enumName: 'EventStatus' })
-  status: EventStatus;
+  configStatus: EventStatus;
+
+  @Expose()
+  @ApiProperty({ enum: Status, enumName: 'Status' })
+  status: Status;
+
+  @Expose()
+  @ApiProperty()
+  isHot: boolean = false;
+
+  @Expose()
+  @ApiProperty()
+  minTicketPrice: number;
 
   @Expose()
   @ApiProperty()
@@ -42,6 +61,10 @@ export class EventResponseDto implements Event {
   @Expose()
   @ApiProperty()
   ticketCount: number;
+
+  @Expose()
+  @ApiProperty()
+  minPrice: number;
 
   @Expose()
   @ApiProperty()

@@ -18,7 +18,7 @@ model Event {
   isFree                Boolean
   maxTicketsPerCustomer Int
   isNewTrending         Boolean       @default(false)
-  status                EventStatus   @default(DRAFT)
+  configStatus          EventStatus   @default(DRAFT)
   eventInfo             EventInfo?
   ticketClasses         TicketClass[]
   tickets               Ticket[]

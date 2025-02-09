@@ -18,48 +18,43 @@ export class EventRecommendService {
     if (event) {
       const sameCategoryEvents = await this.eventService.findMany({
         filter: {
+          id: { not: eventId },
           categories: {
             hasSome: event.categories,
           },
-          status: 'PUBLISHED',
+          configStatus: 'PUBLISHED',
         },
         options: {
-          take: 8,
-          orderBy: {
-            startSellDate: 'desc',
-          },
+          take: 4,
           include: {
             eventInfo: true,
           },
         },
       });
-
-      if (sameCategoryEvents.length === limit) {
-        return sameCategoryEvents;
-      }
 
       const remaining = limit - sameCategoryEvents.length;
+      let otherCategoryEvents = [];
 
-      // Query additional events that are published and NOT in the same category.
-      const otherCategoryEvents = await this.eventService.findMany({
-        filter: {
-          status: 'PUBLISHED',
-          NOT: {
-            categories: {
-              hasSome: event.categories,
+      if (remaining > 0) {
+        // Query additional events that are published and NOT in the same category.
+        otherCategoryEvents = await this.eventService.findMany({
+          filter: {
+            configStatus: 'PUBLISHED',
+            NOT: {
+              categories: {
+                hasSome: event.categories,
+              },
             },
           },
-        },
-        options: {
-          take: remaining,
-          orderBy: {
-            startSellDate: 'desc',
+          options: {
+            take: remaining,
+            include: {
+              eventInfo: true,
+            },
           },
-          include: {
-            eventInfo: true,
-          },
-        },
-      });
+        });
+      }
+
       return [...sameCategoryEvents, ...otherCategoryEvents];
     }
   }
@@ -81,7 +76,7 @@ export class EventRecommendService {
               lte: dayjs().endOf('week').toDate(),
             },
           },
-          status: 'PUBLISHED',
+          configStatus: 'PUBLISHED',
         },
         options: {
           take: limit,
@@ -102,7 +97,7 @@ export class EventRecommendService {
               lte: dayjs().endOf('month').toDate(),
             },
           },
-          status: 'PUBLISHED',
+          configStatus: 'PUBLISHED',
         },
         options: {
           take: limit,
@@ -117,7 +112,7 @@ export class EventRecommendService {
     } else {
       return await this.eventService.findMany({
         filter: {
-          status: 'PUBLISHED',
+          configStatus: 'PUBLISHED',
         },
         options: {
           take: limit,
