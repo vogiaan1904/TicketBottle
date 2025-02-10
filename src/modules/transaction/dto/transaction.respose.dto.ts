@@ -5,8 +5,10 @@ import {
 } from '@prisma/client';
 
 export class TransactionResponseDto implements Transaction {
+  constructor(partial: Partial<TransactionResponseDto>) {
+    Object.assign(this, partial);
+  }
   id: string;
-  code: bigint;
   refCode: string;
   action: TransactionAction;
   gateway: string;

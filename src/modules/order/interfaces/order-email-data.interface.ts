@@ -5,7 +5,7 @@ class Ticket {
 }
 
 export class OrderSuccessDataDto {
-  orderId: string;
+  orderCode: string;
   eventName: string;
   eventDate: string;
   eventLocation: string;

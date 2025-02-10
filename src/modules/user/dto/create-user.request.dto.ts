@@ -22,6 +22,4 @@ export class CreateUserRequestDto {
   @IsEnum(Gender)
   @Transform(({ value }) => value.toUpperCase())
   gender: string;
-  @IsPhoneNumber('VN')
-  phoneNumber: string;
 }

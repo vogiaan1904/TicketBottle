@@ -49,4 +49,14 @@ export class PaymentController {
       host: `${req.protocol}://${req.get('host')}`,
     });
   }
+
+  @ApiExcludeEndpoint(true)
+  @NoApplyResInterceptor()
+  @ApiPost({ path: 'payos/callback' })
+  async payosCallBack(@Req() req: Request) {
+    return await this.paymentService.handleCallback(GatewayName.PAYOS, {
+      data: req.body,
+      host: `${req.protocol}://${req.get('host')}`,
+    });
+  }
 }
