@@ -26,7 +26,10 @@ import {
   CreateOrderDetailRedis,
   CreateOrderRedisDto,
 } from './dto/create-order.request.dto';
-import { OrderResponseDto } from './dto/order.response.dto';
+import {
+  OrderCheckoutResponseDto,
+  OrderResponseDto,
+} from './dto/order.response.dto';
 
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
@@ -64,9 +67,13 @@ export class OrderService extends BaseService<Order> {
     super(databaseService, 'order', OrderResponseDto);
   }
 
-  private genOrderID(): string {
+  private genOrderCode(): string {
     const now = dayjs().format('YYMMDD').toString();
-    return now + crypto.randomBytes(5).toString('hex');
+    const randomNumber = crypto
+      .randomInt(0, 10000000000)
+      .toString()
+      .padStart(10, '0');
+    return now + randomNumber;
   }
 
   private genTransactionID(): string {
@@ -75,7 +82,7 @@ export class OrderService extends BaseService<Order> {
   }
 
   async createOrderOnRedis(userId: string, dto: CreateOrderRedisDto) {
-    const orderCode = this.genOrderID();
+    const orderCode = this.genOrderCode();
     const transactionCode = this.genTransactionID();
     const orderKey = this.genRedisKey.order(orderCode);
 
@@ -162,7 +169,6 @@ export class OrderService extends BaseService<Order> {
     paymentData: { ip: string; host: string },
   ) {
     const orderData = await this.createOrderOnRedis(userId, dto);
-
     const { code, totalCheckout } = orderData;
     const result = await this.paymentService.createPaymentLink(
       dto.paymentGateway,
@@ -259,6 +265,7 @@ export class OrderService extends BaseService<Order> {
           id: orderData.eventId,
         },
       },
+      code: orderCode,
       status: OrderStatus.CANCELLED,
       totalCheckOut: Number(orderData.totalCheckout),
       totalQuantity: Number(orderData.totalQuantity),
@@ -269,7 +276,7 @@ export class OrderService extends BaseService<Order> {
           refCode: orderCode,
           gateway: orderData.paymentGateway,
           details: {},
-          id: this.genOrderID(),
+          // id: this.genOrderID(),
           amount: Number(orderData.totalCheckout),
         },
       },
@@ -328,12 +335,12 @@ export class OrderService extends BaseService<Order> {
     // Ticket purchase
     if (transactionData.transactionAction === 'BUY_TICKET') {
       const amount = parseFloat(transactionData.totalCheckout);
-      const transactionId = this.genOrderID();
+      // const transactionId = this.genOrderID();
       const refCode = transactionData.code;
       const gateway = transactionData.paymentGateway;
 
-      await this.transactionService.create({
-        id: transactionId,
+      const createdTransaction = await this.transactionService.create({
+        // id: transactionId,
         status: TransactionStatus.COMPLETED,
         action: TransactionAction.BUY_TICKET,
         refCode,
@@ -341,10 +348,10 @@ export class OrderService extends BaseService<Order> {
         details: {},
         amount,
       });
-
+      console.log('createdTransaction', createdTransaction);
       await this.completeOrder(
         transactionData.code, // orderCode
-        transactionId, // transactionID
+        createdTransaction.id, // transactionID
       );
     }
   }
@@ -393,7 +400,7 @@ export class OrderService extends BaseService<Order> {
       // Create order
       return await tx.order.create({
         data: {
-          id: orderData.code,
+          code: orderData.code,
           status: OrderStatus.COMPLETED,
           totalCheckOut: Number(orderData.totalCheckout),
           totalQuantity: Number(orderData.totalQuantity),
@@ -456,6 +463,7 @@ export class OrderService extends BaseService<Order> {
       {
         select: {
           id: true,
+          code: true,
           createdAt: true,
           user: {
             select: {
@@ -485,7 +493,7 @@ export class OrderService extends BaseService<Order> {
       const qrCode = await this.generateQRCode(ticket.ticket.serialNumber);
       const doc = new jsPDF();
       let currentHeight = 20;
-      doc.text(`Order ID: ${orderData.id}`, 10, currentHeight);
+      doc.text(`Order code: ${orderData.code}`, 10, currentHeight);
       currentHeight += 10;
       doc.text(
         `Ordered by ${orderData.user.firstName} ${orderData.user.lastName} at ${dayjs(orderData.createdAt).format('HH:mm, DD/MM/YYYY')}`,
@@ -557,7 +565,7 @@ export class OrderService extends BaseService<Order> {
     await this.emailQueue.add(EmailQueue.jobName, {
       email: userEmail,
       orderData: {
-        orderId: createdOrder.id,
+        orderCode: createdOrder.code,
         eventName: createdOrder.event.eventInfo.name,
         eventDate: formattedStartDate,
         eventLocation: createdOrder.event.eventInfo.location,

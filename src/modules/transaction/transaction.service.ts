@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { Transaction } from '@prisma/client';
 import Redis from 'ioredis';
 import { DatabaseService } from '../database/database.service';
+import { TransactionResponseDto } from './dto/transaction.respose.dto';
 // import cryptoRandomString from 'crypto-random-string';
 
 @Injectable()
@@ -19,7 +20,7 @@ export class TransactionService extends BaseService<Transaction> {
 
     @InjectRedis() private readonly redis: Redis,
   ) {
-    super(databaseService, 'transaction', TransactionService);
+    super(databaseService, 'transaction', TransactionResponseDto);
   }
 
   // generateTransactionCode(): number {

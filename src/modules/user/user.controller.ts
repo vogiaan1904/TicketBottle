@@ -19,9 +19,10 @@ import { GetUsersQueryRequestDto } from './dto/get-users-query.request.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @OnlyAdmin()
   @Post()
   create(@Body() createUserDto: CreateUserRequestDto) {
-    return this.userService.create(createUserDto);
+    return this.userService.create({ ...createUserDto, isVerified: true });
   }
 
   @OnlyAdmin()

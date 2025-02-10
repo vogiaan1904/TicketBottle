@@ -117,6 +117,16 @@ export class OrderRedisResponseDto {
   createdAt: Date;
 }
 
+export class OrderCheckoutResponseDto {
+  @Expose()
+  @ApiProperty()
+  orderData: OrderRedisResponseDto;
+
+  @Expose()
+  @ApiProperty()
+  checkoutUrl: string;
+}
+
 export class OrderStatisticsReponseDto {
   @Expose()
   @ApiProperty()

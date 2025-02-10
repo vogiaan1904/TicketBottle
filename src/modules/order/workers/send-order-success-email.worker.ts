@@ -22,7 +22,9 @@ export class SendSuccessOrderEmailWorker extends WorkerHost {
     }>,
   ): Promise<void> {
     const { email, orderData, attachments } = job.data;
-    this.logger.log(`Sending email for success order Id: ${orderData.orderId}`);
+    this.logger.log(
+      `Sending email for success order code: ${orderData.orderCode}...`,
+    );
     try {
       await this.emailService.sendSuccessOrderEmail(
         email,
@@ -30,11 +32,11 @@ export class SendSuccessOrderEmailWorker extends WorkerHost {
         attachments,
       );
       this.logger.log(
-        `Successfully sent email for order Id: ${orderData.orderId}`,
+        `Successfully sent email for order code: ${orderData.orderCode}`,
       );
     } catch (error) {
       this.logger.error(
-        `Failed to send email for success order Id : ${orderData.orderId}`,
+        `Failed to send email for success order code : ${orderData.orderCode}`,
         error,
       );
       console.error(error);

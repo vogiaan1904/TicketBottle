@@ -12,6 +12,7 @@ import { VnpayGateway } from './gateways/vnpay.gateway';
 import { ZalopayGateWay } from './gateways/zalopay.gateway';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
+import { PayOSGateway } from './gateways/payos.gateway';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PaymentService } from './payment.service';
     VnpayGateway,
     PaymentGatewayFactory,
     ZalopayGateWay,
+    PayOSGateway,
   ],
   exports: [PaymentService],
 })

@@ -352,7 +352,6 @@ export class EventService extends BaseService<Event> {
     if (!event) {
       throw new NotFoundException('Event not found');
     }
-    console.log(event);
 
     let minTicketPrice;
     if (event.ticketClasses.length > 0) {

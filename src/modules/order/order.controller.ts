@@ -15,6 +15,7 @@ import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { JwtAccessTokenGuard } from '../auth/guards/jwt-access/jwt-user-access-token.guard';
 import { CreateOrderRedisDto } from './dto/create-order.request.dto';
 import {
+  OrderCheckoutResponseDto,
   OrderResponseDto,
   OrderStatisticsReponseDto,
 } from './dto/order.response.dto';
@@ -34,7 +35,7 @@ export class OrderController {
 
   @ApiPost({ path: '' })
   @UseGuards(JwtAccessTokenGuard)
-  @ApiCreatedResponse({ type: OrderResponseDto })
+  @ApiCreatedResponse({ type: OrderCheckoutResponseDto })
   async create(
     @Req() request: RequestWithUser,
     @Body() createOrderDto: CreateOrderRedisDto,

@@ -2,6 +2,7 @@ import { Gender } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
@@ -30,9 +31,9 @@ export class RegisterRequestDTO {
 
   // @IsEnum(Gender)
   @IsNotEmpty()
-  @IsString()
+  @IsEnum(Gender)
   @Transform(({ value }) => value.toUpperCase())
-  gender: Gender;
+  gender: string;
 
   @IsOptional()
   @IsPhoneNumber('VN')

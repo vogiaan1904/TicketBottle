@@ -30,6 +30,7 @@ model Transaction {
 
 model Order {
   id            String        @id @default(uuid())
+  code          String        @unique
   orderDetails  OrderDetail[]
   totalCheckOut Float
   status        OrderStatus   @default(PENDING)
