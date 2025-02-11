@@ -1,6 +1,6 @@
 import { BaseService } from '@/services/base/base.service';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Ticket } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { DatabaseService } from 'src/modules/database/database.service';
@@ -32,7 +32,16 @@ export class TicketService extends BaseService<Ticket> {
     });
   }
 
-  async updateCheckInStatus(serialNumber: string) {
+  async validateCheckIn(serialNumber: string) {
+    const ticket = await this.findOne({ serialNumber });
+    if (!ticket) {
+      throw new BadRequestException('Ticket not found');
+    }
+
+    if (ticket.isCheckIn) {
+      throw new BadRequestException('Ticket has already checked in');
+    }
+
     return await super.update(
       { serialNumber },
       { isCheckIn: true, checkInAt: new Date() },

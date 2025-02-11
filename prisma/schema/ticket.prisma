@@ -18,7 +18,7 @@ model TicketClass {
 
 model Ticket {
   id            String       @id @default(uuid())
-  serialNumber  String       @unique @default(cuid())
+  serialNumber  String       @unique
   orderDetail   OrderDetail?
   isCheckIn     Boolean      @default(false)
   checkInAt     DateTime?
