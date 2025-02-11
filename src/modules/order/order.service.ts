@@ -76,6 +76,15 @@ export class OrderService extends BaseService<Order> {
     return now + randomNumber;
   }
 
+  private genTicketSerialNumber(): string {
+    const now = dayjs().format('YYMMDD').toString();
+    const randomNumber = crypto
+      .randomInt(0, 1000000)
+      .toString()
+      .padStart(6, '0');
+    return now + randomNumber;
+  }
+
   private genTransactionID(): string {
     const now = dayjs().format('YYMMDD').toString();
     return now + '-' + crypto.randomBytes(5).toString('hex');
@@ -388,6 +397,7 @@ export class OrderService extends BaseService<Order> {
         });
 
         const ticketData = Array.from({ length: detail.quantity }, () => ({
+          serialNumber: this.genTicketSerialNumber(),
           ticketClassId: detail.ticketClassId,
           eventId: orderData.eventId,
         }));

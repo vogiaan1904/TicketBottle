@@ -105,7 +105,7 @@ export class AuthController {
     });
 
     // Redirect to frontend application
-    res.redirect('http://ticketbottle.com.vn/example');
+    res.redirect(this.configService.get<string>('FRONTEND_URL'));
   }
 
   @UseGuards(JwtAccessTokenGuard)

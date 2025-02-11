@@ -22,6 +22,7 @@ export class TicketController {
     return this.ticketService.findOne({ id });
   }
 
+  @OnlyAdmin()
   @Get(':serial-number/check-in')
   @ApiOkResponse()
   updateCheckInStatus(@Param('serial-number') serialNumber: string) {
