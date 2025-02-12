@@ -615,7 +615,7 @@ export class OrderService extends BaseService<Order> {
     });
   }
 
-  async getOrderById(orderId: string) {
+  async getOrderAndDetailById(orderId: string) {
     const order = await this.databaseService.$queryRaw`
       SELECT 
         o.*,
@@ -661,7 +661,7 @@ export class OrderService extends BaseService<Order> {
       JOIN users u ON o."userId" = u.id
       WHERE o.id = ${orderId};
     `;
-    return order;
+    return order[0];
   }
 
   //Statistics for event dashboard
