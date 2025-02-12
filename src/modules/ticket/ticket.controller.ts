@@ -25,7 +25,7 @@ export class TicketController {
   @OnlyAdmin()
   @Get(':serial-number/check-in')
   @ApiOkResponse()
-  updateCheckInStatus(@Param('serial-number') serialNumber: string) {
-    this.ticketService.updateCheckInStatus(serialNumber);
+  validateCheckIn(@Param('serial-number') serialNumber: string) {
+    this.ticketService.validateCheckIn(serialNumber);
   }
 }
